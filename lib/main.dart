@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/app_theme.dart';
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
@@ -16,14 +17,7 @@ class TvScoreApp extends StatelessWidget {
     return MaterialApp(
       title: 'TV Score',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4F8DF7),
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF091426),
-      ),
+      theme: AppTheme.dark,
       home: const LoginPage(),
     );
   }
@@ -48,7 +42,9 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: _pages[_index]),
+      body: SafeArea(
+        child: IndexedStack(index: _index, children: _pages),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (index) => setState(() => _index = index),

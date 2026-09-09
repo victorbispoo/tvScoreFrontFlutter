@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'redesigned_screens.dart';
 
-class SearchPage extends StatelessWidget {
-  const SearchPage({super.key});
+class LegacySearchPage extends StatelessWidget {
+  const LegacySearchPage({super.key});
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -45,4 +46,8 @@ class SearchPage extends StatelessWidget {
       ),
     ],
   );
+}
+
+class SearchPage extends SearchScreen {
+  const SearchPage({super.key});
 }

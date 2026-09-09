@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'redesigned_screens.dart';
 
-class TrendingPage extends StatelessWidget {
-  const TrendingPage({super.key});
+class LegacyTrendingPage extends StatelessWidget {
+  const LegacyTrendingPage({super.key});
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -24,6 +25,10 @@ class TrendingPage extends StatelessWidget {
       ),
     ],
   );
+}
+
+class TrendingPage extends TrendingScreen {
+  const TrendingPage({super.key});
 }
 
 class _ComingSoon extends StatelessWidget {

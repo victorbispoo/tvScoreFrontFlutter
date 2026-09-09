@@ -1,15 +1,34 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_services.dart';
+import 'redesigned_screens.dart';
 import 'movie_card.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class LegacyHomePage extends StatefulWidget {
+  const LegacyHomePage({super.key});
+
+  @override
+  State<LegacyHomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<LegacyHomePage>
+    with AutomaticKeepAliveClientMixin {
+  late final Future<List<Map<String, String>>> _highlightsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _highlightsFuture = ApiService().getHighlights();
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return FutureBuilder<List<Map<String, String>>>(
-      future: ApiService().getHighlights(),
+      future: _highlightsFuture,
       builder: (context, snapshot) {
         final movies = snapshot.data ?? const <Map<String, String>>[];
         return ListView(
@@ -20,7 +39,7 @@ class HomePage extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Image.asset(
-                  'lib/assets/Logo tv score.png',
+                  'lib/assets/logoTvScore.png',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -50,4 +69,8 @@ class HomePage extends StatelessWidget {
       },
     );
   }
+}
+
+class HomePage extends HomeScreen {
+  const HomePage({super.key});
 }

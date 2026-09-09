@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'redesigned_screens.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class LegacyProfilePage extends StatelessWidget {
+  const LegacyProfilePage({super.key});
 
   /*
   @override
@@ -60,4 +61,8 @@ class ProfilePage extends StatelessWidget {
       ),
     ],
   );
+}
+
+class ProfilePage extends ProfileScreen {
+  const ProfilePage({super.key});
 }

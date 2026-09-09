@@ -2,9 +2,31 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import 'register_page.dart';
+import '../controllers/login_controller.dart';
+import '../widgets/auth_text_field.dart';
+import 'redesigned_screens.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class LegacyLoginPage extends StatefulWidget {
+  const LegacyLoginPage({super.key});
+
+  @override
+  State<LegacyLoginPage> createState() => _LegacyLoginPageState();
+}
+
+class _LegacyLoginPageState extends State<LegacyLoginPage> {
+  late final LoginController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = LoginController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,31 +41,36 @@ class LoginPage extends StatelessWidget {
                 SizedBox(
                   height: 112,
                   child: Image.asset(
-                    'lib/assets/Logo tv score.png',
+                    'lib/assets/logoTvScore.png',
                     fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 28),
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: 'E-mail',
-                    border: OutlineInputBorder(),
-                  ),
+                AuthTextField(
+                  label: 'E-mail',
+                  controller: _controller.emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onChanged: (_) => _controller.onChanged(),
                 ),
                 const SizedBox(height: 12),
-                const TextField(
+                AuthTextField(
+                  label: 'Senha',
+                  controller: _controller.passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Senha',
-                    border: OutlineInputBorder(),
-                  ),
+                  textInputAction: TextInputAction.done,
+                  onChanged: (_) => _controller.onChanged(),
                 ),
                 const SizedBox(height: 20),
                 FilledButton(
-                  onPressed: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AppShell()),
-                  ),
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    final loggedIn = await _controller.submit();
+                    if (!mounted || !loggedIn) return;
+                    navigator.pushReplacement(
+                      MaterialPageRoute(builder: (_) => const AppShell()),
+                    );
+                  },
                   child: const SizedBox(
                     width: double.infinity,
                     child: Center(child: Text('Entrar')),
@@ -63,4 +90,17 @@ class LoginPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
+  @override
+  Widget build(BuildContext context) => AuthScreen(
+    isRegister: false,
+    onSubmit: () => Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AppShell()),
+    ),
+  );
 }
