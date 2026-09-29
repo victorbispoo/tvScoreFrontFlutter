@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
-import 'redesigned_screens.dart';
 
 class LegacyProfilePage extends StatelessWidget {
   const LegacyProfilePage({super.key});
 
-  /*
-  @override
-  Widget build(BuildContext context) => const Center(
-    child: Text(
-      'José Silva',
-      textAlign: TextAlign.center,
-    ),
-  );
-  */
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -63,6 +53,6 @@ class LegacyProfilePage extends StatelessWidget {
   );
 }
 
-class ProfilePage extends ProfileScreen {
+class ProfilePage extends LegacyProfilePage {
   const ProfilePage({super.key});
 }

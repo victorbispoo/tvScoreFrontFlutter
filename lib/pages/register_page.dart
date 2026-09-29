@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../controllers/register_controller.dart';
 import '../widgets/auth_text_field.dart';
-import 'redesigned_screens.dart';
 
-class LegacyRegisterPage extends StatefulWidget {
-  const LegacyRegisterPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LegacyRegisterPage> createState() => _LegacyRegisterPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LegacyRegisterPageState extends State<LegacyRegisterPage> {
+class _RegisterPageState extends State<RegisterPage> {
   late final RegisterController _controller;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -29,7 +29,7 @@ class _LegacyRegisterPageState extends State<LegacyRegisterPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Criar conta')),
-    body: Padding(
+    body: SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
@@ -37,7 +37,7 @@ class _LegacyRegisterPageState extends State<LegacyRegisterPage> {
             label: 'Nome',
             controller: _controller.nameController,
             textInputAction: TextInputAction.next,
-            onChanged: (_) => _controller.onChanged(),
+            onChanged: (_) => setState(_controller.onChanged),
           ),
           const SizedBox(height: 12),
           AuthTextField(
@@ -45,26 +45,30 @@ class _LegacyRegisterPageState extends State<LegacyRegisterPage> {
             controller: _controller.emailController,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            onChanged: (_) => _controller.onChanged(),
+            onChanged: (_) => setState(_controller.onChanged),
           ),
           const SizedBox(height: 12),
           AuthTextField(
             label: 'Senha',
             controller: _controller.passwordController,
-            obscureText: true,
+            obscureText: _obscurePassword,
             textInputAction: TextInputAction.done,
-            onChanged: (_) => _controller.onChanged(),
+            onChanged: (_) => setState(_controller.onChanged),
+            suffixIcon: IconButton(
+              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ),
+          ),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: _controller.canSubmit ? () => Navigator.pop(context) : null,
+            child: const SizedBox(
+              width: double.infinity,
+              child: Center(child: Text('Cadastrar')),
+            ),
           ),
         ],
       ),
     ),
   );
-}
-
-class RegisterPage extends StatelessWidget {
-  const RegisterPage({super.key});
-
-  @override
-  Widget build(BuildContext context) =>
-      AuthScreen(isRegister: true, onSubmit: () => Navigator.pop(context));
 }

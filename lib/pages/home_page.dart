@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_services.dart';
-import 'redesigned_screens.dart';
 import 'movie_card.dart';
 
 class LegacyHomePage extends StatefulWidget {
@@ -55,14 +54,17 @@ class _HomePageState extends State<LegacyHomePage>
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 210,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: movies.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => MovieCard(movie: movies[i]),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.60,
               ),
+              itemCount: movies.length,
+              itemBuilder: (_, i) => MovieCard(movie: movies[i]),
             ),
           ],
         );
@@ -71,6 +73,6 @@ class _HomePageState extends State<LegacyHomePage>
   }
 }
 
-class HomePage extends HomeScreen {
+class HomePage extends LegacyHomePage {
   const HomePage({super.key});
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'redesigned_screens.dart';
 
 class LegacySearchPage extends StatelessWidget {
   const LegacySearchPage({super.key});
@@ -48,6 +47,6 @@ class LegacySearchPage extends StatelessWidget {
   );
 }
 
-class SearchPage extends SearchScreen {
+class SearchPage extends LegacySearchPage {
   const SearchPage({super.key});
 }

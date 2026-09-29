@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'redesigned_screens.dart';
 
 class LegacyTrendingPage extends StatelessWidget {
   const LegacyTrendingPage({super.key});
@@ -27,7 +26,7 @@ class LegacyTrendingPage extends StatelessWidget {
   );
 }
 
-class TrendingPage extends TrendingScreen {
+class TrendingPage extends LegacyTrendingPage {
   const TrendingPage({super.key});
 }
 
