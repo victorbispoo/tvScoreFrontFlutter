@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_services.dart';
-import 'movie_card.dart';
+import '../widgets/movie_card.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LegacyHomePage extends StatefulWidget {
   const LegacyHomePage({super.key});
@@ -33,25 +35,38 @@ class _HomePageState extends State<LegacyHomePage>
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            SizedBox(
-              height: 56,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Image.asset(
-                  'lib/assets/logoTvScore.png',
-                  fit: BoxFit.contain,
-                ),
+            const SizedBox(height: 60),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SvgPicture.asset(
+                'lib/assets/logoTvScore.svg',
+                width: 120,
+                height: 120,
               ),
             ),
-            const SizedBox(height: 6),
+
+            const SizedBox(height: 10),
             const Text(
-              'Filmes e séries para você acompanhar.',
-              style: TextStyle(color: Colors.white70),
+              'Tenha acesso a avaliações dos melhores filmes e séries.',
+              style: TextStyle(color: Colors.white70, fontSize: 20),
             ),
             const SizedBox(height: 28),
-            const Text(
-              'Destaques',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text.rich(
+              TextSpan(
+                children: [
+                  WidgetSpan(
+                    child: HugeIcon(
+                      icon: HugeIcons.strokeRoundedRanking,
+                      size: 28,
+                      color: Colors.amber,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' Destaques',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             GridView.builder(

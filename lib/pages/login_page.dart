@@ -4,6 +4,7 @@ import '../main.dart';
 import 'register_page.dart';
 import '../controllers/login_controller.dart';
 import '../widgets/auth_text_field.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -138,7 +139,7 @@ class _AuthLogo extends StatelessWidget {
       SizedBox(
         width: 300,
         height: 300,
-        child: Image.asset('lib/assets/tvScoreLogin.png', fit: BoxFit.cover),
+        child: SvgPicture.asset('lib/assets/tvScoreLogin.svg'),
       ),
     ],
   );
