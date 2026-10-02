@@ -12,6 +12,7 @@ class AppTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.hintText,
+    this.validator
   });
 
   final String label;
@@ -23,12 +24,13 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final Widget? prefixIcon;
   final IconButton? suffixIcon;
+  final FormFieldValidator<String>? validator;
 
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) => TextFormField(
     controller: controller,
     obscureText: obscureText,
-    
+    validator: validator,
     textInputAction: textInputAction,
     keyboardType: keyboardType,
     onChanged: onChanged,
@@ -70,5 +72,6 @@ class AuthTextField extends AppTextField {
     super.prefixIcon,
     super.suffixIcon,
     super.hintText,
+    super.validator,
   });
 }

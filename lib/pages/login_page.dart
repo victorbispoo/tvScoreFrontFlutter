@@ -49,6 +49,16 @@ class _LoginPageState extends State<LoginPage> {
                   AuthTextField(
                     label: 'Email',
                     hintText: 'Digite seu e-mail...',
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, insira seu e-mail.';
+                      }
+                      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                      if (!emailRegex.hasMatch(value)) {
+                        return 'Por favor, insira um e-mail válido.';
+                      }
+                      return null;
+                    },
                     controller: _controller.emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
@@ -60,6 +70,15 @@ class _LoginPageState extends State<LoginPage> {
                   AuthTextField(
                     label: 'Senha',
                     hintText: 'Digite sua senha...',
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, insira sua senha.';
+                      }
+                      if (value.length < 6) {
+                        return 'A senha deve ter pelo menos 6 caracteres.';
+                      }
+                      return null;
+                    },
                     controller: _controller.passwordController,
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,

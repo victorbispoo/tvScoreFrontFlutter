@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class LegacyProfilePage extends StatelessWidget {
   const LegacyProfilePage({super.key});
@@ -17,7 +18,7 @@ class LegacyProfilePage extends StatelessWidget {
         child: CircleAvatar(
           radius: 42,
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: const Icon(Icons.person, size: 46),
+          child: const HugeIcon(icon: HugeIcons.strokeRoundedUser, size: 42, strokeWidth: 2),
         ),
       ),
       const SizedBox(height: 16),
@@ -35,18 +36,18 @@ class LegacyProfilePage extends StatelessWidget {
       const SizedBox(height: 32),
       const Card(
         child: ListTile(
-          leading: Icon(Icons.bookmark_outline),
+          leading: HugeIcon(icon: HugeIcons.strokeRoundedBookmark01, size: 24, strokeWidth: 2),
           title: Text('Minha lista'),
-          subtitle: Text('Nenhum título salvo ainda'),
-          trailing: Icon(Icons.chevron_right),
+          subtitle: Text('Veja seus filmes e séries salvos'),
+          trailing: HugeIcon(icon: HugeIcons.strokeRoundedChevronRight, size: 24, strokeWidth: 2),
         ),
       ),
       const Card(
         child: ListTile(
-          leading: Icon(Icons.star_outline),
+          leading: HugeIcon(icon: HugeIcons.strokeRoundedStar, size: 24, strokeWidth: 2),
           title: Text('Minhas avaliações'),
-          subtitle: Text('Suas notas aparecerão aqui'),
-          trailing: Icon(Icons.chevron_right),
+          subtitle: Text('Acesse suas avaliações de filmes e séries'),
+          trailing: HugeIcon(icon: HugeIcons.strokeRoundedChevronRight, size: 24, strokeWidth: 2),
         ),
       ),
     ],
