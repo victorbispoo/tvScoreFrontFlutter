@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../services/api_services.dart';
 
@@ -10,6 +10,7 @@ class LoginController extends ChangeNotifier {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool isLoading = false;
+  String? errorMessage;
 
   bool get canSubmit =>
       emailController.text.trim().isNotEmpty &&
@@ -19,6 +20,7 @@ class LoginController extends ChangeNotifier {
 
   Future<bool> submit() async {
     if (isLoading) return false;
+    errorMessage = null;
     isLoading = true;
     notifyListeners();
     try {
@@ -27,6 +29,9 @@ class LoginController extends ChangeNotifier {
         passwordController.text,
       );
       return true;
+    } on FormatException catch (error) {
+      errorMessage = error.message;
+      return false;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -40,3 +45,4 @@ class LoginController extends ChangeNotifier {
     super.dispose();
   }
 }
+

@@ -24,9 +24,10 @@ class MovieCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceHighlight,
                     borderRadius: BorderRadius.circular(8),
-                  ), //TODO: CAPA
-                  child: const Center(
-                    child: Icon(Icons.movie_outlined, size: 42),
+                  ),
+                  child: Image.network( 
+                    movie['poster_path']!,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 Positioned(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../main.dart';
 import 'register_page.dart';
@@ -96,8 +96,18 @@ class _LoginPageState extends State<LoginPage> {
                       child: FilledButton(
                         onPressed: () async {
                           final navigator = Navigator.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
                           final loggedIn = await _controller.submit();
-                          if (!mounted || !loggedIn) return;
+                          if (!mounted) return;
+                          if (!loggedIn) {
+                            final message = _controller.errorMessage;
+                            if (message != null) {
+                              messenger.showSnackBar(
+                                SnackBar(content: Text(message)),
+                              );
+                            }
+                            return;
+                          }
                           navigator.pushReplacement(
                             MaterialPageRoute(builder: (_) => const AppShell()),
                           );
@@ -220,3 +230,5 @@ class _AuthFooter extends StatelessWidget {
     ],
   );
 }
+
+
