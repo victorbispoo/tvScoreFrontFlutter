@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:tv_score_front_flutter/core/app_theme.dart';
 import 'package:tv_score_front_flutter/pages/my_list_page.dart';
 
 class LegacyProfilePage extends StatelessWidget {

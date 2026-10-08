@@ -69,17 +69,29 @@ class _HomePageState extends State<LegacyHomePage>
               ),
             ),
             const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.60,
+            // GridView.builder(
+            //   shrinkWrap: true,
+            //   physics: const NeverScrollableScrollPhysics(),
+            //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            //     crossAxisCount: 2,
+            //     crossAxisSpacing: 12,
+            //     mainAxisSpacing: 16,
+            //     childAspectRatio: 0.60,
+            //   ),
+            //   itemCount: movies.length,
+            //   itemBuilder: (_, i) => MovieCard(movie: movies[i]),
+            // ),
+            SizedBox(
+              height:270,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: movies.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 14),
+                itemBuilder: (_, i) => SizedBox(
+                  width: 160,
+                  child: MovieCard(movie: movies[i]),
+                ),
               ),
-              itemCount: movies.length,
-              itemBuilder: (_, i) => MovieCard(movie: movies[i]),
             ),
           ],
         );
