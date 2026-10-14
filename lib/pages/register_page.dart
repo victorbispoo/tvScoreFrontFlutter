@@ -1,3 +1,4 @@
+import '../services/api_services.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/register_controller.dart';
@@ -13,6 +14,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   late final RegisterController _controller;
   bool _obscurePassword = true;
+  bool _busy = false;
 
   @override
   void initState() {
@@ -55,13 +57,44 @@ class _RegisterPageState extends State<RegisterPage> {
             textInputAction: TextInputAction.done,
             onChanged: (_) => setState(_controller.onChanged),
             suffixIcon: IconButton(
-              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
           const SizedBox(height: 20),
           FilledButton(
-            onPressed: _controller.canSubmit ? () => Navigator.pop(context) : null,
+            onPressed: !_busy && _controller.canSubmit
+                ? () async {
+                    setState(() => _busy = true);
+                    try {
+                      await ApiService().register(
+                        _controller.nameController.text,
+                        _controller.emailController.text,
+                        _controller.passwordController.text,
+                      );
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Conta de demonstração criada para esta sessão. Faça login para continuar.',
+                          ),
+                        ),
+                      );
+                      Navigator.pop(context);
+                    } on FormatException catch (error) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(error.message)));
+                      }
+                    } finally {
+                      if (mounted) setState(() => _busy = false);
+                    }
+                  }
+                : null,
             child: const SizedBox(
               width: double.infinity,
               child: Center(child: Text('Cadastrar')),

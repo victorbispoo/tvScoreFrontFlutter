@@ -32,17 +32,14 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _index = 0;
-  final _pages = const [
-    HomePage(),
-    SearchPage(),
-    ProfilePage(),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    // Reconstrói as páginas ao mudar de aba para atualizar listas e contagens.
+    final pages = [HomePage(), SearchPage(), ProfilePage()];
     return Scaffold(
       body: SafeArea(
-        child: IndexedStack(index: _index, children: _pages),
+        child: IndexedStack(index: _index, children: pages),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -50,18 +47,27 @@ class _AppShellState extends State<AppShell> {
         destinations: const [
           NavigationDestination(
             icon: HugeIcon(icon: HugeIcons.strokeRoundedHome01),
-            selectedIcon: HugeIcon(icon: HugeIcons.strokeRoundedHome01, strokeWidth:3 ,),
+            selectedIcon: HugeIcon(
+              icon: HugeIcons.strokeRoundedHome01,
+              strokeWidth: 3,
+            ),
             label: 'Início',
           ),
 
           NavigationDestination(
             icon: HugeIcon(icon: HugeIcons.strokeRoundedSearch01),
-            selectedIcon: HugeIcon(icon: HugeIcons.strokeRoundedSearch01, strokeWidth:3 ,),
+            selectedIcon: HugeIcon(
+              icon: HugeIcons.strokeRoundedSearch01,
+              strokeWidth: 3,
+            ),
             label: 'Pesquisar',
           ),
           NavigationDestination(
             icon: HugeIcon(icon: HugeIcons.strokeRoundedUser),
-            selectedIcon: HugeIcon(icon: HugeIcons.strokeRoundedUser, strokeWidth:3 ,),
+            selectedIcon: HugeIcon(
+              icon: HugeIcons.strokeRoundedUser,
+              strokeWidth: 3,
+            ),
             label: 'Perfil',
           ),
         ],

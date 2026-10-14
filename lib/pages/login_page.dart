@@ -166,8 +166,8 @@ class _AuthLogo extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     children: [
       SizedBox(
-        width: 300,
-        height: 300,
+        width: 200,
+        height: 200,
         child: SvgPicture.asset('lib/assets/tvScoreLogin.svg'),
       ),
     ],

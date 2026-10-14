@@ -32,6 +32,11 @@ class LoginController extends ChangeNotifier {
     } on FormatException catch (error) {
       errorMessage = error.message;
       return false;
+    } catch (error, stackTrace) {
+      debugPrint('Falha ao carregar os dados após o login: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      errorMessage = 'Não foi possível acessar seus dados. Tente novamente.';
+      return false;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -45,4 +50,5 @@ class LoginController extends ChangeNotifier {
     super.dispose();
   }
 }
+
 
