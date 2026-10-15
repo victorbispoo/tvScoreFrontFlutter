@@ -1,135 +1,68 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 
 import '../models/review.dart';
 
 /// Ponto único para substituir os dados de exemplo por chamadas HTTP.
 class ApiService {
+
+
+static const generos = <int, String>{
+  28: 'Ação',
+  12: 'Aventura',
+  16: 'Animação',
+  35: 'Comédia',
+  80: 'Crime',
+  99: 'Documentário',
+  18: 'Drama',
+  10751: 'Família',
+  14: 'Fantasia',
+  36: 'História',
+  27: 'Terror',
+  10402: 'Música',
+  9648: 'Mistério',
+  10749: 'Romance',
+  878: 'Ficção Científica',
+  10770: 'Filme para TV',
+  53: 'Suspense',
+  10752: 'Guerra',
+  37: 'Faroeste',
+};
+final Dio dio = Dio(
+  BaseOptions(
+    baseUrl: 'http://10.106.75.24:8080/api',
+  ),
+);
+
+static String? token;
+
   Future<List<Map<String, String>>> getHighlights() async {
-    return const [
-      {
-        'title': 'Oppenheimer',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
-        'year': '2023',
-        'score': '8.9',
-        'genre': 'Biografia / Drama',
-      },
-      {
-        'title': 'Barbie',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg',
-        'year': '2023',
-        'score': '7.3',
-        'genre': 'Comédia',
-      },
-      {
-        'title': 'Avatar: O Caminho da Água',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg',
-        'year': '2022',
-        'score': '7.8',
-        'genre': 'Ficção Científica',
-      },
-      {
-        'title': 'Homem-Aranha: Através do Aranhaverso',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/8HWnnrO0a4aY18y2rN83g7c88P6.jpg',
-        'year': '2023',
-        'score': '8.9',
-        'genre': 'Animação',
-      },
-      {
-        'title': 'Duna: Parte Dois',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg',
-        'year': '2024',
-        'score': '8.5',
-        'genre': 'Ficção Científica',
-      },
-      {
-        'title': 'Missão: Impossível - Efeito Fallout',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/AkJQpmRyz9JwX7opAVQby6zyALv.jpg',
-        'year': '2018',
-        'score': '7.7',
-        'genre': 'Ação',
-      },
-      {
-        'title': 'Top Gun: Maverick',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/62HCnUTziyWcpDaBO2i1DX17ljH.jpg',
-        'year': '2022',
-        'score': '8.3',
-        'genre': 'Ação',
-      },
-      {
-        'title': 'Vingadores: Ultimato',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg',
-        'year': '2019',
-        'score': '8.4',
-        'genre': 'Ação',
-      },
-      {
-        'title': 'O Poderoso Chefão',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg',
-        'year': '1972',
-        'score': '9.2',
-        'genre': 'Crime / Drama',
-      },
-      {
-        'title': 'Pulp Fiction: Tempo de Violência',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/tptX04nGe6P9k9XvN6s1lqE5c1P.jpg',
-        'year': '1994',
-        'score': '8.9',
-        'genre': 'Crime / Drama',
-      },
-      {
-        'title': 'Interestelar',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
-        'year': '2014',
-        'score': '8.7',
-        'genre': 'Ficção Científica',
-      },
-      {
-        'title': 'Breaking Bad',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
-        'year': '2008',
-        'score': '9.5',
-        'genre': 'Crime / Drama',
-        'type': 'series',
-        'overview':
-            'Um professor de química entra no mundo do crime e transforma a própria vida e a de sua família.',
-      },
-      {
-        'title': 'Stranger Things',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg',
-        'year': '2016',
-        'score': '8.7',
-        'genre': 'Ficção Científica / Suspense',
-        'type': 'series',
-        'overview':
-            'Um grupo de amigos investiga acontecimentos sobrenaturais e o desaparecimento de um garoto em uma pequena cidade.',
-      },
-      {
-        'title': 'The Last of Us',
-        'poster_path':
-            'https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg',
-        'year': '2023',
-        'score': '8.7',
-        'genre': 'Drama / Aventura',
-        'type': 'series',
-        'overview':
-            'Em um mundo devastado, um sobrevivente e uma adolescente atravessam o país em uma jornada perigosa.',
-      },
-    ];
+      final dio = Dio();
+      final response = await dio.get(
+    'http://10.106.75.24:8080/api/filmes/em-alta',
+    );
+
+    final results = response.data['results'] as List;
+
+    return results.map<Map<String,String>>((filme){
+      final data = filme['release_date'] as String? ?? '';
+      final poster = filme['poster_path'] as String?;
+      final ids = filme['genre_ids'] as List? ?? [];
+      final generoPrincipal = ids.isEmpty ? 'não informado' : generos[ids.first] ?? 'não informado';
+      return {
+        'id' : filme['id'].toString(),
+        'title' : filme['title'] as String? ?? 'Sem título',
+        'overview' : filme['overview'] as String? ?? '',
+        'year' : data.length >= 4 ? data.substring(0, 4) : '',
+        'score' : (filme['vote_average'] as num?)?.toStringAsFixed(1) ?? '0.0',
+        'poster_path' : poster == null || poster.isEmpty ? '' : 'https://image.tmdb.org/t/p/w500$poster',
+        'genre_ids': filme['genre_ids']?.join(' | ') ?? '',
+        'genre': generoPrincipal,
+        'type': filme['media_type'] as String? ?? 'movie',
+      };
+    }).toList();
   }
 
   // Contas fictícias para testes locais, sem persistência.
@@ -153,26 +86,49 @@ class ApiService {
       'password': '123456',
     },
   ];
+  Future<void> register(
+    String name,
+    String email,
+    String password,
+  )async {
+    try{
+      await dio.post(
+        '/auth/cadastrar',
+        data: {
+          'nome': name.trim(),
+          'email': email.trim().toLowerCase(),
+          'senha': password,
+        },
+      );
+    } on DioException catch (error) {
+      final body = error.response?.data;
 
-  Future<void> register(String name, String email, String password) async {
-    final normalizedEmail = email.trim().toLowerCase();
-    if (name.trim().isEmpty ||
-        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(normalizedEmail) ||
-        password.length < 6) {
-      throw const FormatException(
-        'Informe nome, e-mail válido e senha de pelo menos 6 caracteres.',
+      throw FormatException(
+        body is Map ?
+        body['message']?.toString() ?? 'Erro ao registrar usuário.': ' Não foi possível conectar ao servidor.',
       );
     }
-    if (mockUsers.any((user) => user['email'] == normalizedEmail)) {
-      throw const FormatException('Este e-mail já está cadastrado.');
-    }
-    mockUsers.add({
-      'id': normalizedEmail,
-      'name': name.trim(),
-      'email': normalizedEmail,
-      'password': password,
-    });
   }
+
+  // Future<void> register(String name, String email, String password) async {
+  //   final normalizedEmail = email.trim().toLowerCase();
+  //   if (name.trim().isEmpty ||
+  //       !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(normalizedEmail) ||
+  //       password.length < 6) {
+  //     throw const FormatException(
+  //       'Informe nome, e-mail válido e senha de pelo menos 6 caracteres.',
+  //     );
+  //   }
+  //   if (mockUsers.any((user) => user['email'] == normalizedEmail)) {
+  //     throw const FormatException('Este e-mail já está cadastrado.');
+  //   }
+  //   mockUsers.add({
+  //     'id': normalizedEmail,
+  //     'name': name.trim(),
+  //     'email': normalizedEmail,
+  //     'password': password,
+  //   });
+  // }
 
   Future<void> login(String email, String password) async {
     final normalizedEmail = email.trim().toLowerCase();
