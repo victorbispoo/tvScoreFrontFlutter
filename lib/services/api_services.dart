@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../models/review.dart';
 
-/// Ponto único para substituir os dados de exemplo por chamadas HTTP.
+
 class ApiService {
 
 
@@ -39,13 +39,33 @@ final Dio dio = Dio(
 static String? token;
 
   Future<List<Map<String, String>>> getHighlights() async {
-      final dio = Dio();
-      final response = await dio.get(
-    'http://10.106.75.24:8080/api/filmes/em-alta',
-    );
+    final response = await dio.get('/filmes/em-alta');
 
     final results = response.data['results'] as List;
 
+    return results.map<Map<String,String>>((filme){
+      final data = filme['release_date'] as String? ?? '';
+      final poster = filme['poster_path'] as String?;
+      final ids = filme['genre_ids'] as List? ?? [];
+      final generoPrincipal = ids.isEmpty ? 'não informado' : generos[ids.first] ?? 'não informado';
+      return {
+        'id' : filme['id'].toString(),
+        'title' : filme['title'] as String? ?? 'Sem título',
+        'overview' : filme['overview'] as String? ?? '',
+        'year' : data.length >= 4 ? data.substring(0, 4) : '',
+        'score' : (filme['vote_average'] as num?)?.toStringAsFixed(1) ?? '0.0',
+        'poster_path' : poster == null || poster.isEmpty ? '' : 'https://image.tmdb.org/t/p/w500$poster',
+        'genre_ids': filme['genre_ids']?.join(' | ') ?? '',
+        'genre': generoPrincipal,
+        'type': filme['media_type'] as String? ?? 'movie',
+      };
+    }).toList();
+  }
+  Future<List<Map<String,String>>> getCatalog() async {
+    final response = await dio.get('/filmes/pesquisar',
+    queryParameters: {'q':texto.trim()},
+    );
+    final results = response.data['results'] as List;
     return results.map<Map<String,String>>((filme){
       final data = filme['release_date'] as String? ?? '';
       final poster = filme['poster_path'] as String?;
