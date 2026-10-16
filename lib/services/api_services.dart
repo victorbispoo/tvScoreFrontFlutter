@@ -65,27 +65,57 @@ static String? token;
     }).toList();
   }
 
-  // Contas fictícias para testes locais, sem persistência.
-  static final mockUsers = <Map<String, String>>[
-    {
-      'id': '1',
-      'name': 'José Silva',
-      'email': 'jose@teste.com',
-      'password': '123456',
-    },
-    {
-      'id': '2',
-      'name': 'Ana Souza',
-      'email': 'ana@teste.com',
-      'password': '123456',
-    },
-    {
-      'id': '3',
-      'name': 'Victor Lima',
-      'email': 'victor@teste.com',
-      'password': '123456',
-    },
-  ];
+  // static final mockUsers = <Map<String, String>>[
+  //   {
+  //     'id': '1',
+  //     'name': 'José Silva',
+  //     'email': 'jose@teste.com',
+  //     'password': '123456',
+  //   },
+  //   {
+  //     'id': '2',
+  //     'name': 'Ana Souza',
+  //     'email': 'ana@teste.com',
+  //     'password': '123456',
+  //   },
+  //   {
+  //     'id': '3',
+  //     'name': 'Victor Lima',
+  //     'email': 'victor@teste.com',
+  //     'password': '123456',
+  //   },
+  // ];
+  Future<void> loginApi(String email, String password) async {
+    token = null;
+    try {
+      final response = await dio.post(
+        '/auth/login',
+        data: {
+          'email': email.trim().toLowerCase(),
+          'senha': password,
+        },
+      );
+      final dados = response.data as Map<String, dynamic>;
+      final tokenRecebido = dados['token'] as String?;
+      if (tokenRecebido == null || tokenRecebido.isEmpty) {
+        throw const FormatException('Token não recebido do servidor.');
+      }
+      await open(
+        dados['email'] as String,
+        dados['nome'] as String,
+      );
+
+      token = tokenRecebido;
+    } on DioException catch (error) {
+      final body = error.response?.data;
+      throw FormatException(
+        body is Map
+            ? body['mensagem']?.toString() ?? 'Erro ao efetuar login.'
+            : 'Não foi possível conectar ao servidor.',
+      );
+    }
+
+  }
   Future<void> register(
     String name,
     String email,
@@ -130,18 +160,18 @@ static String? token;
   //   });
   // }
 
-  Future<void> login(String email, String password) async {
-    final normalizedEmail = email.trim().toLowerCase();
-    final matches = mockUsers.where(
-      (user) =>
-          user['email'] == normalizedEmail && user['password'] == password,
-    );
-    if (matches.isEmpty) {
-      throw const FormatException('Email ou senha incorretos.');
-    }
-    final user = matches.first;
-    await open(normalizedEmail, user['name']!);
-  }
+  // Future<void> login(String email, String password) async {
+  //   final normalizedEmail = email.trim().toLowerCase();
+  //   final matches = mockUsers.where(
+  //     (user) =>
+  //         user['email'] == normalizedEmail && user['password'] == password,
+  //   );
+  //   if (matches.isEmpty) {
+  //     throw const FormatException('Email ou senha incorretos.');
+  //   }
+  //   final user = matches.first;
+  //   await open(normalizedEmail, user['name']!);
+  // }
 
   // Dados compartilhados entre as páginas do app.
   static String userName = '';

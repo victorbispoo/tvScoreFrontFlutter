@@ -24,7 +24,7 @@ class LoginController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      await _apiService.login(
+      await _apiService.loginApi(
         emailController.text.trim(),
         passwordController.text,
       );
