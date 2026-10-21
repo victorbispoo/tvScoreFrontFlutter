@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../services/api_services.dart';
 import '../widgets/movie_card.dart';
-import 'my_list_page.dart';
+import 'favorites_page.dart';
 import 'my_reviews_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -91,12 +91,12 @@ class _HomePageState extends State<HomePage>
                       children: [
                         ActionChip(
                           avatar: const Icon(Icons.bookmark_border, size: 18),
-                          label: const Text('Minha lista'),
+                          label: const Text('Favoritos'),
                           onPressed: () async {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const MyListPage(),
+                                builder: (_) => const FavoritesPage(),
                               ),
                             );
                             if (mounted) setState(() {});

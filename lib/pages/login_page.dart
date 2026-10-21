@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:tv_score_front_flutter/services/api_services.dart';
 
 import '../main.dart';
 import 'register_page.dart';
@@ -32,105 +33,126 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: _AuthBackground(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Form(
-              
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const _AuthLogo(),
-                  const SizedBox(height: 12),
-                  const _AuthLabel('Email'),
-                  const SizedBox(height: 8),
-                  AuthTextField(
-                    label: 'Email',
-                    hintText: 'Digite seu e-mail...',
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, insira seu e-mail.';
-                      }
-                      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                      if (!emailRegex.hasMatch(value)) {
-                        return 'Por favor, insira um e-mail válido.';
-                      }
-                      return null;
-                    },
-                    controller: _controller.emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    onChanged: (_) => _controller.onChanged(),
-                  ),
-                  const SizedBox(height: 18),
-                  const _AuthLabel('Senha'),
-                  const SizedBox(height: 8),
-                  AuthTextField(
-                    label: 'Senha',
-                    hintText: 'Digite sua senha...',
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Por favor, insira sua senha.';
-                      }
-                      if (value.length < 6) {
-                        return 'A senha deve ter pelo menos 6 caracteres.';
-                      }
-                      return null;
-                    },
-                    controller: _controller.passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onChanged: (_) => _controller.onChanged(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+      body: SafeArea(
+        child: _AuthBackground(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Form(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _AuthLogo(),
+                    const SizedBox(height: 12),
+                    const _AuthLabel('Email'),
+                    const SizedBox(height: 8),
+                    AuthTextField(
+                      label: 'Email',
+                      hintText: 'Digite seu e-mail...',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira seu e-mail.';
+                        }
+                        final emailRegex = RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        );
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Por favor, insira um e-mail válido.';
+                        }
+                        return null;
+                      },
+                      controller: _controller.emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onChanged: (_) => _controller.onChanged(),
                     ),
-                  ),
-                  const SizedBox(height: 38),
-                  Center(
-                    child: SizedBox(
-                      width: 165,
-                      height: 50,
-                      child: FilledButton(
-                        onPressed: () async {
-                          final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(context);
-                          final loggedIn = await _controller.submit();
-                          if (!mounted) return;
-                          if (!loggedIn) {
-                            final message = _controller.errorMessage;
-                            if (message != null) {
-                              messenger.showSnackBar(
-                                SnackBar(content: Text(message)),
-                              );
-                            }
-                            return;
-                          }
-                          navigator.pushReplacement(
-                            MaterialPageRoute(builder: (_) => const AppShell()),
-                          );
-                        },
-                        child: const Text('Entrar'),
+                    const SizedBox(height: 18),
+                    const _AuthLabel('Senha'),
+                    const SizedBox(height: 8),
+                    AuthTextField(
+                      label: 'Senha',
+                      hintText: 'Digite sua senha...',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira sua senha.';
+                        }
+                        if (value.length < 6) {
+                          return 'A senha deve ter pelo menos 6 caracteres.';
+                        }
+                        return null;
+                      },
+                      controller: _controller.passwordController,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      onChanged: (_) => _controller.onChanged(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 28),
-                  _AuthFooter(
-                    prompt: 'Ainda não tem uma conta?',
-                    action: 'Cadastre-se',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const RegisterPage()),
+                    const SizedBox(height: 38),
+                    Center(
+                      child: SizedBox(
+                        width: 165,
+                        height: 50,
+                        child: FilledButton(
+                          onPressed: () async {
+                            await ApiService().open(
+                              'teste@local.com',
+                              'Usuário de teste',
+                            );
+
+                            if (!mounted) return;
+
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (_) => const AppShell(),
+                              ),
+                            );
+                            // final navigator = Navigator.of(context);
+                            // final messenger = ScaffoldMessenger.of(context);
+                            // final loggedIn = await _controller.submit();
+                            // if (!mounted) return;
+                            // if (!loggedIn) {
+                            //   final message = _controller.errorMessage;
+                            //   if (message != null) {
+                            //     messenger.showSnackBar(
+                            //       SnackBar(content: Text(message)),
+                            //     );
+                            //   }
+                            //   return;
+                            // }
+                            // navigator.pushReplacement(
+                            //   MaterialPageRoute(builder: (_) => const AppShell()),
+                            // );
+                          },
+                          child: const Text('Entrar'),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 28),
+                    _AuthFooter(
+                      prompt: 'Ainda não tem uma conta?',
+                      action: 'Cadastre-se',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RegisterPage()),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }
@@ -184,7 +206,7 @@ class _AuthLabel extends StatelessWidget {
     text,
     style: const TextStyle(
       color: Colors.white,
-      fontSize: 24,
+      fontSize: 14,
       fontWeight: FontWeight.w500,
       height: 1.33,
     ),
@@ -230,5 +252,3 @@ class _AuthFooter extends StatelessWidget {
     ],
   );
 }
-
-

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../services/api_services.dart';
 import '../widgets/movie_card.dart';
 
-class MyListPage extends StatefulWidget {
-  const MyListPage({super.key});
+class FavoritesPage extends StatefulWidget {
+  const FavoritesPage({super.key});
 
   @override
-  State<MyListPage> createState() => _MyListPageState();
+  State<FavoritesPage> createState() => _FavoritesPageState();
 }
 
-class _MyListPageState extends State<MyListPage> {
+class _FavoritesPageState extends State<FavoritesPage> {
   final _api = ApiService();
 
   Future<void> _removeMovie(Map<String, String> movie) async {
@@ -29,7 +31,7 @@ class _MyListPageState extends State<MyListPage> {
   Widget build(BuildContext context) {
     final movies = ApiService.savedMovies;
     return Scaffold(
-      appBar: AppBar(title: const Text('Minha lista')),
+      appBar: AppBar(title: const Text('Favoritos')),
       body: SafeArea(
         child: movies.isEmpty
             ? const Center(
@@ -39,7 +41,7 @@ class _MyListPageState extends State<MyListPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.bookmark_border,
+                        HugeIconsStroke.favourite,
                         size: 56,
                         color: Colors.white54,
                       ),

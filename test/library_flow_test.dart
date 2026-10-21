@@ -1,5 +1,5 @@
 import 'package:tv_score_front_flutter/main.dart';
-import 'package:tv_score_front_flutter/pages/my_list_page.dart';
+import 'package:tv_score_front_flutter/pages/favorites_page.dart';
 import 'package:tv_score_front_flutter/widgets/movie_card.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
@@ -41,7 +41,7 @@ void main() {
         home: const DetailsPage(movie: movie),
       ),
     );
-    final saveTitle = find.text('Adicionar à minha lista');
+    final saveTitle = find.text('Adicionar aos favoritos');
     await tester.scrollUntilVisible(
       saveTitle,
       200,
@@ -161,22 +161,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('minha lista atualiza depois de remover um título nos detalhes', (
+  testWidgets('favoritos atualiza depois de remover um título nos detalhes', (
     tester,
   ) async {
     await ApiService().toggleSaved(movie);
     await tester.pumpWidget(
-      MaterialApp(theme: ThemeData.dark(), home: const MyListPage()),
+      MaterialApp(theme: ThemeData.dark(), home: const FavoritesPage()),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byType(MovieCard));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Remover da minha lista'),
+      find.text('Remover dos favoritos'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Remover da minha lista'));
+    await tester.tap(find.text('Remover dos favoritos'));
     await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();

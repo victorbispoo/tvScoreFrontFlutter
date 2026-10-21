@@ -112,7 +112,7 @@ class _DetailsPageState extends State<DetailsPage> {
               onPressed: _busy ? null : _toggleSaved,
               icon: Icon(saved ? Icons.bookmark : Icons.bookmark_border),
               label: Text(
-                saved ? 'Remover da minha lista' : 'Adicionar à minha lista',
+                saved ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
               ),
             ),
             const SizedBox(height: 28),
