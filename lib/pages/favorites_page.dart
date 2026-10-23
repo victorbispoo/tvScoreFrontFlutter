@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../services/api_services.dart';

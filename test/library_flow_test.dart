@@ -1,16 +1,16 @@
-import 'package:tv_score_front_flutter/main.dart';
-import 'package:tv_score_front_flutter/pages/favorites_page.dart';
-import 'package:tv_score_front_flutter/widgets/movie_card.dart';
-import 'package:tv_score_front_flutter/pages/home_page.dart';
-import 'package:tv_score_front_flutter/pages/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/main.dart';
 import 'package:tv_score_front_flutter/pages/details_page.dart';
+import 'package:tv_score_front_flutter/pages/favorites_page.dart';
+import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/pages/my_reviews_page.dart';
+import 'package:tv_score_front_flutter/pages/search_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
+import 'package:tv_score_front_flutter/widgets/movie_card.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

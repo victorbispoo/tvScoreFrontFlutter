@@ -16,31 +16,24 @@ abstract final class AppTheme {
       backgroundColor: scaffoldBackground,
       indicatorColor: primary.withValues(alpha: .15),
 
-    iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-    (states) {
-      final selecionado = states.contains(WidgetState.selected);
+      iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
+        final isSelected = states.contains(WidgetState.selected);
 
-      return IconThemeData(
-        color: selecionado ? primary : Colors.white60,
-      );
-    },
-  ),
+        return IconThemeData(color: isSelected ? primary : Colors.white60);
+      }),
 
+      labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
+        final isSelected = states.contains(WidgetState.selected);
 
-  labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
-    (states) {
-      final selecionado = states.contains(WidgetState.selected);
+        return GoogleFonts.workSans(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          color: isSelected ? primary : Colors.white60,
+        );
+      }),
 
-      return GoogleFonts.workSans(
-        fontSize: 12,
-        fontWeight: selecionado ? FontWeight.w600 : FontWeight.w400,
-        color: selecionado ? primary : Colors.white60,
-      );
-    },
-  ),
-
-  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-),
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+    ),
     textTheme: GoogleFonts.workSansTextTheme(ThemeData.dark().textTheme),
     colorScheme: ColorScheme.fromSeed(
       seedColor: primary,

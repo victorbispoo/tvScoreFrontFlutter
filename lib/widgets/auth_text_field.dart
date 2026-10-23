@@ -12,7 +12,7 @@ class AppTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.hintText,
-    this.validator
+    this.validator,
   });
 
   final String label;
@@ -43,7 +43,7 @@ class AppTextField extends StatelessWidget {
       prefixIcon: prefixIcon,
       filled: true,
       fillColor: const Color(0xFF15243D),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
         borderSide: BorderSide(color: Colors.white.withValues(alpha: .10)),

@@ -5,6 +5,7 @@ import '../pages/details_page.dart';
 
 class MoviePoster extends StatelessWidget {
   const MoviePoster({super.key, required this.movie});
+
   final Map<String, String> movie;
 
   @override
@@ -31,6 +32,7 @@ class MoviePoster extends StatelessWidget {
 
 class MovieCard extends StatelessWidget {
   const MovieCard({super.key, required this.movie, this.onChanged});
+
   final VoidCallback? onChanged;
   final Map<String, String> movie;
 

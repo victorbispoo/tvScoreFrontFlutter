@@ -5,6 +5,7 @@ import '../widgets/movie_card.dart';
 
 class DetailsPage extends StatefulWidget {
   const DetailsPage({super.key, required this.movie});
+
   final Map<String, String> movie;
 
   @override

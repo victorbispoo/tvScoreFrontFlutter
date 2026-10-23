@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:tv_score_front_flutter/services/api_services.dart';
 
 class AppSearchController extends ChangeNotifier {
   final queryController = TextEditingController();
@@ -20,12 +17,4 @@ class AppSearchController extends ChangeNotifier {
     queryController.dispose();
     super.dispose();
   }
-
-  final _api= ApiService();
-  Timer? _debounce;
-  int _buscaAtual = 0;
-
-  List<Map<String, String>> _resultados = [];
-  bool _isLoading = false;
-  String? _error;
 }

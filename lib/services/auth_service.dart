@@ -2,12 +2,13 @@ part of 'api_services.dart';
 
 extension AuthService on ApiService {
   void logout() {
-  ApiService.token = null;
-  ApiService.userName = '';
-  ApiService.userEmail = '';
-  ApiService.savedMovies = [];
-  ApiService.reviews = [];
-}
+    ApiService.token = null;
+    ApiService.userName = '';
+    ApiService.userEmail = '';
+    ApiService.savedMovies = [];
+    ApiService.reviews = [];
+  }
+
   Future<void> loginApi(String email, String password) async {
     ApiService.token = null;
     try {
@@ -23,10 +24,10 @@ extension AuthService on ApiService {
       ApiService.token = tokenRecebido;
       await open(dados['email'] as String, dados['nome'] as String);
     } on DioException catch (error) {
-      print('Tipo: ${error.type}');
-print('URL: ${error.requestOptions.uri}');
-print('Status: ${error.response?.statusCode}');
-print('Mensagem: ${error.message}');
+      debugPrint('Tipo: ${error.type}');
+      debugPrint('URL: ${error.requestOptions.uri}');
+      debugPrint('Status: ${error.response?.statusCode}');
+      debugPrint('Mensagem: ${error.message}');
       ApiService.token = null;
       final body = error.response?.data;
       throw FormatException(

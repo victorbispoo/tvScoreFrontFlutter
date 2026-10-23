@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../services/api_services.dart';
 
@@ -50,5 +50,3 @@ class LoginController extends ChangeNotifier {
     super.dispose();
   }
 }
-
-

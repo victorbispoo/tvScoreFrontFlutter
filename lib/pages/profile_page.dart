@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
-import 'package:hugeicons/styles/stroke_rounded.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:tv_score_front_flutter/pages/login_page.dart';
 
 import '../services/api_services.dart';
 import 'favorites_page.dart';
+import 'login_page.dart';
 import 'my_reviews_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -19,16 +16,14 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _api = ApiService();
 
-void _logout() {
-  _api.logout();
+  void _logout() {
+    _api.logout();
 
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(
-      builder: (_) => const LoginPage(),
-    ),
-    (route) => false,
-  );
-}
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
 
   Future<void> _editProfile() async {
     var editedName = ApiService.userName;
@@ -107,21 +102,25 @@ void _logout() {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-              FilledButton(
-                onPressed: _editProfile,
-                child: const Text('Editar perfil'),
+            FilledButton(
+              onPressed: _editProfile,
+              child: const Text('Editar perfil'),
             ),
             const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: _logout,
-                child: const Text('Sair da conta'),
+            OutlinedButton(
+              onPressed: _logout,
+              child: const Text('Sair da conta'),
             ),
           ],
         ),
         const SizedBox(height: 28),
         Card(
           child: ListTile(
-            leading: Icon(HugeIconsStroke.favourite, color: Colors.redAccent, size: 24),
+            leading: Icon(
+              HugeIconsStroke.favourite,
+              color: Colors.redAccent,
+              size: 24,
+            ),
             title: const Text('Favoritos'),
             subtitle: Text('${ApiService.savedMovies.length} títulos salvos'),
             trailing: const Icon(Icons.chevron_right),

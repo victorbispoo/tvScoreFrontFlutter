@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import 'core/app_theme.dart';
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/search_page.dart';
-import 'package:hugeicons/hugeicons.dart';
 
 void main() => runApp(const TvScoreApp());
 

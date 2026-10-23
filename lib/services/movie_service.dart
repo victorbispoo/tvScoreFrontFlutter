@@ -28,5 +28,6 @@ extension MovieService on ApiService {
       };
     }).toList();
   }
+
   // Pendente no arquivo original: Future<Map<String,String>> getMovie
 }

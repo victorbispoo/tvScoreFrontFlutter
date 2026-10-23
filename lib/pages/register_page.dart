@@ -1,7 +1,7 @@
-import '../services/api_services.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/register_controller.dart';
+import '../services/api_services.dart';
 import '../widgets/auth_text_field.dart';
 
 class RegisterPage extends StatefulWidget {
