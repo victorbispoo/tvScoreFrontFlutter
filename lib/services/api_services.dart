@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/mock_movies.dart';
 import '../models/review.dart';
 
 part 'auth_service.dart';
@@ -12,6 +13,11 @@ part 'favorites_service.dart';
 part 'reviews_service.dart';
 
 class ApiService {
+  // Use --dart-define=USE_MOCK_MOVIES=false para voltar ao backend.
+  static const useMockMovies = bool.fromEnvironment(
+    'USE_MOCK_MOVIES',
+    defaultValue: true,
+  );
   static const generos = <int, String>{
     28: 'Ação',
     12: 'Aventura',

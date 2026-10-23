@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import '../widgets/movie_card.dart';
-import 'favorites_page.dart';
-import 'my_reviews_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -87,81 +87,72 @@ class _HomePageState extends State<HomePage>
                       style: TextStyle(color: Colors.white70, height: 1.5),
                     ),
                     const SizedBox(height: 20),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: [
-                        ActionChip(
-                          avatar: const Icon(Icons.bookmark_border, size: 18),
-                          label: const Text('Favoritos'),
-                          onPressed: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const FavoritesPage(),
-                              ),
-                            );
-                            if (mounted) setState(() {});
-                          },
-                        ),
-                        ActionChip(
-                          avatar: const Icon(Icons.star_outline, size: 18),
-                          label: const Text('Minhas avaliações'),
-                          onPressed: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const MyReviewsPage(),
-                              ),
-                            );
-                            if (mounted) setState(() {});
-                          },
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 28),
               _buildCarousel(
+                icon: const Icon(HugeIconsSolid.fire, color: AppTheme.primary),
                 title: 'Destaques',
                 subtitle: 'Histórias que merecem sua atenção',
                 movies: movies.take(6).toList(),
               ),
               _buildCarousel(
+                icon: const Icon(HugeIconsSolid.star, color: AppTheme.primary),
                 title: 'Mais bem avaliados',
                 subtitle: 'As maiores notas do catálogo',
                 movies: best.take(8).toList(),
               ),
               _buildCarousel(
+                icon: const Icon(
+                  HugeIconsSolid.clock01,
+                  color: AppTheme.primary,
+                ),
                 title: 'Mais recentes no catálogo',
                 movies: recent.take(8).toList(),
               ),
               _buildCarousel(
+                icon: const Icon(
+                  HugeIconsSolid.sword01,
+                  color: AppTheme.primary,
+                ),
                 title: 'Ação e aventura',
                 movies: movies
                     .where((movie) => movie['genre']!.contains('Ação'))
                     .toList(),
               ),
               _buildCarousel(
+                icon: const Icon(
+                  HugeIconsSolid.rocket01,
+                  color: AppTheme.primary,
+                ),
                 title: 'Ficção científica',
                 movies: movies
                     .where((movie) => movie['genre']!.contains('Ficção'))
                     .toList(),
               ),
               _buildCarousel(
+                icon: const Icon(
+                  HugeIconsSolid.film01,
+                  color: AppTheme.primary,
+                ),
                 title: 'Drama e grandes clássicos',
                 movies: movies
                     .where((movie) => movie['genre']!.contains('Drama'))
                     .toList(),
               ),
               _buildCarousel(
+                icon: const Icon(HugeIconsSolid.tv01, color: AppTheme.primary),
                 title: 'Séries para maratonar',
                 movies: movies
                     .where((movie) => movie['type'] == 'series')
                     .toList(),
               ),
               _buildCarousel(
+                icon: const Icon(
+                  HugeIconsSolid.bookmark01,
+                  color: AppTheme.primary,
+                ),
                 title: 'Na sua lista',
                 movies: ApiService.savedMovies,
               ),
@@ -174,6 +165,7 @@ class _HomePageState extends State<HomePage>
 
   // O mesmo layout é usado em cada carrossel da Home.
   Widget _buildCarousel({
+    Icon? icon,
     required String title,
     String? subtitle,
     required List<Map<String, String>> movies,
@@ -189,12 +181,19 @@ class _HomePageState extends State<HomePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    if (icon != null) ...[icon, const SizedBox(width: 8)],
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 4),

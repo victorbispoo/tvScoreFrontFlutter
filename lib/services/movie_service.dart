@@ -2,6 +2,11 @@ part of 'api_services.dart';
 
 extension MovieService on ApiService {
   Future<List<Map<String, String>>> getHighlights() async {
+    if (ApiService.useMockMovies) {
+      return mockMovies
+          .map((movie) => Map<String, String>.from(movie))
+          .toList();
+    }
     final response = await dio.get('/filmes/em-alta');
 
     final results = response.data['results'] as List;
