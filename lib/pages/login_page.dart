@@ -1,9 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../controllers/login_controller.dart';
 import '../main.dart';
-import '../services/api_services.dart';
 import '../widgets/auth_text_field.dart';
 import 'register_page.dart';
 
@@ -15,6 +14,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
   late final LoginController _controller;
   bool _obscurePassword = true;
 
@@ -42,6 +42,7 @@ class _LoginPageState extends State<LoginPage> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Form(
+                  key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -130,22 +131,47 @@ class _LoginPageState extends State<LoginPage> {
                         child: SizedBox(
                           width: 165,
                           height: 50,
-                          child: FilledButton(
-                            onPressed: () async {
-                              await ApiService().open(
-                                'teste@local.com',
-                                'Usuário de teste',
-                              );
-
-                              if (!context.mounted) return;
-
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (_) => const AppShell(),
-                                ),
-                              );
-                            },
-                            child: const Text('Entrar'),
+                          child: ListenableBuilder(
+                            listenable: _controller,
+                            builder: (context, child) => FilledButton(
+                              onPressed: _controller.isLoading
+                                  ? null
+                                  : () async {
+                                      if (!_formKey.currentState!.validate()) {
+                                        return;
+                                      }
+                                      final success = await _controller
+                                          .submit();
+                                      if (!context.mounted) return;
+                                      if (!success) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              _controller.errorMessage ??
+                                                  'Não foi possível entrar.',
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder: (_) => const AppShell(),
+                                        ),
+                                      );
+                                    },
+                              child: _controller.isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Entrar'),
+                            ),
                           ),
                         ),
                       ),

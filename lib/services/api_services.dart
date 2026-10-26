@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/mock_movies.dart';
@@ -16,7 +17,7 @@ class ApiService {
   // Use --dart-define=USE_MOCK_MOVIES=false para voltar ao backend.
   static const useMockMovies = bool.fromEnvironment(
     'USE_MOCK_MOVIES',
-    defaultValue: true,
+    defaultValue: false,
   );
   static const generos = <int, String>{
     28: 'Ação',
@@ -39,7 +40,9 @@ class ApiService {
     10752: 'Guerra',
     37: 'Faroeste',
   };
-  final Dio dio = Dio(BaseOptions(baseUrl: 'http://10.106.75.24:8080/api'));
+  final Dio dio = Dio(
+    BaseOptions(baseUrl: 'https://tvscore-backend.onrender.com/api'),
+  );
 
   static String? token;
 

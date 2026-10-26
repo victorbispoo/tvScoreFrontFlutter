@@ -16,8 +16,19 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _api = ApiService();
 
-  void _logout() {
-    _api.logout();
+  Future<void> _logout() async {
+    try {
+      await _api.logout();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível sair. Tente novamente.'),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginPage()),

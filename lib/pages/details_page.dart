@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:tv_score_front_flutter/widgets/movie_card.dart';
 
 import '../services/api_services.dart';
 
@@ -83,7 +84,6 @@ class _DetailsPageState extends State<DetailsPage> {
         surfaceTintColor: Colors.transparent,
         foregroundColor: Colors.white,
         scrolledUnderElevation: 0,
-
       ),
       body: SafeArea(
         top: false,
@@ -95,7 +95,7 @@ class _DetailsPageState extends State<DetailsPage> {
                 children: [
                   SizedBox(
                     width: double.infinity,
-                    height: 280+ (MediaQuery.of(context).padding.top),
+                    height: 225 + (MediaQuery.of(context).padding.top),
                     child: Image.network(
                       backdrop ?? '',
                       fit: BoxFit.cover,
@@ -108,8 +108,8 @@ class _DetailsPageState extends State<DetailsPage> {
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
                           colors: [
                             backgroundColor.withValues(alpha: 0.05),
                             backgroundColor.withValues(alpha: 0.15),
@@ -118,24 +118,36 @@ class _DetailsPageState extends State<DetailsPage> {
                             backgroundColor.withValues(alpha: 0.9),
                             backgroundColor,
                           ],
-                          stops: const [0, 0.3, 0.55, 0.78, 0.90, 0.95],
+                          stops: const [0, 0.5, 0.65, 0.85, 0.90, 0.95],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            backgroundColor.withValues(alpha: 0),
+                            backgroundColor.withValues(alpha: 0.15),
+                            backgroundColor.withValues(alpha: 0.65),
+                            backgroundColor,
+                          ],
+                          stops: const [0, 0.75, 0.90, 1],
                         ),
                       ),
                     ),
                   ),
                   Positioned(
                     left: 20,
-                    right: 20,
                     bottom: 20,
-                    child: Text(
-                      movie['title'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    width: 125,
+                    height: 170,
+                    child: MoviePoster(movie: movie),
                   ),
+                  
                 ],
               ),
             ),
@@ -145,6 +157,14 @@ class _DetailsPageState extends State<DetailsPage> {
               child: Column(
                 crossAxisAlignment: .start,
                 children: [
+                  Text(
+                      movie['title'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   Row(
                     children: [
                       Text(

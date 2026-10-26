@@ -6,11 +6,18 @@ import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/search_page.dart';
+import 'services/api_services.dart';
 
-void main() => runApp(const TvScoreApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final loggedIn = await ApiService().restoreSession();
+  runApp(TvScoreApp(loggedIn: loggedIn));
+}
 
 class TvScoreApp extends StatelessWidget {
-  const TvScoreApp({super.key});
+  const TvScoreApp({super.key, this.loggedIn = false});
+
+  final bool loggedIn;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +25,7 @@ class TvScoreApp extends StatelessWidget {
       title: 'TV Score',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: const LoginPage(),
+      home: loggedIn ? const AppShell() : const LoginPage(),
     );
   }
 }
