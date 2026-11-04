@@ -5,17 +5,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../data/mock_movies.dart';
+import '../data/mock_contents.dart';
 import '../models/review.dart';
 
 part 'auth_service.dart';
-part 'movie_service.dart';
+part 'content_service.dart';
 part 'favorites_service.dart';
 part 'reviews_service.dart';
 
 class ApiService {
   // Use --dart-define=USE_MOCK_MOVIES=false para voltar ao backend.
-  static const useMockMovies = bool.fromEnvironment(
+  static const useMockContents = bool.fromEnvironment(
     'USE_MOCK_MOVIES',
     defaultValue: false,
   );
@@ -49,7 +49,7 @@ class ApiService {
   // Dados compartilhados entre as páginas do app.
   static String userName = '';
   static String userEmail = '';
-  static List<Map<String, String>> savedMovies = [];
+  static List<Map<String, String>> savedContents = [];
   static List<Review> reviews = [];
 
   // Carrega os dados locais da conta depois do login.
@@ -62,16 +62,16 @@ class ApiService {
 
     userEmail = email;
     userName = data['name'] ?? defaultName;
-    savedMovies = [];
+    savedContents = [];
     reviews = [];
 
-    for (final movie in data['saved'] ?? []) {
-      savedMovies.add(Map<String, String>.from(movie));
+    for (final content in data['saved'] ?? []) {
+      savedContents.add(Map<String, String>.from(content));
     }
     for (final review in data['reviews'] ?? []) {
       reviews.add(
         Review(
-          movie: Map<String, String>.from(review['movie']),
+          content: Map<String, String>.from(review['movie']),
           rating: review['rating'],
           comment: review['comment'],
           date: DateTime.parse(review['date']),
@@ -82,14 +82,14 @@ class ApiService {
 
   // Grava no dispositivo antes de atualizar os dados usados pelas telas.
   Future<void> _saveLibrary(
-    List<Map<String, String>> movies,
-    List<Review> movieReviews,
+    List<Map<String, String>> contents,
+    List<Review> contentReviews,
     String name,
   ) async {
     final reviewData = <Map<String, dynamic>>[];
-    for (final review in movieReviews) {
+    for (final review in contentReviews) {
       reviewData.add({
-        'movie': review.movie,
+        'movie': review.content,
         'rating': review.rating,
         'comment': review.comment,
         'date': review.date.toIso8601String(),
@@ -99,10 +99,10 @@ class ApiService {
     final preferences = SharedPreferencesAsync();
     await preferences.setString(
       'tv_score_library_$userEmail',
-      jsonEncode({'name': name, 'saved': movies, 'reviews': reviewData}),
+      jsonEncode({'name': name, 'saved': contents, 'reviews': reviewData}),
     );
-    savedMovies = movies;
-    reviews = movieReviews;
+    savedContents = contents;
+    reviews = contentReviews;
     userName = name;
   }
 
@@ -110,6 +110,6 @@ class ApiService {
     if (name.trim().isEmpty) {
       throw ArgumentError('Informe seu nome.');
     }
-    await _saveLibrary(savedMovies, reviews, name.trim());
+    await _saveLibrary(savedContents, reviews, name.trim());
   }
 }

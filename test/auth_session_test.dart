@@ -72,9 +72,9 @@ void main() {
 
   test('restaura sessão, perfil e biblioteca depois de reiniciar', () async {
     await login();
-    const movie = {'id': '1', 'type': 'movie', 'title': 'Teste'};
-    await api.toggleSaved(movie);
-    await api.saveReview(movie, 9, 'Muito bom');
+    const content = {'id': '1', 'type': 'movie', 'title': 'Teste'};
+    await api.toggleSaved(content);
+    await api.saveReview(content, 9, 'Muito bom');
     await api.updateName('Ana Silva');
     ApiService.token = null;
     await api.open('outra@teste.com', 'Outra conta');
@@ -83,7 +83,7 @@ void main() {
     expect(ApiService.token, validToken);
     expect(ApiService.userEmail, 'ana@teste.com');
     expect(ApiService.userName, 'Ana Silva');
-    expect(ApiService.savedMovies.single, movie);
+    expect(ApiService.savedContents.single, content);
     expect(ApiService.reviews.single.rating, 9);
   });
 
@@ -131,15 +131,15 @@ void main() {
 
   test('sair impede restaurar a sessão e preserva a biblioteca', () async {
     await login();
-    const movie = {'id': '1', 'title': 'Teste'};
-    await api.toggleSaved(movie);
+    const content = {'id': '1', 'title': 'Teste'};
+    await api.toggleSaved(content);
     await api.logout();
     expect(await storage.readAll(), isEmpty);
     expect(ApiService.token, isNull);
-    expect(ApiService.savedMovies, isEmpty);
+    expect(ApiService.savedContents, isEmpty);
     expect(await ApiService().restoreSession(), isFalse);
     await api.open('ana@teste.com', 'Ana');
-    expect(ApiService.savedMovies.single, movie);
+    expect(ApiService.savedContents.single, content);
   });
 
   test('login recusado não mantém uma sessão anterior', () async {

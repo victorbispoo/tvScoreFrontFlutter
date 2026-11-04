@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/review.dart';
 import '../services/api_services.dart';
-import '../widgets/movie_card.dart';
+import '../widgets/content_card.dart';
 import 'details_page.dart';
 
 class MyReviewsPage extends StatefulWidget {
@@ -19,7 +19,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
   Future<void> _editReview(Review review) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => DetailsPage(movie: review.movie)),
+      MaterialPageRoute(builder: (_) => DetailsPage(content: review.content)),
     );
     // Atualiza a lista depois de voltar da tela de detalhes.
     if (mounted) setState(() {});
@@ -31,7 +31,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Excluir avaliação?'),
         content: Text(
-          'Excluir sua nota e comentário de "${review.movie['title']}"?',
+          'Excluir sua nota e comentário de "${review.content['title']}"?',
         ),
         actions: [
           TextButton(
@@ -176,7 +176,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                                 SizedBox(
                                   width: 70,
                                   height: 105,
-                                  child: MoviePoster(movie: review.movie),
+                                  child: ContentPoster(content: review.content),
                                 ),
                                 const SizedBox(width: 14),
                                 Expanded(
@@ -185,7 +185,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        review.movie['title']!,
+                                        review.content['title']!,
                                         style: const TextStyle(
                                           fontSize: 17,
                                           fontWeight: FontWeight.bold,

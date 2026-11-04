@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../services/api_services.dart';
-import '../widgets/movie_card.dart';
+import '../widgets/content_card.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -14,9 +14,9 @@ class FavoritesPage extends StatefulWidget {
 class _FavoritesPageState extends State<FavoritesPage> {
   final _api = ApiService();
 
-  Future<void> _removeMovie(Map<String, String> movie) async {
+  Future<void> _removeContent(Map<String, String> content) async {
     try {
-      await _api.toggleSaved(movie);
+      await _api.toggleSaved(content);
       if (mounted) setState(() {});
     } catch (_) {
       if (!mounted) return;
@@ -28,11 +28,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final movies = ApiService.savedMovies;
+    final contents = ApiService.savedContents;
     return Scaffold(
       appBar: AppBar(title: const Text('Favoritos')),
       body: SafeArea(
-        child: movies.isEmpty
+        child: contents.isEmpty
             ? const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),
@@ -69,17 +69,17 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 20,
                 ),
-                itemCount: movies.length,
+                itemCount: contents.length,
                 itemBuilder: (context, index) => Column(
                   children: [
                     Expanded(
-                      child: MovieCard(
-                        movie: movies[index],
+                      child: ContentCard(
+                        content: contents[index],
                         onChanged: () => setState(() {}),
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () => _removeMovie(movies[index]),
+                      onPressed: () => _removeContent(contents[index]),
                       icon: const Icon(
                         Icons.bookmark_remove_outlined,
                         size: 18,

@@ -10,11 +10,11 @@ import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/pages/my_reviews_page.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
-import 'package:tv_score_front_flutter/widgets/movie_card.dart';
+import 'package:tv_score_front_flutter/widgets/content_card.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const movie = {
+  const content = {
     'title': 'Título de teste',
     'poster_path': '',
     'year': '2024',
@@ -38,7 +38,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData.dark(),
-        home: const DetailsPage(movie: movie),
+        home: const DetailsPage(content: content),
       ),
     );
     final saveTitle = find.text('Adicionar aos favoritos');
@@ -49,7 +49,7 @@ void main() {
     );
     await tester.tap(saveTitle);
     await tester.pumpAndSettle();
-    expect(ApiService.savedMovies, hasLength(1));
+    expect(ApiService.savedContents, hasLength(1));
     await tester.scrollUntilVisible(
       find.byType(TextField),
       200,
@@ -73,7 +73,7 @@ void main() {
   testWidgets('avaliações abre edição e exclui somente após confirmação', (
     tester,
   ) async {
-    await ApiService().saveReview(movie, 9, 'Muito bom');
+    await ApiService().saveReview(content, 9, 'Muito bom');
     await tester.pumpWidget(
       MaterialApp(theme: ThemeData.dark(), home: const MyReviewsPage()),
     );
@@ -164,12 +164,12 @@ void main() {
   testWidgets('favoritos atualiza depois de remover um título nos detalhes', (
     tester,
   ) async {
-    await ApiService().toggleSaved(movie);
+    await ApiService().toggleSaved(content);
     await tester.pumpWidget(
       MaterialApp(theme: ThemeData.dark(), home: const FavoritesPage()),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(MovieCard));
+    await tester.tap(find.byType(ContentCard));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Remover dos favoritos'),
@@ -193,8 +193,8 @@ void main() {
     expect(find.text('0 títulos salvos'), findsOneWidget);
     await tester.tap(find.text('Início'));
     await tester.pumpAndSettle();
-    await ApiService().toggleSaved(movie);
-    await ApiService().saveReview(movie, 9, 'Bom');
+    await ApiService().toggleSaved(content);
+    await ApiService().saveReview(content, 9, 'Bom');
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
     expect(find.text('1 títulos salvos'), findsOneWidget);

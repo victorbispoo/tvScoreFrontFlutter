@@ -1,5 +1,5 @@
 // Catálogo de demonstração usado enquanto o backend está indisponível.
-const mockMovies = <Map<String, String>>[
+const mockContents = <Map<String, String>>[
   {
     'id': 'mock-avatar-2',
     'backdrop_path':
@@ -88,7 +88,7 @@ const mockMovies = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',
     'genre_ids': '878 | 9648',
     'genre': 'Ficção Científica • Mistério',
-    'type': 'series',
+    'type': 'tv',
   },
   {
     'id': 'mock-breaking-bad',
@@ -103,7 +103,7 @@ const mockMovies = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/3xnWaLQjelJDDF7LT1WBo6f4BRe.jpg',
     'genre_ids': '18 | 80',
     'genre': 'Drama • Crime',
-    'type': 'series',
+    'type': 'tv',
   },
   {
     'id': 'mock-last-of-us',
@@ -118,7 +118,7 @@ const mockMovies = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg',
     'genre_ids': '18 | 28',
     'genre': 'Drama • Ação',
-    'type': 'series',
+    'type': 'tv',
   },
   {
     'id': 'mock-dark',
@@ -133,7 +133,7 @@ const mockMovies = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/apbrbWs8M9lyOpJYU5WXrpFbk1Z.jpg',
     'genre_ids': '878 | 9648',
     'genre': 'Ficção Científica • Mistério',
-    'type': 'series',
+    'type': 'tv',
   },
   {
     'id': 'mock-game-of-thrones',
@@ -148,7 +148,7 @@ const mockMovies = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
     'genre_ids': '14 | 18',
     'genre': 'Fantasia • Drama',
-    'type': 'series',
+    'type': 'tv',
   },
   {
     'id': 'mock-the-office',
@@ -163,7 +163,7 @@ const mockMovies = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg',
     'genre_ids': '35',
     'genre': 'Comédia',
-    'type': 'series',
+    'type': 'tv',
   },
   {
     'id': 'mock-the-mandalorian',
@@ -178,6 +178,6 @@ const mockMovies = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/sWgBv7LV2PRoQgkxwlibdGXKz1S.jpg',
     'genre_ids': '28 | 878',
     'genre': 'Ação • Ficção Científica',
-    'type': 'series',
+    'type': 'tv',
   },
 ];

@@ -8,7 +8,7 @@ extension AuthService on ApiService {
     ApiService.token = null;
     ApiService.userName = '';
     ApiService.userEmail = '';
-    ApiService.savedMovies = [];
+    ApiService.savedContents = [];
     ApiService.reviews = [];
   }
 

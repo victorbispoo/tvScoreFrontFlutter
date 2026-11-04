@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import '../core/app_theme.dart';
 import '../pages/details_page.dart';
 
-class MoviePoster extends StatelessWidget {
-  const MoviePoster({super.key, required this.movie});
+class ContentPoster extends StatelessWidget {
+  const ContentPoster({super.key, required this.content});
 
-  final Map<String, String> movie;
+  final Map<String, String> content;
 
   @override
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(12),
     child: Image.network(
-      movie['poster_path'] ?? '',
+      content['poster_path'] ?? '',
       fit: BoxFit.cover,
       loadingBuilder: (context, child, progress) => progress == null
           ? child
@@ -30,11 +30,11 @@ class MoviePoster extends StatelessWidget {
   );
 }
 
-class MovieCard extends StatelessWidget {
-  const MovieCard({super.key, required this.movie, this.onChanged});
+class ContentCard extends StatelessWidget {
+  const ContentCard({super.key, required this.content, this.onChanged});
 
   final VoidCallback? onChanged;
-  final Map<String, String> movie;
+  final Map<String, String> content;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -44,7 +44,7 @@ class MovieCard extends StatelessWidget {
       onTap: () async {
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => DetailsPage(movie: movie)),
+          MaterialPageRoute(builder: (_) => DetailsPage(content: content)),
         );
         if (context.mounted) onChanged?.call();
       },
@@ -55,7 +55,7 @@ class MovieCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MoviePoster(movie: movie),
+                ContentPoster(content: content),
                 Positioned(
                   top: 8,
                   right: 8,
@@ -77,7 +77,7 @@ class MovieCard extends StatelessWidget {
                           size: 16,
                         ),
                         const SizedBox(width: 4),
-                        Text(movie['score'] ?? '—'),
+                        Text(content['score'] ?? '—'),
                       ],
                     ),
                   ),
@@ -87,13 +87,13 @@ class MovieCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            movie['title'] ?? '',
+            content['title'] ?? '',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           Text(
-            '${movie['year']} • ${movie['genre']}',
+            '${content['year']} • ${content['genre']}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 11, color: Colors.white60),

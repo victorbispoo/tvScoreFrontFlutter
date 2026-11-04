@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_services.dart';
-import '../widgets/movie_card.dart';
+import '../widgets/content_card.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -101,8 +101,8 @@ class _SearchPageState extends State<SearchPage>
                 final query = _normalize(_query.text);
                 final results = (snapshot.data ?? [])
                     .where(
-                      (movie) => _normalize(
-                        '${movie['title']} ${movie['genre']}',
+                      (content) => _normalize(
+                        '${content['title']} ${content['genre']}',
                       ).contains(query),
                     )
                     .toList();
@@ -124,7 +124,8 @@ class _SearchPageState extends State<SearchPage>
                     mainAxisSpacing: 20,
                   ),
                   itemCount: results.length,
-                  itemBuilder: (_, index) => MovieCard(movie: results[index]),
+                  itemBuilder: (_, index) =>
+                      ContentCard(content: results[index]),
                 );
               },
             ),

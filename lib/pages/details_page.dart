@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:tv_score_front_flutter/widgets/movie_card.dart';
+import 'package:tv_score_front_flutter/widgets/content_card.dart';
 
 import '../services/api_services.dart';
 
 class DetailsPage extends StatefulWidget {
-  const DetailsPage({super.key, required this.movie});
+  const DetailsPage({super.key, required this.content});
 
-  final Map<String, String> movie;
+  final Map<String, String> content;
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();
@@ -22,7 +22,7 @@ class _DetailsPageState extends State<DetailsPage> {
   @override
   void initState() {
     super.initState();
-    final review = _api.reviewFor(widget.movie);
+    final review = _api.reviewFor(widget.content);
     _rating = review?.rating ?? 8;
     _comment = TextEditingController(text: review?.comment ?? '');
   }
@@ -36,7 +36,7 @@ class _DetailsPageState extends State<DetailsPage> {
   Future<void> _toggleSaved() async {
     setState(() => _busy = true);
     try {
-      await _api.toggleSaved(widget.movie);
+      await _api.toggleSaved(widget.content);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sua lista foi atualizada.')),
@@ -54,7 +54,7 @@ class _DetailsPageState extends State<DetailsPage> {
   Future<void> _saveReview() async {
     setState(() => _busy = true);
     try {
-      await _api.saveReview(widget.movie, _rating, _comment.text);
+      await _api.saveReview(widget.content, _rating, _comment.text);
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -71,11 +71,11 @@ class _DetailsPageState extends State<DetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final movie = widget.movie;
-    final backdrop = movie['backdrop_path'];
+    final content = widget.content;
+    final backdrop = content['backdrop_path'];
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
-    final saved = _api.isSaved(movie);
-    final review = _api.reviewFor(movie);
+    final saved = _api.isSaved(content);
+    final review = _api.reviewFor(content);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -145,9 +145,8 @@ class _DetailsPageState extends State<DetailsPage> {
                     bottom: 20,
                     width: 125,
                     height: 170,
-                    child: MoviePoster(movie: movie),
+                    child: ContentPoster(content: content),
                   ),
-                  
                 ],
               ),
             ),
@@ -158,17 +157,17 @@ class _DetailsPageState extends State<DetailsPage> {
                 crossAxisAlignment: .start,
                 children: [
                   Text(
-                      movie['title'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    content['title'] ?? '',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
+                  ),
                   Row(
                     children: [
                       Text(
-                        '${movie['year']}  •  ${movie['genre']}  •  ',
+                        '${content['year']}  •  ${content['genre']}  •  ',
                         style: const TextStyle(color: Colors.white70),
                       ),
                       const Icon(
@@ -177,13 +176,13 @@ class _DetailsPageState extends State<DetailsPage> {
                         size: 14,
                       ),
                       const SizedBox(width: 6),
-                      Text('${movie['score']}'),
+                      Text('${content['score']}'),
                     ],
                   ),
-                  if (movie['overview'] != null) ...[
+                  if (content['overview'] != null) ...[
                     const SizedBox(height: 20),
                     Text(
-                      movie['overview']!,
+                      content['overview']!,
                       style: const TextStyle(height: 1.6),
                     ),
                   ],

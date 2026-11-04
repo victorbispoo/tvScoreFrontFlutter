@@ -4,7 +4,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_theme.dart';
 import '../services/api_services.dart';
-import '../widgets/movie_card.dart';
+import '../widgets/content_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -49,13 +49,13 @@ class _HomePageState extends State<HomePage>
             ),
           );
         }
-        final movies = snapshot.data ?? [];
-        final best = movies.toList()
+        final contents = snapshot.data ?? [];
+        final best = contents.toList()
           ..sort(
             (a, b) =>
                 double.parse(b['score']!).compareTo(double.parse(a['score']!)),
           );
-        final recent = movies.toList()
+        final recent = contents.toList()
           ..sort((a, b) => b['year']!.compareTo(a['year']!));
         return RefreshIndicator(
           onRefresh: _refresh,
@@ -95,13 +95,13 @@ class _HomePageState extends State<HomePage>
                 icon: const Icon(HugeIconsSolid.fire, color: AppTheme.primary),
                 title: 'Destaques',
                 subtitle: 'Histórias que merecem sua atenção',
-                movies: movies.take(6).toList(),
+                contents: contents.take(6).toList(),
               ),
               _buildCarousel(
                 icon: const Icon(HugeIconsSolid.star, color: AppTheme.primary),
                 title: 'Mais bem avaliados',
                 subtitle: 'As maiores notas do catálogo',
-                movies: best.take(8).toList(),
+                contents: best.take(8).toList(),
               ),
               _buildCarousel(
                 icon: const Icon(
@@ -109,7 +109,7 @@ class _HomePageState extends State<HomePage>
                   color: AppTheme.primary,
                 ),
                 title: 'Mais recentes no catálogo',
-                movies: recent.take(8).toList(),
+                contents: recent.take(8).toList(),
               ),
               _buildCarousel(
                 icon: const Icon(
@@ -117,8 +117,8 @@ class _HomePageState extends State<HomePage>
                   color: AppTheme.primary,
                 ),
                 title: 'Ação e aventura',
-                movies: movies
-                    .where((movie) => movie['genre']!.contains('Ação'))
+                contents: contents
+                    .where((content) => content['genre']!.contains('Ação'))
                     .toList(),
               ),
               _buildCarousel(
@@ -127,8 +127,8 @@ class _HomePageState extends State<HomePage>
                   color: AppTheme.primary,
                 ),
                 title: 'Ficção científica',
-                movies: movies
-                    .where((movie) => movie['genre']!.contains('Ficção'))
+                contents: contents
+                    .where((content) => content['genre']!.contains('Ficção'))
                     .toList(),
               ),
               _buildCarousel(
@@ -137,15 +137,15 @@ class _HomePageState extends State<HomePage>
                   color: AppTheme.primary,
                 ),
                 title: 'Drama e grandes clássicos',
-                movies: movies
-                    .where((movie) => movie['genre']!.contains('Drama'))
+                contents: contents
+                    .where((content) => content['genre']!.contains('Drama'))
                     .toList(),
               ),
               _buildCarousel(
                 icon: const Icon(HugeIconsSolid.tv01, color: AppTheme.primary),
                 title: 'Séries para maratonar',
-                movies: movies
-                    .where((movie) => movie['type'] == 'series')
+                contents: contents
+                    .where((content) => content['type'] == 'tv')
                     .toList(),
               ),
               _buildCarousel(
@@ -154,7 +154,7 @@ class _HomePageState extends State<HomePage>
                   color: AppTheme.primary,
                 ),
                 title: 'Na sua lista',
-                movies: ApiService.savedMovies,
+                contents: ApiService.savedContents,
               ),
             ],
           ),
@@ -168,9 +168,9 @@ class _HomePageState extends State<HomePage>
     Icon? icon,
     required String title,
     String? subtitle,
-    required List<Map<String, String>> movies,
+    required List<Map<String, String>> contents,
   }) {
-    if (movies.isEmpty) return const SizedBox.shrink();
+    if (contents.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 30),
       child: Column(
@@ -208,12 +208,12 @@ class _HomePageState extends State<HomePage>
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               scrollDirection: Axis.horizontal,
-              itemCount: movies.length,
+              itemCount: contents.length,
               separatorBuilder: (_, index) => const SizedBox(width: 14),
               itemBuilder: (_, index) => SizedBox(
                 width: 160,
-                child: MovieCard(
-                  movie: movies[index],
+                child: ContentCard(
+                  content: contents[index],
                   onChanged: () => setState(() {}),
                 ),
               ),

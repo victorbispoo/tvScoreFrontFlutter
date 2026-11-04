@@ -64,7 +64,7 @@ O cadastro ainda faz uma requisição ao servidor e depende de sua disponibilida
 
 ## Catálogo mockado
 
-Os dados estão em [lib/data/mock_movies.dart](lib/data/mock_movies.dart), com filmes e séries, sinopses, notas de demonstração e URLs de pôsteres e backdrops.
+Os dados estão em [lib/data/mock_contents.dart](lib/data/mock_contents.dart), com filmes e séries, sinopses, notas de demonstração e URLs de pôsteres e backdrops.
 
 O modo mockado vem **ativado por padrão**. Para executá-lo explicitamente:
 

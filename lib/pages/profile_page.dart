@@ -133,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
               size: 24,
             ),
             title: const Text('Favoritos'),
-            subtitle: Text('${ApiService.savedMovies.length} títulos salvos'),
+            subtitle: Text('${ApiService.savedContents.length} títulos salvos'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
               await Navigator.push(

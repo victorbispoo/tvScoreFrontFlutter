@@ -1,10 +1,10 @@
 part of 'api_services.dart';
 
-extension MovieService on ApiService {
+extension ContentService on ApiService {
   Future<List<Map<String, String>>> getHighlights() async {
-    if (ApiService.useMockMovies) {
-      return mockMovies
-          .map((movie) => Map<String, String>.from(movie))
+    if (ApiService.useMockContents) {
+      return mockContents
+          .map((content) => Map<String, String>.from(content))
           .toList();
     }
     final responses = await Future.wait([
@@ -39,10 +39,10 @@ extension MovieService on ApiService {
             : 'https://image.tmdb.org/t/p/w500$poster',
         'genre_ids': filme['genre_ids']?.join(' | ') ?? '',
         'genre': generoPrincipal,
-        'type': filme['tipoConteudo'] == 'TV' ? 'series' : 'movie',
+        'type': filme['tipoConteudo'] == 'TV' ? 'tv' : 'movie',
       };
     }).toList();
   }
 
-  // Pendente no arquivo original: Future<Map<String,String>> getMovie
+  // Pendente no arquivo original: Future<Map<String,String>> getContent
 }

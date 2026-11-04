@@ -1,9 +1,9 @@
 part of 'api_services.dart';
 
 extension ReviewsService on ApiService {
-  Review? reviewFor(Map<String, String> movie) {
+  Review? reviewFor(Map<String, String> content) {
     for (final review in ApiService.reviews) {
-      if (review.movie['title'] == movie['title']) {
+      if (review.content['title'] == content['title']) {
         return review;
       }
     }
@@ -11,40 +11,40 @@ extension ReviewsService on ApiService {
   }
 
   Future<void> saveReview(
-    Map<String, String> movie,
+    Map<String, String> content,
     int rating,
     String comment,
   ) async {
     if (rating < 1 || rating > 10) {
       throw ArgumentError('A nota deve ser de 1 a 10.');
     }
-    final movieReviews = List<Review>.from(ApiService.reviews);
-    movieReviews.removeWhere(
-      (review) => review.movie['title'] == movie['title'],
+    final contentReviews = List<Review>.from(ApiService.reviews);
+    contentReviews.removeWhere(
+      (review) => review.content['title'] == content['title'],
     );
-    movieReviews.add(
+    contentReviews.add(
       Review(
-        movie: movie,
+        content: content,
         rating: rating,
         comment: comment.trim(),
         date: DateTime.now(),
       ),
     );
     await _saveLibrary(
-      ApiService.savedMovies,
-      movieReviews,
+      ApiService.savedContents,
+      contentReviews,
       ApiService.userName,
     );
   }
 
   Future<void> deleteReview(Review review) async {
-    final movieReviews = List<Review>.from(ApiService.reviews);
-    movieReviews.removeWhere(
-      (item) => item.movie['title'] == review.movie['title'],
+    final contentReviews = List<Review>.from(ApiService.reviews);
+    contentReviews.removeWhere(
+      (item) => item.content['title'] == review.content['title'],
     );
     await _saveLibrary(
-      ApiService.savedMovies,
-      movieReviews,
+      ApiService.savedContents,
+      contentReviews,
       ApiService.userName,
     );
   }
