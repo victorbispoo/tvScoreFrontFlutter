@@ -14,6 +14,36 @@ class FavoritesPage extends StatefulWidget {
 class _FavoritesPageState extends State<FavoritesPage> {
   final _api = ApiService();
 
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState(){
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async{
+    setState(() {
+      _loading= true;
+      _error = null;
+    });
+
+    try {
+      await _api.loadFavorites();
+    } catch (_){
+      if(!mounted) return;
+
+      setState(() {
+        _error = 'Não foi possível carregar seus favoritos.';
+      });
+    } finally {
+      if(mounted){
+        setState(() => _loading=false);
+      }
+    }
+  }
+
   Future<void> _removeContent(Map<String, String> content) async {
     try {
       await _api.toggleSaved(content);
@@ -32,7 +62,20 @@ class _FavoritesPageState extends State<FavoritesPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Favoritos')),
       body: SafeArea(
-        child: contents.isEmpty
+        child: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : _error !=null
+          ? Center(
+            child: Column(
+              mainAxisSize: .min,
+              children: [
+                Text(_error!),
+                const SizedBox(height: 12),
+                FilledButton(onPressed: _loadFavorites, child: const Text('Tentar Novamente'))
+              ],
+            ),
+          )
+        : contents.isEmpty
             ? const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),

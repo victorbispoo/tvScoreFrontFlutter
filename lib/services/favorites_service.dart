@@ -1,7 +1,7 @@
 part of 'api_services.dart';
 
 extension FavoritesService on ApiService {
-  Future<List<Map<String, dynamic>>> getSavedContents() async {
+  Future<List<Map<String, dynamic>>> getFavorites() async {
     final response = await dio.get(
       '/favoritos',
       options: Options(
@@ -70,12 +70,34 @@ extension FavoritesService on ApiService {
     );
   }
 
+  Future<void> loadFavorites() async {
+    final favorites = await getFavorites();
+
+    final contents = await Future.wait(
+      favorites.map((favorite) {
+        final id = (favorite['filmeSerieId'] as num).toInt();
+
+        final type = switch (favorite['tipoConteudo']) {
+          'MOVIE' => 'movie',
+          'TV' => 'tv',
+          _=> throw const FormatException(
+            'Tipo de favorito desconhecido'
+          ),
+        };
+        return getContent(id, type);
+      })
+    );
+    ApiService.savedContents = contents;
+  }
+
   bool isSaved(Map<String, String> content) {
     return ApiService.savedContents.any(
       (saved) =>
           saved['id'] == content['id'] && saved['type'] == content['type'],
     );
   }
+
+  
 
   Future<void> toggleSaved(Map<String, String> content) async {
     final contents = List<Map<String, String>>.from(ApiService.savedContents);
