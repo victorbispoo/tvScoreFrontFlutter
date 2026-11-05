@@ -60,14 +60,17 @@ class ApiService {
         ? <String, dynamic>{}
         : jsonDecode(value) as Map<String, dynamic>;
 
+    // Remove favoritos antigos do dispositivo, preservando nome e avaliações.
+    if (data.containsKey('saved')) {
+      data.remove('saved');
+      await preferences.setString('tv_score_library_$email', jsonEncode(data));
+    }
+
     userEmail = email;
     userName = data['name'] ?? defaultName;
     savedContents = [];
     reviews = [];
 
-    for (final content in data['saved'] ?? []) {
-      savedContents.add(Map<String, String>.from(content));
-    }
     for (final review in data['reviews'] ?? []) {
       reviews.add(
         Review(
@@ -82,7 +85,6 @@ class ApiService {
 
   // Grava no dispositivo antes de atualizar os dados usados pelas telas.
   Future<void> _saveLibrary(
-    List<Map<String, String>> contents,
     List<Review> contentReviews,
     String name,
   ) async {
@@ -99,9 +101,8 @@ class ApiService {
     final preferences = SharedPreferencesAsync();
     await preferences.setString(
       'tv_score_library_$userEmail',
-      jsonEncode({'name': name, 'saved': contents, 'reviews': reviewData}),
+      jsonEncode({'name': name, 'reviews': reviewData}),
     );
-    savedContents = contents;
     reviews = contentReviews;
     userName = name;
   }
@@ -110,6 +111,6 @@ class ApiService {
     if (name.trim().isEmpty) {
       throw ArgumentError('Informe seu nome.');
     }
-    await _saveLibrary(savedContents, reviews, name.trim());
+    await _saveLibrary(reviews, name.trim());
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tv_score_front_flutter/core/app_theme.dart';
 
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
@@ -51,17 +52,19 @@ class _SearchPageState extends State<SearchPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        backgroundColor: AppTheme.scaffoldBackground,
+        title: const Text(
+          'Pesquisar',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Pesquisar',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
               const SizedBox(height: 8),
               const Text(
                 'Encontre filmes e séries do catálogo.',

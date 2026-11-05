@@ -13,7 +13,7 @@ extension ContentService on ApiService {
       throw ArgumentError('Tipo de conteúdo inválido. Deve ser "movie" ou "tv".');
     }
 
-    final resource = type == 'movie' ? 'movie' : 'tv';
+    final resource = type == 'movie' ? 'filmes' : 'series';
 
     final response = await dio.get('/$resource/$id');
 

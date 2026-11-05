@@ -31,7 +31,6 @@ extension ReviewsService on ApiService {
       ),
     );
     await _saveLibrary(
-      ApiService.savedContents,
       contentReviews,
       ApiService.userName,
     );
@@ -43,7 +42,6 @@ extension ReviewsService on ApiService {
       (item) => item.content['title'] == review.content['title'],
     );
     await _saveLibrary(
-      ApiService.savedContents,
       contentReviews,
       ApiService.userName,
     );

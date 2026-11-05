@@ -111,6 +111,6 @@ extension FavoritesService on ApiService {
       await addFavourite(content);
       contents.add(content);
     }
-    await _saveLibrary(contents, ApiService.reviews, ApiService.userName);
+    ApiService.savedContents = contents;
   }
 }
