@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:tv_score_front_flutter/pages/favorites_page.dart';
 
 import 'core/app_theme.dart';
 import 'pages/home_page.dart';
@@ -43,7 +44,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     // Reconstrói as páginas ao mudar de aba para atualizar listas e contagens.
-    final pages = [HomePage(), SearchPage(), ProfilePage()];
+    final pages = [HomePage(), FavoritesPage(), ProfilePage()];
     return Scaffold(
       body: SafeArea(
         child: IndexedStack(index: _index, children: pages),
@@ -62,12 +63,12 @@ class _AppShellState extends State<AppShell> {
           ),
 
           NavigationDestination(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedSearch01),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedFavourite),
             selectedIcon: HugeIcon(
-              icon: HugeIcons.strokeRoundedSearch01,
+              icon: HugeIcons.strokeRoundedFavourite,
               strokeWidth: 3,
             ),
-            label: 'Pesquisar',
+            label: 'Favoritos',
           ),
           NavigationDestination(
             icon: HugeIcon(icon: HugeIcons.strokeRoundedUser),

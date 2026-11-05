@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:tv_score_front_flutter/pages/search_page.dart';
 
 import '../core/app_theme.dart';
 import '../services/api_services.dart';
@@ -68,25 +69,20 @@ class _HomePageState extends State<HomePage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SvgPicture.asset(
-                      'lib/assets/logoTvScore.svg',
-                      width: 130,
-                      height: 70,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Sua próxima boa história começa aqui.',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        SvgPicture.asset(
+                          'lib/assets/logoSemTexto.svg',
+                          width: 130,
+                          height: 70,
+                        ),
+                        const Spacer(),
+                        IconButton(tooltip: 'Pesquisar',onPressed: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => SearchPage()));
+                        }, icon: Icon(HugeIconsSolid.search01)),
+                      ],
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Descubra filmes e séries, salve seus favoritos e compartilhe sua opinião.',
-                      style: TextStyle(color: Colors.white70, height: 1.5),
-                    ),
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),

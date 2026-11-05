@@ -33,7 +33,7 @@ extension ContentService on ApiService {
         'score': (filme['vote_average'] as num?)?.toStringAsFixed(1) ?? '0.0',
         'backdrop_path': backdrop == null || backdrop.isEmpty
             ? ''
-            : 'https://image.tmdb.org/t/p/w500$backdrop',
+            : 'https://image.tmdb.org/t/p/original$backdrop',
         'poster_path': poster == null || poster.isEmpty
             ? ''
             : 'https://image.tmdb.org/t/p/w500$poster',

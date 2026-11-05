@@ -95,10 +95,11 @@ class _DetailsPageState extends State<DetailsPage> {
                 children: [
                   SizedBox(
                     width: double.infinity,
-                    height: 225 + (MediaQuery.of(context).padding.top),
+                    height: 350 + (MediaQuery.of(context).padding.top),
                     child: Image.network(
                       backdrop ?? '',
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fitHeight,
+                      alignment: const Alignment(0.3, 0),
                       errorBuilder: (_, error, stackTrace) => const Center(
                         child: Icon(Icons.broken_image, size: 48),
                       ),
