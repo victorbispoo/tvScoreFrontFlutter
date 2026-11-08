@@ -107,10 +107,10 @@ extension ReviewsService on ApiService {
             review.content['type'] == type,
       );
 
-      if (found!=null){
-        updated.add(found);
-      }
-      ApiService.reviews = updated;
+    if (found != null) {
+      updated.add(found);
+    }
+    ApiService.reviews = updated;
   }
 
   Review? reviewFor(Map<String, String> content) {
@@ -128,7 +128,7 @@ extension ReviewsService on ApiService {
     double rating,
     String comment,
   ) async {
-    if (!rating.isFinite||rating < 0 || rating > 10) {
+    if (!rating.isFinite || rating < 0 || rating > 10) {
       throw ArgumentError('A nota deve ser de 0 a 10.');
     }
     final contentId = int.tryParse(content['id'] ?? '');
@@ -158,18 +158,11 @@ extension ReviewsService on ApiService {
 
     final data = Map<String, dynamic>.from(response.data as Map);
 
-    debugPrint('Campos da avaliação: ${data.keys.toList()}');
-    for (final entry in data.entries) {
-      if (entry.key.toLowerCase().contains('data')) {
-        debugPrint('${entry.key}: ${entry.value}');
-      }
-    }
-
     final savedReview = Review(
       id: data['id'] as int,
       content: content,
       rating: (data['nota'] as num).toDouble(),
-      comment: data['comentario'] as String,
+      comment: data['comentario'] as String? ?? '',
       date: DateTime.parse(data['dataCriacao'] as String),
     );
 

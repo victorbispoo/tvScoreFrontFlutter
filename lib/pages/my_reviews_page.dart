@@ -14,6 +14,7 @@ class MyReviewsPage extends StatefulWidget {
 
 class _MyReviewsPageState extends State<MyReviewsPage> {
   final _api = ApiService();
+  bool _deleting = false;
   bool _highestFirst = false;
   bool _loading = true;
   String? _error;
@@ -34,20 +35,19 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
     } catch (error, stackTrace) {
       debugPrint('Falha ao carregar avaliações: $error');
       debugPrintStack(stackTrace: stackTrace);
-    
 
-    if(!mounted) return;
-    setState(() {
-      _error= 'Não foi possível carregar suas avaliações';
-    });
-    }finally{
-      if(mounted){
+      if (!mounted) return;
+      setState(() {
+        _error = 'Não foi possível carregar suas avaliações';
+      });
+    } finally {
+      if (mounted) {
         setState(() {
           _loading = false;
         });
       }
     }
-  } 
+  }
 
   Future<void> _editReview(Review review) async {
     await Navigator.push(
@@ -59,35 +59,43 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
   }
 
   Future<void> _deleteReview(Review review) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir avaliação?'),
-        content: Text(
-          'Excluir sua nota e comentário de "${review.content['title']}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
+    if (_deleting) return;
+    setState(() => _deleting = true);
     try {
-      await _api.deleteReview(review);
-      if (mounted) setState(() {});
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível excluir a avaliação.')),
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Excluir avaliação?'),
+          content: Text(
+            'Excluir sua nota e comentário de "${review.content['title']}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Excluir'),
+            ),
+          ],
+        ),
       );
+      if (confirmed != true || !mounted) return;
+
+      try {
+        await _api.deleteReview(review);
+        if (mounted) setState(() {});
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível excluir a avaliação.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _deleting = false);
     }
   }
 
@@ -109,21 +117,23 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Minhas avaliações')),
       body: SafeArea(
-        child: _loading 
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null 
-        ? Center(
-          child: Column(
-            mainAxisSize:  .min,
-            children: [
-              Text(_error!, textAlign: .center,),
-              const SizedBox(height: 12,),
-              FilledButton(onPressed: _loadMyReviews, child: const Text('Tentar Novamente'))
-            ],
-          ),
-        )
-        :
-        reviews.isEmpty
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? Center(
+                child: Column(
+                  mainAxisSize: .min,
+                  children: [
+                    Text(_error!, textAlign: .center),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: _loadMyReviews,
+                      child: const Text('Tentar Novamente'),
+                    ),
+                  ],
+                ),
+              )
+            : reviews.isEmpty
             ? const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),
@@ -266,7 +276,9 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                               spacing: 8,
                               children: [
                                 TextButton.icon(
-                                  onPressed: () => _editReview(review),
+                                  onPressed: _deleting
+                                      ? null
+                                      : () => _editReview(review),
                                   icon: const Icon(
                                     Icons.edit_outlined,
                                     size: 18,
@@ -274,7 +286,9 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                                   label: const Text('Editar'),
                                 ),
                                 TextButton.icon(
-                                  onPressed: () => _deleteReview(review),
+                                  onPressed: _deleting
+                                      ? null
+                                      : () => _deleteReview(review),
                                   icon: const Icon(
                                     Icons.delete_outline,
                                     size: 18,

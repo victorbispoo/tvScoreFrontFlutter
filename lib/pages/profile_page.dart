@@ -15,6 +15,24 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final _api = ApiService();
+  late Future<int> _reviewCount;
+
+  Future<int> _fetchReviewCount() async {
+    final reviews = await _api.getMyReviews();
+    return reviews.length;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _reviewCount = _fetchReviewCount();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _reviewCount = _fetchReviewCount();
+  }
 
   Future<void> _logout() async {
     try {
@@ -148,8 +166,28 @@ class _ProfilePageState extends State<ProfilePage> {
           child: ListTile(
             leading: Icon(HugeIconsStroke.star, color: Colors.amber, size: 24),
             title: const Text('Minhas avaliações'),
-            subtitle: Text(
-              '${ApiService.reviews.length} avaliações • Veja suas notas e comentários',
+            subtitle: FutureBuilder<int>(
+              future: _reviewCount,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Text('Carregando contagem...');
+                }
+                if (snapshot.hasError) {
+                  return TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _reviewCount = _fetchReviewCount();
+                      });
+                    },
+                    child: const Text('Tentar carregar contagem novamente'),
+                  );
+                }
+                final count = snapshot.data;
+                return Text(
+                  '$count ${count == 1 ? 'avaliação' : 'avaliações'}'
+                  ' • Veja suas notas e comentários',
+                );
+              },
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
@@ -157,7 +195,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 context,
                 MaterialPageRoute(builder: (_) => const MyReviewsPage()),
               );
-              if (mounted) setState(() {});
+              if (!mounted) return;
+              setState(() {
+                _reviewCount = _fetchReviewCount();
+              });
             },
           ),
         ),

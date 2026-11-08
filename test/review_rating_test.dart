@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 
 void main() {
-  for (final returnedRating in <num>[8, 8.0, 8.5]) {
+  for (final returnedRating in <num>[0, 0.5, 8, 8.0, 8.5, 10]) {
     test('interpreta nota $returnedRating como double', () async {
       final api = ApiService();
       ApiService.token = 'test-token';
@@ -16,26 +16,33 @@ void main() {
         InterceptorsWrapper(
           onRequest: (options, handler) {
             expect(options.path, '/avaliacoes');
-            expect(options.data['nota'], 8.0);
+            expect(options.data['nota'], returnedRating.toDouble());
             expect(options.data['tipoConteudo'], 'MOVIE');
-            handler.resolve(Response(
-              requestOptions: options,
-              statusCode: 200,
-              data: {
-                'id': 1,
-                'nota': returnedRating,
-                'comentario': '',
-                'dataCriacao': '2026-11-07T12:00:00',
-              },
-            ));
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'id': 1,
+                  'nota': returnedRating,
+                  'comentario': null,
+                  'dataCriacao': '2026-11-07T12:00:00',
+                },
+              ),
+            );
           },
         ),
       );
 
-      await api.saveReview({'id': '123', 'type': 'MOVIE'}, 8.0, '');
+      await api.saveReview(
+        {'id': '123', 'type': 'MOVIE'},
+        returnedRating.toDouble(),
+        '',
+      );
 
       expect(ApiService.reviews.single.rating, isA<double>());
       expect(ApiService.reviews.single.rating, returnedRating.toDouble());
+      expect(ApiService.reviews.single.comment, isEmpty);
     });
   }
 }

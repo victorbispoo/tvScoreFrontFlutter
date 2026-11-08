@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,9 +14,13 @@ import 'package:tv_score_front_flutter/pages/search_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
 
+import 'support/backend_http.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const content = {
+    'id': '123',
+    'type': 'MOVIE',
     'title': 'Título de teste',
     'poster_path': '',
     'year': '2024',
@@ -28,6 +34,10 @@ void main() {
   });
 
   setUp(() async {
+    final previous = HttpOverrides.current;
+    HttpOverrides.global = BackendHttp();
+    addTearDown(() => HttpOverrides.global = previous);
+    ApiService.token = 'test-token';
     await SharedPreferencesAsync().clear();
     await ApiService().open('jose@teste.com', 'José Silva');
   });
@@ -73,7 +83,9 @@ void main() {
   testWidgets('avaliações abre edição e exclui somente após confirmação', (
     tester,
   ) async {
-    await ApiService().saveReview(content, 9, 'Muito bom');
+    await tester.runAsync(
+      () => ApiService().saveReview(content, 9, 'Muito bom'),
+    );
     await tester.pumpWidget(
       MaterialApp(theme: ThemeData.dark(), home: const MyReviewsPage()),
     );
@@ -164,7 +176,7 @@ void main() {
   testWidgets('favoritos atualiza depois de remover um título nos detalhes', (
     tester,
   ) async {
-    await ApiService().toggleSaved(content);
+    await tester.runAsync(() => ApiService().toggleSaved(content));
     await tester.pumpWidget(
       MaterialApp(theme: ThemeData.dark(), home: const FavoritesPage()),
     );
@@ -193,13 +205,15 @@ void main() {
     expect(find.text('0 títulos salvos'), findsOneWidget);
     await tester.tap(find.text('Início'));
     await tester.pumpAndSettle();
-    await ApiService().toggleSaved(content);
-    await ApiService().saveReview(content, 9, 'Bom');
+    await tester.runAsync(() async {
+      await ApiService().toggleSaved(content);
+      await ApiService().saveReview(content, 9, 'Bom');
+    });
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
     expect(find.text('1 títulos salvos'), findsOneWidget);
     expect(
-      find.text('1 avaliações • Veja suas notas e comentários'),
+      find.text('1 avaliação • Veja suas notas e comentários'),
       findsOneWidget,
     );
   });

@@ -4,14 +4,18 @@ Atualizado em 08/11/2026. Este documento registra contexto e evidências; confir
 
 ## Última sessão — estado para retomada
 
+- **Avaliações concluídas para o escopo do TCC.** Usuário confirmou em 08/11/2026 a validação manual final dos fluxos solicitados, incluindo recuperação, edição, exclusão, comunidade, contagem e contas distintas. Autorizou commit, push da victor e integração/push na main.
+- Contagem remota do Perfil implementada; corrigido o retorno por `mounted` invertido ao voltar da lista. Exclusão bloqueada desde a confirmação até terminar a requisição. Comentário nulo tratado e logs temporários de resposta removidos.
+- Testes antigos atualizados para ausência de persistência local e HTTP simulado exclusivamente nos testes. Suíte completa: **25 testes passando**; `flutter analyze`: **No issues found!**. Esses testes não fazem chamadas ao backend real.
+- **Próximo trabalho: recomendações personalizadas reais.** Conferir contrato atual do Python/Java antes de orientar. Depois onde assistir, pesquisa/paginação e preparação do APK. Continuar uma etapa por vez, sem alterações automáticas.
+- Integração autorizada nesta sessão: enviar victor e main por avanço direto se possível; preservar victor para continuidade. Confirmar estado final com Git. Os registros abaixo sobre pendências anteriores são históricos e foram superados por este fechamento.
 - Commit de progresso criado: `113aa4f` — `feat: carrega avaliações pessoais e comunidade do backend`. Usuário autorizou agora o push para `origin/victor`. Esta atualização de memória será enviada em um commit de documentação adicional; conferir o resultado do push no Git ao retomar.
 - Avaliação pessoal agora carrega diretamente nos detalhes pela Home via `loadMyReviewFor()`, reaproveitando o conteúdo aberto. Usuário confirmou funcionamento após corrigir a chave `tipoConteudo` e a condição do botão salvar.
 - Comunidade conectada: busca lista e resumo, guarda no estado, exibe autor/nota/comentário e filtra a avaliação pessoal pelo ID do registro. `_saveReview()` recarrega resumo e comunidade após salvar. Exibição com duas contas ainda exige teste manual.
 - Removidos catch duplicado e erro de texto TMBD; incluídos título da comunidade e singular/plural da contagem.
 - Decisão atual de notas: **double, intervalo 0 a 10 e slider em passos de 0,5**. Validação de salvar e carregar alinhada, incluindo rejeição de NaN/infinito.
 - Última execução de `flutter analyze` no estado final: **No issues found!**. Não foi executada a suíte completa nesta revisão; testes antigos ainda precisam ser atualizados.
-- Próximo passo: contagem remota de avaliações no Perfil. Depois validar exclusão com confirmação, recuperação após login, filme/série, comunidade com outra conta e isolamento entre contas; alinhar testes antigos e remover diagnósticos temporários.
-- Ainda não considerar pronto para main. O usuário autorizou este commit de progresso mesmo com pendências, substituindo a preferência anterior de esperar concluir todo o fluxo.
+- A contagem, limpeza de logs e alinhamento dos testes foram finalizados; o usuário confirmou os fluxos finais e autorizou integrar na main.
 
 ## Como trabalhar com o usuário
 
@@ -113,12 +117,8 @@ A lista por conteúdo inclui a avaliação do próprio usuário. Separá-la usan
 
 Uma etapa por vez, com inspeção atual antes de orientar:
 
-1. Implementar contagem remota de avaliações no Perfil; não depender da visita a Minhas avaliações para preencher a contagem.
-2. Verificar manualmente resumo e comunidade com duas contas, incluindo separação da avaliação pessoal e atualização após salvar/editar.
-3. Conferir recuperação de nota/comentário pela Home para filmes e séries, inclusive notas zero e fracionárias.
-4. Conferir atualização das listas e contagens após exclusão.
-5. Validar exclusão com confirmação, persistência após login, filme+série, não duplicação e isolamento entre contas. Revisar múltiplos toques/concorrência nos fluxos alterados.
-6. Remover logs temporários; atualizar testes antigos que esperam avaliações locais; executar análise e testes relevantes. Fazer commit quando usuário autorizar. Avaliar estabilidade para main e avisar; não integrar sem pedido.
+1. Avaliações fechadas: contagem remota, carregamento pessoal, comunidade, resumo e exclusão implementados; testes automatizados e validação manual final concluídos.
+2. Retomar pelas recomendações reais, conferindo o contrato antes de propor integração. Não presumir que as observações antigas dos serviços continuam atuais.
 
 Depois:
 
@@ -135,9 +135,9 @@ Não são requisitos: nova arquitetura, modelos para todos os mapas, cache sofis
 
 - Houve `flutter analyze` sem problemas e três testes de conversão de nota passando após padronização de tipos. Usuário também executou analyze com sucesso antes dos últimos ajustes de UI. Isso não certifica o estado atual inteiro.
 - `test/review_rating_test.dart` cobre resposta numérica e envio MOVIE; fixture usa `dataCriacao`.
-- Testes antigos de biblioteca/sessão precisam ser alinhados à retirada de avaliações locais e integração HTTP. Não afirmar que suíte completa passa.
-- Diagnósticos restantes podem estar em `saveReview()` e `_saveReview()`. Nunca registrar token/senha.
+- Testes de biblioteca/sessão alinhados à integração HTTP e retirada de persistência local; suíte completa passou com 25 testes na sessão de fechamento.
+- Logs temporários dos campos e datas removidos de `saveReview()`. Manter diagnóstico de erros sem registrar token/senha.
 
 ## Mensagem para retomar em outro PC
 
-> Leia MEMORIA_PROJETO.md e confira o código local/Git. Quero orientação, sem alterações automáticas. Estamos concluindo avaliações do TVScore. Próximo passo: contagem remota no Perfil, testes antigos e validação final dos fluxos. Trabalhe uma etapa por vez; não faça commit/push sem eu pedir.
+> Leia MEMORIA_PROJETO.md e confira o código local/Git. Quero orientação, sem alterações automáticas. Avaliações do TVScore foram concluídas e validadas. Próximo passo: conferir o contrato atual e integrar recomendações personalizadas reais. Trabalhe uma etapa por vez; não faça commit/push sem eu pedir.

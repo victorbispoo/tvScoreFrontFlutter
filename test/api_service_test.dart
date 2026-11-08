@@ -26,9 +26,8 @@ void main() {
     await api.open('jose@teste.com', 'José Silva');
   });
 
-  test('preserva avaliação e nome sem persistir favoritos', () async {
+  test('preserva nome sem persistir favoritos ou avaliações', () async {
     ApiService.savedContents = [content];
-    await api.saveReview(content, 9, '  Muito bom  ');
     await api.updateName('José');
     await api.open('ana@teste.com', 'Ana');
     expect(ApiService.savedContents, isEmpty);
@@ -36,48 +35,59 @@ void main() {
     await api.open('jose@teste.com', 'Nome padrão');
     expect(ApiService.userName, 'José');
     expect(ApiService.savedContents, isEmpty);
-    final stored = jsonDecode(
-      (await SharedPreferencesAsync().getString('tv_score_library_jose@teste.com'))!,
-    ) as Map<String, dynamic>;
+    final stored =
+        jsonDecode(
+              (await SharedPreferencesAsync().getString(
+                'tv_score_library_jose@teste.com',
+              ))!,
+            )
+            as Map<String, dynamic>;
     expect(stored.containsKey('saved'), isFalse);
-    expect(ApiService.reviews.single.rating, 9);
-    expect(ApiService.reviews.single.comment, 'Muito bom');
+    expect(stored.containsKey('reviews'), isFalse);
+    expect(ApiService.reviews, isEmpty);
   });
 
-  test(
-    'editar substitui a avaliação e excluir remove do armazenamento',
-    () async {
-      await api.saveReview(content, 7, 'Bom');
-      await api.saveReview(content, 10, 'Excelente');
-      expect(ApiService.reviews, hasLength(1));
-      expect(ApiService.reviews.single.rating, 10);
-      await api.deleteReview(ApiService.reviews.single);
-      await api.open('jose@teste.com', 'José');
-      expect(ApiService.reviews, isEmpty);
-      expect(ApiService.savedContents, isEmpty);
-    },
-  );
+  test('reabrir conta limpa as listas em memória', () async {
+    ApiService.savedContents = [content];
+    await api.open('jose@teste.com', 'José');
+    expect(ApiService.reviews, isEmpty);
+    expect(ApiService.savedContents, isEmpty);
+  });
 
   test('remove favoritos antigos preservando os outros dados locais', () async {
     final preferences = SharedPreferencesAsync();
     await preferences.setString(
       'tv_score_library_jose@teste.com',
-      jsonEncode({'name': 'José', 'saved': [content], 'reviews': []}),
+      jsonEncode({
+        'name': 'José',
+        'saved': [content],
+        'reviews': [],
+      }),
     );
     await api.open('jose@teste.com', 'Nome padrão');
     expect(ApiService.savedContents, isEmpty);
     expect(ApiService.userName, 'José');
-    final stored = jsonDecode(
-      (await preferences.getString('tv_score_library_jose@teste.com'))!,
-    ) as Map<String, dynamic>;
+    final stored =
+        jsonDecode(
+              (await preferences.getString('tv_score_library_jose@teste.com'))!,
+            )
+            as Map<String, dynamic>;
     expect(stored.containsKey('saved'), isFalse);
     expect(stored['name'], 'José');
-    expect(stored['reviews'], isEmpty);
+    expect(stored.containsKey('reviews'), isFalse);
   });
 
-  test('recusa notas fora de 1 a 10', () async {
-    await expectLater(api.saveReview(content, 0, ''), throwsArgumentError);
+  test('recusa notas fora de 0 a 10 e valores não finitos', () async {
+    await expectLater(api.saveReview(content, -0.5, ''), throwsArgumentError);
     await expectLater(api.saveReview(content, 11, ''), throwsArgumentError);
+    await expectLater(
+      api.saveReview(content, double.nan, ''),
+      throwsArgumentError,
+    );
+    await expectLater(
+      api.saveReview(content, double.infinity, ''),
+      throwsArgumentError,
+    );
     expect(ApiService.reviews, isEmpty);
   });
 }
