@@ -5,7 +5,7 @@ import 'package:tv_score_front_flutter/pages/search_page.dart';
 
 import '../core/app_theme.dart';
 import '../services/api_services.dart';
-import '../widgets/content_card.dart';
+import '../widgets/content_carousel.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -77,9 +77,18 @@ class _HomePageState extends State<HomePage>
                           height: 70,
                         ),
                         const Spacer(),
-                        IconButton(tooltip: 'Pesquisar',onPressed: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => SearchPage()));
-                        }, icon: Icon(HugeIconsSolid.search01)),
+                        IconButton(
+                          tooltip: 'Pesquisar',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SearchPage(),
+                              ),
+                            );
+                          },
+                          icon: Icon(HugeIconsSolid.search01),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -87,19 +96,22 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
               const SizedBox(height: 28),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(HugeIconsSolid.fire, color: AppTheme.primary),
                 title: 'Destaques',
                 subtitle: 'Histórias que merecem sua atenção',
                 contents: contents.take(6).toList(),
               ),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(HugeIconsSolid.star, color: AppTheme.primary),
                 title: 'Mais bem avaliados',
                 subtitle: 'As maiores notas do catálogo',
                 contents: best.take(8).toList(),
               ),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(
                   HugeIconsSolid.clock01,
                   color: AppTheme.primary,
@@ -107,7 +119,8 @@ class _HomePageState extends State<HomePage>
                 title: 'Mais recentes no catálogo',
                 contents: recent.take(8).toList(),
               ),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(
                   HugeIconsSolid.sword01,
                   color: AppTheme.primary,
@@ -117,7 +130,8 @@ class _HomePageState extends State<HomePage>
                     .where((content) => content['genre']!.contains('Ação'))
                     .toList(),
               ),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(
                   HugeIconsSolid.rocket01,
                   color: AppTheme.primary,
@@ -127,7 +141,8 @@ class _HomePageState extends State<HomePage>
                     .where((content) => content['genre']!.contains('Ficção'))
                     .toList(),
               ),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(
                   HugeIconsSolid.film01,
                   color: AppTheme.primary,
@@ -137,14 +152,16 @@ class _HomePageState extends State<HomePage>
                     .where((content) => content['genre']!.contains('Drama'))
                     .toList(),
               ),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(HugeIconsSolid.tv01, color: AppTheme.primary),
                 title: 'Séries para maratonar',
                 contents: contents
                     .where((content) => content['type'] == 'TV')
                     .toList(),
               ),
-              _buildCarousel(
+              ContentCarousel(
+                onChanged: () => setState(() {}),
                 icon: const Icon(
                   HugeIconsSolid.bookmark01,
                   color: AppTheme.primary,
@@ -156,67 +173,6 @@ class _HomePageState extends State<HomePage>
           ),
         );
       },
-    );
-  }
-
-  // O mesmo layout é usado em cada carrossel da Home.
-  Widget _buildCarousel({
-    Icon? icon,
-    required String title,
-    String? subtitle,
-    required List<Map<String, String>> contents,
-  }) {
-    if (contents.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (icon != null) ...[icon, const SizedBox(width: 8)],
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(color: Colors.white60)),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 290,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              scrollDirection: Axis.horizontal,
-              itemCount: contents.length,
-              separatorBuilder: (_, index) => const SizedBox(width: 14),
-              itemBuilder: (_, index) => SizedBox(
-                width: 160,
-                child: ContentCard(
-                  content: contents[index],
-                  onChanged: () => setState(() {}),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

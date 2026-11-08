@@ -1,3 +1,14 @@
+## Latest publication decision - 2026-11-08
+
+User explicitly authorized including the unfinished episode grid draft in the componentization commit and pushing ONLY victor. This overrides the earlier instruction below to exclude the grid. The grid uses hardcoded sample ratings, has no backend integration, and remains unfinished for tomorrow. Previous componentization checks: 32 tests passed and analysis was clean before the user added this grid draft; the draft has not been verified. Main must not be updated.
+
+## Update before push - 2026-11-08
+
+- Extracted the details backdrop, community review card, and review form into widgets; extracted the Home carousel into a widget. The page still owns state, controllers, HTTP calls, and callbacks.
+- Verification for this extraction: 32 Flutter tests passed and flutter analyze reported no issues. No device test was run for the extraction.
+- User requested commit and push of the componentization. Episode ratings grid work is explicitly deferred until tomorrow; keep episode_ratings_grid.dart and its DetailsPage insertion out of this commit, preserving the user's local changes.
+- Current branch at this update: victor. After publishing, continue the episode grid from its local draft; do not merge to main unless the user asks.
+
 # TVScore — memória de continuidade
 
 Atualizado em 08/11/2026. Este documento registra contexto e evidências; confira o código local e o Git antes de continuar. Não contém credenciais.

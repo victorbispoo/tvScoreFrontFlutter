@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:tv_score_front_flutter/widgets/content_card.dart';
-
+import 'package:tv_score_front_flutter/widgets/episode_ratings_grid.dart';
 import '../services/api_services.dart';
+import '../widgets/community_review_card.dart';
+import '../widgets/content_header.dart';
+import '../widgets/review_form.dart';
 
 class DetailsPage extends StatefulWidget {
   const DetailsPage({super.key, required this.content});
@@ -168,40 +170,10 @@ class _DetailsPageState extends State<DetailsPage> {
         final comment = item['comentario'] as String? ?? '';
         final rating = (item['nota'] as num).toDouble();
 
-        return Card(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: .start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        author == null || author.trim().isEmpty
-                            ? 'Usuário'
-                            : author,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text('•'),
-                    SizedBox(width: 8),
-                    const Icon(
-                      HugeIconsSolid.star,
-                      color: Colors.amber,
-                      size: 14,
-                    ),
-                    SizedBox(width: 5),
-                    Text('${rating.toStringAsFixed(1)}/10'),
-                  ],
-                ),
-                if (comment.trim().isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(comment),
-                ],
-              ],
-            ),
-          ),
+        return CommunityReviewCard(
+          author: author,
+          rating: rating,
+          comment: comment,
         );
       }).toList(),
     );
@@ -210,8 +182,6 @@ class _DetailsPageState extends State<DetailsPage> {
   @override
   Widget build(BuildContext context) {
     final content = widget.content;
-    final backdrop = content['backdrop_path'];
-    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final saved = _api.isSaved(content);
     final review = _api.reviewFor(content);
     final otherReviews = _communityReviews
@@ -235,67 +205,7 @@ class _DetailsPageState extends State<DetailsPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            Center(
-              child: Stack(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 350 + (MediaQuery.of(context).padding.top),
-                    child: Image.network(
-                      backdrop ?? '',
-                      fit: BoxFit.fitHeight,
-                      alignment: const Alignment(0.3, 0),
-                      errorBuilder: (_, error, stackTrace) => const Center(
-                        child: Icon(Icons.broken_image, size: 48),
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                          colors: [
-                            backgroundColor.withValues(alpha: 0.05),
-                            backgroundColor.withValues(alpha: 0.15),
-                            backgroundColor.withValues(alpha: 0.45),
-                            backgroundColor.withValues(alpha: 0.8),
-                            backgroundColor.withValues(alpha: 0.9),
-                            backgroundColor,
-                          ],
-                          stops: const [0, 0.5, 0.65, 0.85, 0.90, 0.95],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            backgroundColor.withValues(alpha: 0),
-                            backgroundColor.withValues(alpha: 0.15),
-                            backgroundColor.withValues(alpha: 0.65),
-                            backgroundColor,
-                          ],
-                          stops: const [0, 0.75, 0.90, 1],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 20,
-                    bottom: 20,
-                    width: 125,
-                    height: 170,
-                    child: ContentPoster(content: content),
-                  ),
-                ],
-              ),
-            ),
+            ContentHeader(content: content),
 
             Padding(
               padding: EdgeInsets.only(left: 20, right: 20),
@@ -370,7 +280,15 @@ class _DetailsPageState extends State<DetailsPage> {
                           : 'Adicionar aos favoritos',
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  
+                  if (content['type'] == 'TV') ...[
+                    const SizedBox(height: 24),
+                    const EpisodeRatingsGrid(),
+                    const SizedBox(height: 24),
+                  ]
+                  else
+                  const SizedBox(height: 24),
+
                   if (_loadingMyReview)
                     const LinearProgressIndicator()
                   else if (_myReviewError != null)
@@ -384,44 +302,14 @@ class _DetailsPageState extends State<DetailsPage> {
                         ),
                       ],
                     ),
-                  Text(
-                    review == null ? 'Sua avaliação' : 'Editar sua avaliação',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sua nota: $_rating / 10',
-                    style: const TextStyle(color: Colors.amber, fontSize: 18),
-                  ),
-                  Slider(
-                    value: _rating,
-                    min: 0,
-                    max: 10,
-                    divisions: 20,
-                    label: '$_rating',
-                    onChanged: canEditReview
-                        ? (value) => setState(() => _rating = value)
-                        : null,
-                  ),
-                  TextField(
-                    controller: _comment,
+                  ReviewForm(
+                    isEditing: review != null,
+                    rating: _rating,
+                    commentController: _comment,
                     enabled: canEditReview,
-                    maxLines: 4,
-                    maxLength: 500,
-                    decoration: const InputDecoration(
-                      labelText: 'Comentário (opcional)',
-                      hintText: 'O que você achou desse título?',
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: !canEditReview ? null : _saveReview,
-                    icon: const Icon(Icons.star_outline),
-                    label: Text(_busy ? 'Salvando...' : 'Salvar avaliação'),
+                    isSaving: _busy,
+                    onRatingChanged: (value) => setState(() => _rating = value),
+                    onSave: _saveReview,
                   ),
                   const SizedBox(height: 12),
                   const Text(
