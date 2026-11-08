@@ -13,7 +13,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg',
     'genre_ids': '878 | 12',
     'genre': 'Ficção Científica • Aventura',
-    'type': 'movie',
+    'type': 'MOVIE',
   },
   {
     'id': 'mock-interstellar',
@@ -28,7 +28,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
     'genre_ids': '878 | 18',
     'genre': 'Ficção Científica • Drama',
-    'type': 'movie',
+    'type': 'MOVIE',
   },
   {
     'id': 'mock-inception',
@@ -43,7 +43,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg',
     'genre_ids': '28 | 878',
     'genre': 'Ação • Ficção Científica',
-    'type': 'movie',
+    'type': 'MOVIE',
   },
   {
     'id': 'mock-dark-knight',
@@ -58,7 +58,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
     'genre_ids': '28 | 18',
     'genre': 'Ação • Drama',
-    'type': 'movie',
+    'type': 'MOVIE',
   },
   {
     'id': 'mock-dune-2',
@@ -73,7 +73,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
     'genre_ids': '878 | 12',
     'genre': 'Ficção Científica • Aventura',
-    'type': 'movie',
+    'type': 'MOVIE',
   },
   {
     'id': 'mock-stranger-things',
@@ -88,7 +88,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',
     'genre_ids': '878 | 9648',
     'genre': 'Ficção Científica • Mistério',
-    'type': 'tv',
+    'type': 'TV',
   },
   {
     'id': 'mock-breaking-bad',
@@ -103,7 +103,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/3xnWaLQjelJDDF7LT1WBo6f4BRe.jpg',
     'genre_ids': '18 | 80',
     'genre': 'Drama • Crime',
-    'type': 'tv',
+    'type': 'TV',
   },
   {
     'id': 'mock-last-of-us',
@@ -118,7 +118,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg',
     'genre_ids': '18 | 28',
     'genre': 'Drama • Ação',
-    'type': 'tv',
+    'type': 'TV',
   },
   {
     'id': 'mock-dark',
@@ -133,7 +133,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/apbrbWs8M9lyOpJYU5WXrpFbk1Z.jpg',
     'genre_ids': '878 | 9648',
     'genre': 'Ficção Científica • Mistério',
-    'type': 'tv',
+    'type': 'TV',
   },
   {
     'id': 'mock-game-of-thrones',
@@ -148,7 +148,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
     'genre_ids': '14 | 18',
     'genre': 'Fantasia • Drama',
-    'type': 'tv',
+    'type': 'TV',
   },
   {
     'id': 'mock-the-office',
@@ -163,7 +163,7 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg',
     'genre_ids': '35',
     'genre': 'Comédia',
-    'type': 'tv',
+    'type': 'TV',
   },
   {
     'id': 'mock-the-mandalorian',
@@ -178,6 +178,6 @@ const mockContents = <Map<String, String>>[
         'https://image.tmdb.org/t/p/w500/sWgBv7LV2PRoQgkxwlibdGXKz1S.jpg',
     'genre_ids': '28 | 878',
     'genre': 'Ação • Ficção Científica',
-    'type': 'tv',
+    'type': 'TV',
   },
 ];

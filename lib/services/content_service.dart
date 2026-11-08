@@ -9,11 +9,11 @@ extension ContentService on ApiService {
       throw ArgumentError('O ID do conteúdo deve ser maior que zero.');
     }
 
-    if (type != 'movie' && type != 'tv') {
-      throw ArgumentError('Tipo de conteúdo inválido. Deve ser "movie" ou "tv".');
+    if (type != 'MOVIE' && type != 'TV') {
+      throw ArgumentError('Tipo de conteúdo inválido. Deve ser "MOVIE" ou "TV".');
     }
 
-    final resource = type == 'movie' ? 'filmes' : 'series';
+    final resource = type == 'MOVIE' ? 'filmes' : 'series';
 
     final response = await dio.get('/$resource/$id');
 
@@ -84,7 +84,7 @@ extension ContentService on ApiService {
             : 'https://image.tmdb.org/t/p/w500$poster',
         'genre_ids': filme['genre_ids']?.join(' | ') ?? '',
         'genre': generoPrincipal,
-        'type': filme['tipoConteudo'] == 'TV' ? 'tv' : 'movie',
+        'type': filme['tipoConteudo'] as String,
       };
     }).toList();
   }

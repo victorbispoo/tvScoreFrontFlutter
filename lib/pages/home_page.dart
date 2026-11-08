@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
@@ -141,7 +141,7 @@ class _HomePageState extends State<HomePage>
                 icon: const Icon(HugeIconsSolid.tv01, color: AppTheme.primary),
                 title: 'Séries para maratonar',
                 contents: contents
-                    .where((content) => content['type'] == 'tv')
+                    .where((content) => content['type'] == 'TV')
                     .toList(),
               ),
               _buildCarousel(

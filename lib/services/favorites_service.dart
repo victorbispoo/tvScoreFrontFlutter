@@ -25,16 +25,15 @@ extension FavoritesService on ApiService {
       throw ArgumentError('O conteúdo precisa ter um ID válido.');
     }
 
-    if (type != 'movie' && type != 'tv') {
+    if (type != 'MOVIE' && type != 'TV') {
       throw ArgumentError('Tipo de conteúdo inválido.');
     }
 
-    final tipoConteudo = type == 'movie' ? 'MOVIE' : 'TV';
 
     try {
       await dio.post(
         '/favoritos',
-        data: {'filmeSerieId': id, 'tipoConteudo': tipoConteudo},
+        data: {'filmeSerieId': id, 'tipoConteudo': type},
         options: Options(
           headers: {'Authorization': 'Bearer ${ApiService.token}'},
         ),
@@ -55,15 +54,14 @@ extension FavoritesService on ApiService {
     if (id == null) {
       throw ArgumentError('O conteúdo precisa ter um ID válido.');
     }
-    if (type != 'movie' && type != 'tv') {
+    if (type != 'MOVIE' && type != 'TV') {
       throw ArgumentError('Tipo de conteúdo inválido.');
     }
 
-    final tipoConteudo = type == 'movie' ? 'MOVIE' : 'TV';
 
     await dio.delete(
       '/favoritos/$id',
-      queryParameters: {'tipoConteudo': tipoConteudo},
+      queryParameters: {'tipoConteudo': type},
       options: Options(
         headers: {'Authorization': 'Bearer ${ApiService.token}'},
       ),
@@ -77,13 +75,7 @@ extension FavoritesService on ApiService {
       favorites.map((favorite) {
         final id = (favorite['filmeSerieId'] as num).toInt();
 
-        final type = switch (favorite['tipoConteudo']) {
-          'MOVIE' => 'movie',
-          'TV' => 'tv',
-          _=> throw const FormatException(
-            'Tipo de favorito desconhecido'
-          ),
-        };
+        final type = favorite['tipoConteudo'] as String;
         return getContent(id, type);
       })
     );

@@ -72,7 +72,7 @@ void main() {
 
   test('restaura sessão, perfil e biblioteca depois de reiniciar', () async {
     await login();
-    const content = {'id': '1', 'type': 'movie', 'title': 'Teste'};
+    const content = {'id': '1', 'type': 'MOVIE', 'title': 'Teste'};
     ApiService.savedContents = [content];
     await api.saveReview(content, 9, 'Muito bom');
     await api.updateName('Ana Silva');

@@ -15,6 +15,39 @@ class MyReviewsPage extends StatefulWidget {
 class _MyReviewsPageState extends State<MyReviewsPage> {
   final _api = ApiService();
   bool _highestFirst = false;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyReviews();
+  }
+
+  Future<void> _loadMyReviews() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await _api.loadMyReviews();
+    } catch (error, stackTrace) {
+      debugPrint('Falha ao carregar avaliações: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    
+
+    if(!mounted) return;
+    setState(() {
+      _error= 'Não foi possível carregar suas avaliações';
+    });
+    }finally{
+      if(mounted){
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  } 
 
   Future<void> _editReview(Review review) async {
     await Navigator.push(
@@ -76,7 +109,21 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Minhas avaliações')),
       body: SafeArea(
-        child: reviews.isEmpty
+        child: _loading 
+        ? const Center(child: CircularProgressIndicator())
+        : _error != null 
+        ? Center(
+          child: Column(
+            mainAxisSize:  .min,
+            children: [
+              Text(_error!, textAlign: .center,),
+              const SizedBox(height: 12,),
+              FilledButton(onPressed: _loadMyReviews, child: const Text('Tentar Novamente'))
+            ],
+          ),
+        )
+        :
+        reviews.isEmpty
             ? const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),

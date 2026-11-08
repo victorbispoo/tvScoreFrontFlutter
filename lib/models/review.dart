@@ -7,9 +7,9 @@ class Review {
     required this.comment,
     required this.date,
   });
-  final int id;
+  final int? id;
   final Map<String, String> content;
-  final int rating;
+  final double rating;
   final String comment;
   final DateTime date;
 }

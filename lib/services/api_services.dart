@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,9 +61,10 @@ class ApiService {
         ? <String, dynamic>{}
         : jsonDecode(value) as Map<String, dynamic>;
 
-    // Remove favoritos antigos do dispositivo, preservando nome e avaliações.
-    if (data.containsKey('saved')) {
+    // Remove favoritos antigos do dispositivo
+    if (data.containsKey('saved') || data.containsKey('reviews')) {
       data.remove('saved');
+      data.remove('reviews');
       await preferences.setString('tv_score_library_$email', jsonEncode(data));
     }
 
@@ -70,47 +72,19 @@ class ApiService {
     userName = data['name'] ?? defaultName;
     savedContents = [];
     reviews = [];
-
-    for (final review in data['reviews'] ?? []) {
-      reviews.add(
-        Review(
-          content: Map<String, String>.from(review['movie']),
-          rating: review['rating'],
-          comment: review['comment'],
-          date: DateTime.parse(review['date']),
-        ),
-      );
-    }
-  }
-
-  // Grava no dispositivo antes de atualizar os dados usados pelas telas.
-  Future<void> _saveLibrary(
-    List<Review> contentReviews,
-    String name,
-  ) async {
-    final reviewData = <Map<String, dynamic>>[];
-    for (final review in contentReviews) {
-      reviewData.add({
-        'movie': review.content,
-        'rating': review.rating,
-        'comment': review.comment,
-        'date': review.date.toIso8601String(),
-      });
-    }
-
-    final preferences = SharedPreferencesAsync();
-    await preferences.setString(
-      'tv_score_library_$userEmail',
-      jsonEncode({'name': name, 'reviews': reviewData}),
-    );
-    reviews = contentReviews;
-    userName = name;
   }
 
   Future<void> updateName(String name) async {
-    if (name.trim().isEmpty) {
-      throw ArgumentError('Informe seu nome.');
+    final nomeTrim = name.trim();
+
+    if (nomeTrim.isEmpty) {
+      throw ArgumentError('Informe seu nome');
     }
-    await _saveLibrary(reviews, name.trim());
+
+    final preferences = SharedPreferencesAsync();
+    await preferences.setString('tv_score_library_$userEmail', jsonEncode({'name': nomeTrim}),
+    );
+
+    userName = nomeTrim;
   }
 }

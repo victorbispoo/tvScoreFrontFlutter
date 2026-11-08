@@ -6,7 +6,6 @@ import 'core/app_theme.dart';
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
-import 'pages/search_page.dart';
 import 'services/api_services.dart';
 
 Future<void> main() async {
@@ -43,7 +42,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Reconstrói as páginas ao mudar de aba para atualizar listas e contagens.
+    
     final pages = [HomePage(), FavoritesPage(), ProfilePage()];
     return Scaffold(
       body: SafeArea(

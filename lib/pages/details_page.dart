@@ -16,15 +16,91 @@ class DetailsPage extends StatefulWidget {
 class _DetailsPageState extends State<DetailsPage> {
   final _api = ApiService();
   late final TextEditingController _comment;
-  late int _rating;
+  late double _rating;
   bool _busy = false;
+  Map<String, dynamic>? _reviewSummary;
+  bool _loadingCommunity = true;
+  String? _communityError;
+  bool _loadingMyReview = true;
+  String? _myReviewError;
+  List<Map<String, dynamic>> _communityReviews = [];
 
   @override
   void initState() {
     super.initState();
-    final review = _api.reviewFor(widget.content);
-    _rating = review?.rating ?? 8;
-    _comment = TextEditingController(text: review?.comment ?? '');
+    _rating = 8.0;
+    _comment = TextEditingController();
+    _loadMyReview();
+    _checkCommunityReviews();
+  }
+
+  Future<void> _checkCommunityReviews() async {
+    setState(() {
+      _loadingCommunity = true;
+      _communityError = null;
+    });
+
+    try {
+      final id = int.parse(widget.content['id']!);
+      final type = widget.content['type']!;
+      final summary = await _api.getContentReviewSummary(id, type);
+      final reviews = await _api.getContentReviews(id, type);
+
+      if (!mounted) return;
+      setState(() {
+        _reviewSummary = summary;
+        _communityReviews = reviews;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _communityError = 'Não foi possível carregar as avaliações.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingCommunity = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMyReview() async {
+    setState(() {
+      _loadingMyReview = true;
+      _myReviewError = null;
+    });
+
+    try {
+      await _api.loadMyReviewFor(widget.content);
+      if (!mounted) return;
+
+      final review = _api.reviewFor(widget.content);
+      final rating = review?.rating ?? 8.0;
+
+      if (!rating.isFinite || rating < 0 || rating > 10) {
+        throw const FormatException(
+          'A nota salva está fora do intervalo do formulário.',
+        );
+      }
+      setState(() {
+        _rating = rating;
+        _comment.text = review?.comment ?? '';
+      });
+    } catch (error) {
+      debugPrint('Falha ao carregar avaliação pessoal: $error');
+      if (!mounted) return;
+
+      setState(() {
+        _myReviewError = 'Não foi possível carregar sua avaliação.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingMyReview = false;
+        });
+      }
+    }
   }
 
   @override
@@ -59,7 +135,10 @@ class _DetailsPageState extends State<DetailsPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Avaliação salva!')));
-    } catch (_) {
+      await _checkCommunityReviews();
+    } catch (error, stackTrace) {
+      debugPrint('falha: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Não foi possível salvar a avaliação.')),
@@ -69,6 +148,61 @@ class _DetailsPageState extends State<DetailsPage> {
     }
   }
 
+  Widget _buildCommunitySection(List<Map<String, dynamic>> reviews) {
+    if (_loadingCommunity || _loadingMyReview) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_communityError != null || _myReviewError != null) {
+      return const Text('Carregue as avaliações tentando novamente');
+    }
+    if (reviews.isEmpty) {
+      return const Text('Ainda não há avaliações de outras pessoas.');
+    }
+
+    return Column(
+      crossAxisAlignment: .stretch,
+      children: reviews.map((item) {
+        final author = item['nomeUsuario'] as String?;
+        final comment = item['comentario'] as String? ?? '';
+        final rating = (item['nota'] as num).toDouble();
+
+        return Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: .start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      author == null || author.trim().isEmpty
+                          ? 'Usuário'
+                          : author,
+                    ),
+                    SizedBox(width: 8,),
+                    Text('•'),
+                    SizedBox(width: 8,),
+                    const Icon(
+                      HugeIconsSolid.star,
+                      color: Colors.amber,
+                      size: 14,
+                    ),
+                    SizedBox(width: 5),
+                    Text('${rating.toStringAsFixed(1)}/10'),
+                  ],
+                ),
+                if (comment.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(comment),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final content = widget.content;
@@ -76,6 +210,13 @@ class _DetailsPageState extends State<DetailsPage> {
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final saved = _api.isSaved(content);
     final review = _api.reviewFor(content);
+    final otherReviews = _communityReviews
+        .where((item) => item['id'] != review?.id)
+        .toList();
+    final totalReviews =
+        (_reviewSummary?['totalAvaliacoes'] as num?)?.toInt() ?? 0;
+    final communityAverage = _reviewSummary?['media'] as num?;
+    final canEditReview = !_busy && !_loadingMyReview && _myReviewError == null;
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -177,7 +318,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         size: 14,
                       ),
                       const SizedBox(width: 6),
-                      Text('${content['score']}'),
+                      Text('TMDB: ${content['score']}'),
                     ],
                   ),
                   if (content['overview'] != null) ...[
@@ -187,6 +328,28 @@ class _DetailsPageState extends State<DetailsPage> {
                       style: const TextStyle(height: 1.6),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  if (_loadingCommunity)
+                    const LinearProgressIndicator()
+                  else if (_communityError != null)
+                    Column(
+                      crossAxisAlignment: .start,
+                      children: [
+                        Text(_communityError!),
+                        TextButton(
+                          onPressed: _checkCommunityReviews,
+                          child: const Text('Tentar novamente'),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      totalReviews == 0
+                          ? 'TVScore: ainda sem avaliações'
+                          : 'TVScore: ${communityAverage?.toStringAsFixed(1) ?? '—'}/10'
+                                ' • $totalReviews '
+                                '${totalReviews == 1 ? 'avaliação' : 'avaliações'}',
+                    ),
                   const SizedBox(height: 24),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _toggleSaved,
@@ -202,6 +365,19 @@ class _DetailsPageState extends State<DetailsPage> {
                     ),
                   ),
                   const SizedBox(height: 28),
+                  if (_loadingMyReview)
+                    const LinearProgressIndicator()
+                  else if (_myReviewError != null)
+                    Column(
+                      crossAxisAlignment: .start,
+                      children: [
+                        Text(_myReviewError!),
+                        TextButton(
+                          onPressed: _loadMyReview,
+                          child: const Text('Tentar Novamente'),
+                        ),
+                      ],
+                    ),
                   Text(
                     review == null ? 'Sua avaliação' : 'Editar sua avaliação',
                     style: const TextStyle(
@@ -215,20 +391,20 @@ class _DetailsPageState extends State<DetailsPage> {
                     style: const TextStyle(color: Colors.amber, fontSize: 18),
                   ),
                   Slider(
-                    value: _rating.toDouble(),
-                    min: 1,
+                    value: _rating,
+                    min: 0,
                     max: 10,
-                    divisions: 9,
+                    divisions: 20,
                     label: '$_rating',
-                    onChanged: _busy
-                        ? null
-                        : (value) => setState(() => _rating = value.round()),
+                    onChanged: canEditReview
+                        ? (value) => setState(() => _rating = value)
+                        : null,
                   ),
                   TextField(
                     controller: _comment,
-                    enabled: !_busy,
+                    enabled: canEditReview,
                     maxLines: 4,
-                    maxLength: 1000,
+                    maxLength: 500,
                     decoration: const InputDecoration(
                       labelText: 'Comentário (opcional)',
                       hintText: 'O que você achou desse título?',
@@ -237,10 +413,18 @@ class _DetailsPageState extends State<DetailsPage> {
                   ),
                   const SizedBox(height: 12),
                   FilledButton.icon(
-                    onPressed: _busy ? null : _saveReview,
+                    onPressed: !canEditReview ? null : _saveReview,
                     icon: const Icon(Icons.star_outline),
                     label: Text(_busy ? 'Salvando...' : 'Salvar avaliação'),
                   ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Avaliações da comunidade',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCommunitySection(otherReviews),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
