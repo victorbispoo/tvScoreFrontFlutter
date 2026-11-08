@@ -4,7 +4,7 @@ Atualizado em 08/11/2026. Este documento registra contexto e evidências; confir
 
 ## Última sessão — estado para retomada
 
-- Usuário autorizou um commit do progresso nesta data, incluindo esta memória. Não pediu push neste momento; conferir Git antes de transportar para outro PC.
+- Commit de progresso criado: `113aa4f` — `feat: carrega avaliações pessoais e comunidade do backend`. Usuário autorizou agora o push para `origin/victor`. Esta atualização de memória será enviada em um commit de documentação adicional; conferir o resultado do push no Git ao retomar.
 - Avaliação pessoal agora carrega diretamente nos detalhes pela Home via `loadMyReviewFor()`, reaproveitando o conteúdo aberto. Usuário confirmou funcionamento após corrigir a chave `tipoConteudo` e a condição do botão salvar.
 - Comunidade conectada: busca lista e resumo, guarda no estado, exibe autor/nota/comentário e filtra a avaliação pessoal pelo ID do registro. `_saveReview()` recarrega resumo e comunidade após salvar. Exibição com duas contas ainda exige teste manual.
 - Removidos catch duplicado e erro de texto TMBD; incluídos título da comunidade e singular/plural da contagem.
