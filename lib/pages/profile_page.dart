@@ -7,7 +7,9 @@ import 'login_page.dart';
 import 'my_reviews_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, this.isActive = true});
+
+  final bool isActive;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -25,13 +27,15 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _reviewCount = _fetchReviewCount();
+    _reviewCount = widget.isActive ? _fetchReviewCount() : Future.value(0);
   }
 
   @override
   void didUpdateWidget(covariant ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _reviewCount = _fetchReviewCount();
+    if (widget.isActive && !oldWidget.isActive) {
+      _reviewCount = _fetchReviewCount();
+    }
   }
 
   Future<void> _logout() async {

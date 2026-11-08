@@ -5,6 +5,7 @@ extension AuthService on ApiService {
   static const _sessionKey = 'tv_score_session';
 
   static void _clearAccount() {
+    ApiService._sessionVersion++;
     ApiService.token = null;
     ApiService.userName = '';
     ApiService.userEmail = '';

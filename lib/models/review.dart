@@ -12,4 +12,15 @@ class Review {
   final double rating;
   final String comment;
   final DateTime date;
+
+  factory Review.fromJson(
+    Map<String, dynamic> data,
+    Map<String, String> content,
+  ) => Review(
+    id: (data['id'] as num).toInt(),
+    content: content,
+    rating: (data['nota'] as num).toDouble(),
+    comment: data['comentario'] as String? ?? '',
+    date: DateTime.parse(data['dataCriacao'] as String),
+  );
 }

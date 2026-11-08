@@ -2,12 +2,14 @@ part of 'api_services.dart';
 
 extension FavoritesService on ApiService {
   Future<List<Map<String, dynamic>>> getFavorites() async {
+    final session = ApiService._sessionVersion;
     final response = await dio.get(
       '/favoritos',
       options: Options(
         headers: {'Authorization': 'Bearer ${ApiService.token}'},
       ),
     );
+    ApiService._checkSession(session);
     final dados = response.data as List;
 
     return dados.map((item) {
@@ -18,9 +20,7 @@ extension FavoritesService on ApiService {
   Future<void> addFavourite(Map<String, String> content) async {
     final id = int.tryParse(content['id'] ?? '');
     final type = content['type'];
-  debugPrint(
-  'Favoritando: id=${content['id']}, type=${content['type']}',
-);
+    debugPrint('Favoritando: id=${content['id']}, type=${content['type']}');
     if (id == null) {
       throw ArgumentError('O conteúdo precisa ter um ID válido.');
     }
@@ -28,7 +28,6 @@ extension FavoritesService on ApiService {
     if (type != 'MOVIE' && type != 'TV') {
       throw ArgumentError('Tipo de conteúdo inválido.');
     }
-
 
     try {
       await dio.post(
@@ -58,7 +57,6 @@ extension FavoritesService on ApiService {
       throw ArgumentError('Tipo de conteúdo inválido.');
     }
 
-
     await dio.delete(
       '/favoritos/$id',
       queryParameters: {'tipoConteudo': type},
@@ -69,6 +67,7 @@ extension FavoritesService on ApiService {
   }
 
   Future<void> loadFavorites() async {
+    final session = ApiService._sessionVersion;
     final favorites = await getFavorites();
 
     final contents = await Future.wait(
@@ -77,8 +76,9 @@ extension FavoritesService on ApiService {
 
         final type = favorite['tipoConteudo'] as String;
         return getContent(id, type);
-      })
+      }),
     );
+    ApiService._checkSession(session);
     ApiService.savedContents = contents;
   }
 
@@ -89,9 +89,8 @@ extension FavoritesService on ApiService {
     );
   }
 
-  
-
   Future<void> toggleSaved(Map<String, String> content) async {
+    final session = ApiService._sessionVersion;
     final contents = List<Map<String, String>>.from(ApiService.savedContents);
     if (isSaved(content)) {
       await removeFavourite(content);
@@ -103,6 +102,7 @@ extension FavoritesService on ApiService {
       await addFavourite(content);
       contents.add(content);
     }
+    ApiService._checkSession(session);
     ApiService.savedContents = contents;
   }
 }

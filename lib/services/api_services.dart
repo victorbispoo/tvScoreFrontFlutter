@@ -46,6 +46,13 @@ class ApiService {
   );
 
   static String? token;
+  static int _sessionVersion = 0;
+
+  static void _checkSession(int version) {
+    if (version != _sessionVersion) {
+      throw StateError('A sessão mudou. Entre novamente na sua conta.');
+    }
+  }
 
   // Dados compartilhados entre as páginas do app.
   static String userName = '';
@@ -82,7 +89,9 @@ class ApiService {
     }
 
     final preferences = SharedPreferencesAsync();
-    await preferences.setString('tv_score_library_$userEmail', jsonEncode({'name': nomeTrim}),
+    await preferences.setString(
+      'tv_score_library_$userEmail',
+      jsonEncode({'name': nomeTrim}),
     );
 
     userName = nomeTrim;

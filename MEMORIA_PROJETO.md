@@ -4,6 +4,17 @@ Atualizado em 08/11/2026. Este documento registra contexto e evidências; confir
 
 ## Última sessão — estado para retomada
 
+- **Atualização mais recente: simplificações após concluir avaliações.** Usuário autorizou commit, push em victor e integração/push em main das alterações abaixo. Base anterior: `299e65f`. Manter victor para continuar o trabalho.
+- Proteção de sessão: `_sessionVersion` em ApiService é incrementada ao limpar a conta; consultas e mutações de favoritos/avaliações verificam a versão antes de atualizar estado compartilhado. Respostas antigas geram StateError em vez de repor dados após logout, inclusive com token igual num novo login.
+- `ProfilePage.isActive` informado pelo AppShell: contagem consultada ao entrar no Perfil e ao voltar de Minhas avaliações, sem consulta a cada troca para outra aba.
+- Conversão de conteúdo unificada em `_mapContent()` e de avaliação em `Review.fromJson()`. Preservados mapas, extensions e estado atual; sem nova arquitetura.
+- Resumo e comentários carregam em paralelo via record `.wait`. Textos de ano/gênero/TMDB e nomes longos acomodados com Wrap/Expanded.
+- Removidos arquivos sem referências: `controllers/search_controller.dart`, `models/content.dart`, `widgets/app_page.dart`, `widgets/empty_state.dart`; removida dependência phosphoricons_flutter e atualizado lockfile pelo cache offline.
+- Verificação automática da simplificação: suíte com **32 testes passando**, incluindo respostas pendentes em seis operações, chamadas do Perfil e texto longo em tela estreita; análise sem problemas. A revisão manual dessas últimas simplificações no aparelho ainda não foi realizada pelo assistente. Não confundir com validação manual anterior das avaliações já confirmada pelo usuário.
+- **Nova intenção do usuário: notas por episódio de séries.** Flutter ainda sem integração de episódios. Consultado no GitHub: EpisodioController oferece GET `/series/{id}/episodios/painel`, `/series/{id}/temporadas/{temporada}` e `/series/{id}/temporadas/{temporada}/episodios/{episodio}`; dados incluem notas TMDB, não cadastro de avaliação pessoal. Antes de implementar, esclarecer se quer mostrar nota TMDB ou permitir nota pessoal; pergunta ainda sem resposta. Não houve alteração de código para episódios nem teste das rotas publicadas.
+- A polida visual ampla dos detalhes foi discutida, mas não definida; somente os ajustes pequenos acima foram autorizados e feitos. Recomendações/onde assistir/pesquisa continuam pendentes. Seguir a prioridade que o usuário confirmar na retomada.
+- Os itens antigos abaixo são histórico; em caso de conflito, prevalece esta atualização mais recente.
+
 - **Avaliações concluídas para o escopo do TCC.** Usuário confirmou em 08/11/2026 a validação manual final dos fluxos solicitados, incluindo recuperação, edição, exclusão, comunidade, contagem e contas distintas. Autorizou commit, push da victor e integração/push na main.
 - Contagem remota do Perfil implementada; corrigido o retorno por `mounted` invertido ao voltar da lista. Exclusão bloqueada desde a confirmação até terminar a requisição. Comentário nulo tratado e logs temporários de resposta removidos.
 - Testes antigos atualizados para ausência de persistência local e HTTP simulado exclusivamente nos testes. Suíte completa: **25 testes passando**; `flutter analyze`: **No issues found!**. Esses testes não fazem chamadas ao backend real.
@@ -140,4 +151,4 @@ Não são requisitos: nova arquitetura, modelos para todos os mapas, cache sofis
 
 ## Mensagem para retomar em outro PC
 
-> Leia MEMORIA_PROJETO.md e confira o código local/Git. Quero orientação, sem alterações automáticas. Avaliações do TVScore foram concluídas e validadas. Próximo passo: conferir o contrato atual e integrar recomendações personalizadas reais. Trabalhe uma etapa por vez; não faça commit/push sem eu pedir.
+> Leia MEMORIA_PROJETO.md e confira o código local/Git. Quero orientação, sem alterações automáticas. Avaliações de filmes/séries concluídas; simplificações verificadas automaticamente. Minha intenção mais recente é adicionar notas por episódio: primeiro esclarecer se são notas TMDB ou pessoais. Recomendações, onde assistir e pesquisa ainda pendentes. Trabalhe uma etapa por vez; não faça commit/push sem eu pedir.

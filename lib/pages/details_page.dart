@@ -43,8 +43,10 @@ class _DetailsPageState extends State<DetailsPage> {
     try {
       final id = int.parse(widget.content['id']!);
       final type = widget.content['type']!;
-      final summary = await _api.getContentReviewSummary(id, type);
-      final reviews = await _api.getContentReviews(id, type);
+      final (summary, reviews) = await (
+        _api.getContentReviewSummary(id, type),
+        _api.getContentReviews(id, type),
+      ).wait;
 
       if (!mounted) return;
       setState(() {
@@ -174,14 +176,16 @@ class _DetailsPageState extends State<DetailsPage> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      author == null || author.trim().isEmpty
-                          ? 'Usuário'
-                          : author,
+                    Expanded(
+                      child: Text(
+                        author == null || author.trim().isEmpty
+                            ? 'Usuário'
+                            : author,
+                      ),
                     ),
-                    SizedBox(width: 8,),
+                    SizedBox(width: 8),
                     Text('•'),
-                    SizedBox(width: 8,),
+                    SizedBox(width: 8),
                     const Icon(
                       HugeIconsSolid.star,
                       color: Colors.amber,
@@ -306,10 +310,13 @@ class _DetailsPageState extends State<DetailsPage> {
                       color: Colors.white,
                     ),
                   ),
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        '${content['year']}  •  ${content['genre']}  •  ',
+                        '${content['year']}  •  ${content['genre']}',
                         style: const TextStyle(color: Colors.white70),
                       ),
                       const Icon(
@@ -317,7 +324,6 @@ class _DetailsPageState extends State<DetailsPage> {
                         color: Colors.amber,
                         size: 14,
                       ),
-                      const SizedBox(width: 6),
                       Text('TMDB: ${content['score']}'),
                     ],
                   ),

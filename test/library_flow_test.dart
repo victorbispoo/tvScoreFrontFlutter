@@ -17,6 +17,7 @@ import 'package:tv_score_front_flutter/widgets/content_card.dart';
 import 'support/backend_http.dart';
 
 void main() {
+  late BackendHttp backend;
   TestWidgetsFlutterBinding.ensureInitialized();
   const content = {
     'id': '123',
@@ -35,11 +36,51 @@ void main() {
 
   setUp(() async {
     final previous = HttpOverrides.current;
-    HttpOverrides.global = BackendHttp();
+    backend = BackendHttp();
+    HttpOverrides.global = backend;
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = 'test-token';
     await SharedPreferencesAsync().clear();
     await ApiService().open('jose@teste.com', 'José Silva');
+  });
+
+  testWidgets('detalhes acomoda gênero e autor longos em tela estreita', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final author = List.filled(8, 'Autor de nome longo').join(' ');
+    backend.communityReviews.add({
+      'id': 77,
+      'filmeSerieId': 123,
+      'tipoConteudo': 'MOVIE',
+      'nota': 8.5,
+      'comentario': 'Comentário da comunidade',
+      'nomeUsuario': author,
+      'dataCriacao': '2026-11-08T12:00:00',
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: DetailsPage(
+          content: {
+            ...content,
+            'genre': 'Ficção Científica • Aventura • Mistério • Drama',
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text(author),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(author), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('detalhes permite salvar título, dar nota e comentar', (
@@ -203,8 +244,16 @@ void main() {
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
     expect(find.text('0 títulos salvos'), findsOneWidget);
+    expect(
+      backend.requests.where((path) => path == 'GET /avaliacoes/minhas'),
+      hasLength(1),
+    );
     await tester.tap(find.text('Início'));
     await tester.pumpAndSettle();
+    expect(
+      backend.requests.where((path) => path == 'GET /avaliacoes/minhas'),
+      hasLength(1),
+    );
     await tester.runAsync(() async {
       await ApiService().toggleSaved(content);
       await ApiService().saveReview(content, 9, 'Bom');

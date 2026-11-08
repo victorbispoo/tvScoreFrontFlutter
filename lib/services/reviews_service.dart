@@ -2,6 +2,7 @@ part of 'api_services.dart';
 
 extension ReviewsService on ApiService {
   Future<List<Map<String, dynamic>>> getMyReviews() async {
+    final session = ApiService._sessionVersion;
     final token = ApiService.token;
     if (token == null || token.isEmpty) {
       throw StateError('Entre na sua conta para consultar avaliações.');
@@ -12,6 +13,7 @@ extension ReviewsService on ApiService {
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
+    ApiService._checkSession(session);
     final items = response.data as List;
     return items.map((item) => Map<String, dynamic>.from(item as Map)).toList();
   }
@@ -56,6 +58,7 @@ extension ReviewsService on ApiService {
   }
 
   Future<void> loadMyReviews() async {
+    final session = ApiService._sessionVersion;
     final items = await getMyReviews();
 
     final loadedReviews = await Future.wait(
@@ -65,19 +68,15 @@ extension ReviewsService on ApiService {
         final type = item['tipoConteudo'] as String;
         final content = await getContent(contentId, type);
 
-        return Review(
-          id: (item['id'] as num).toInt(),
-          content: content,
-          rating: (item['nota'] as num).toDouble(),
-          comment: item['comentario'] as String? ?? '',
-          date: DateTime.parse(item['dataCriacao'] as String),
-        );
+        return Review.fromJson(item, content);
       }),
     );
+    ApiService._checkSession(session);
     ApiService.reviews = loadedReviews;
   }
 
   Future<void> loadMyReviewFor(Map<String, String> content) async {
+    final session = ApiService._sessionVersion;
     final contentId = int.parse(content['id']!);
     final type = content['type']!;
     final items = await getMyReviews();
@@ -90,16 +89,11 @@ extension ReviewsService on ApiService {
           item['tipoConteudo'] == type;
 
       if (sameContent) {
-        found = Review(
-          id: (item['id'] as num).toInt(),
-          content: content,
-          rating: (item['nota'] as num).toDouble(),
-          comment: item['comentario'] as String? ?? '',
-          date: DateTime.parse(item['dataCriacao'] as String),
-        );
+        found = Review.fromJson(item, content);
         break;
       }
     }
+    ApiService._checkSession(session);
     final updated = List<Review>.from(ApiService.reviews)
       ..removeWhere(
         (review) =>
@@ -128,6 +122,7 @@ extension ReviewsService on ApiService {
     double rating,
     String comment,
   ) async {
+    final session = ApiService._sessionVersion;
     if (!rating.isFinite || rating < 0 || rating > 10) {
       throw ArgumentError('A nota deve ser de 0 a 10.');
     }
@@ -156,15 +151,10 @@ extension ReviewsService on ApiService {
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
+    ApiService._checkSession(session);
     final data = Map<String, dynamic>.from(response.data as Map);
 
-    final savedReview = Review(
-      id: data['id'] as int,
-      content: content,
-      rating: (data['nota'] as num).toDouble(),
-      comment: data['comentario'] as String? ?? '',
-      date: DateTime.parse(data['dataCriacao'] as String),
-    );
+    final savedReview = Review.fromJson(data, content);
 
     final updatedReviews = List<Review>.from(ApiService.reviews);
     updatedReviews.removeWhere(
@@ -177,6 +167,7 @@ extension ReviewsService on ApiService {
   }
 
   Future<void> deleteReview(Review review) async {
+    final session = ApiService._sessionVersion;
     final id = review.id;
     if (id == null || id <= 0) {
       throw ArgumentError('ID da avaliação inválido.');
@@ -192,6 +183,7 @@ extension ReviewsService on ApiService {
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
+    ApiService._checkSession(session);
     ApiService.reviews = ApiService.reviews
         .where((item) => item.id != id)
         .toList();

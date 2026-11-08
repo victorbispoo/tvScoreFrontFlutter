@@ -42,8 +42,11 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    
-    final pages = [HomePage(), FavoritesPage(), ProfilePage()];
+    final pages = [
+      HomePage(),
+      FavoritesPage(),
+      ProfilePage(isActive: _index == 2),
+    ];
     return Scaffold(
       body: SafeArea(
         child: IndexedStack(index: _index, children: pages),

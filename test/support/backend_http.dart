@@ -7,7 +7,9 @@ import 'package:tv_score_front_flutter/services/api_services.dart';
 
 // Backend em memória exclusivo dos testes: nenhuma chamada de rede real.
 class BackendHttp extends HttpOverrides {
+  final requests = <String>[];
   final reviews = <Map<String, dynamic>>[];
+  final communityReviews = <Map<String, dynamic>>[];
   final favorites = <Map<String, dynamic>>[];
   final catalog = [
     for (var index = 0; index < mockContents.length; index++)
@@ -37,6 +39,7 @@ class BackendHttp extends HttpOverrides {
 
   Object? respond(String method, Uri uri, String body) {
     final path = uri.path.replaceFirst('/api', '');
+    requests.add('$method $path');
     if (path == '/avaliacoes/minhas') return reviews;
     if (path == '/avaliacoes' && method == 'POST') {
       final data = jsonDecode(body) as Map<String, dynamic>;
@@ -65,7 +68,7 @@ class BackendHttp extends HttpOverrides {
     if (path.startsWith('/avaliacoes/filme/') ||
         path.startsWith('/avaliacoes/conteudo/')) {
       final id = int.parse(path.split('/')[3]);
-      final items = reviews
+      final items = [...reviews, ...communityReviews]
           .where(
             (item) =>
                 item['filmeSerieId'] == id &&
