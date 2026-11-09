@@ -1,31 +1,104 @@
 import 'package:flutter/material.dart';
 
 class EpisodeRatingsGrid extends StatelessWidget {
-  const EpisodeRatingsGrid({super.key});
+  const EpisodeRatingsGrid({super.key, required this.seasons});
 
-    static const _ratings = <List<double?>>[
-    [8.2, 9.1, 7.4, 8.6, 9.3],
-    [7.8, 8.5, 6.3, 9.0, 8.7],
-    [9.2, 8.0, 5.8, 7.6, 4.2],
-    [8.6, 9.4, 7.2, 2.0, null],
-  ];
+  final List<Map<String, dynamic>> seasons;
 
-Color _ratingColor(double? rating) {
-  if (rating == null) return const Color(0xFF64748B);
+  Color _ratingColor(double? rating) {
+    if (rating == null) {
+      return const Color(0xFF64748B);
+    }
 
-  if (rating >= 9.0) return const Color(0xFF854DFF);
-  if (rating >= 8.0) return const Color(0xFF008F83);
-  if (rating >= 7.0) return const Color(0xFF638500);
-  if (rating >= 6.0) return const Color.fromARGB(255, 126, 133, 0);
-  if (rating >= 5.0) return const Color(0xFFB87500);
-  if (rating >= 3.0) return const Color(0xFFE05224);
+    final value = rating.clamp(0.0, 10.0).toDouble();
 
-  return const Color(0xFFD52250);
-}
+    // Cor exclusiva para obras-primas
+    if (value >= 9.5) {
+      return const Color(0xFF8B3DFF);
+    }
 
+    // Pontos de referência do gradiente
+    const stops = <(double, Color)>[
+      (0.0, Color(0xFFC62845)),
+      (3.0, Color(0xFFDC4934)),
+      (5.0, Color(0xFFD97706)),
+      (6.0, Color(0xFFB59B00)),
+      (7.0, Color(0xFF77A519)),
+      (8.0, Color(0xFF24A366)),
+      (9.5, Color(0xFF008F76)),
+    ];
+
+    for (int i = 0; i < stops.length - 1; i++) {
+      final (startValue, startColor) = stops[i];
+      final (endValue, endColor) = stops[i + 1];
+
+      if (value <= endValue) {
+        final t = (value - startValue) / (endValue - startValue);
+
+        return Color.lerp(startColor, endColor, t)!;
+      }
+    }
+
+    return stops.last.$2;
+  }
+
+  Widget _buildCell(
+    Map<String, dynamic>? episode,
+    int seasonNumber,
+    int episodeNumber,
+  ) {
+    if (episode == null) return const SizedBox(height: 52);
+
+    final votes = (episode['vote_count'] as num?)?.toInt() ?? 0;
+    final value = (episode['vote_average'] as num?)?.toDouble();
+    final rating =
+        votes > 0 &&
+            value != null &&
+            value.isFinite &&
+            value >= 0 &&
+            value <= 10
+        ? value
+        : null;
+
+    return Container(
+      height: 44,
+      margin: const EdgeInsets.all(4),
+      alignment: .center,
+      decoration: BoxDecoration(
+        color: _ratingColor(rating),
+        borderRadius: .circular(8),
+      ),
+      child: Text(
+        rating?.toStringAsFixed(1) ?? '-',
+        style: const TextStyle(color: Colors.white, fontWeight: .bold),
+        semanticsLabel:
+            'Temporada $seasonNumber, episódio $episodeNumber: '
+            '${rating?.toStringAsFixed(1) ?? 'sem nota'}',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final episodesBySeason = seasons.map((season) {
+      final episodes = season['episodes'] as List? ?? [];
+
+      return <int, Map<String, dynamic>>{
+        for (final item in episodes)
+          (item['episode_number'] as num).toInt(): Map<String, dynamic>.from(
+            item as Map,
+          ),
+      };
+    }).toList();
+
+    final episodeNumbers =
+        episodesBySeason.expand((episodes) => episodes.keys).toSet().toList()
+          ..sort();
+
+    if (episodeNumbers.isEmpty) {
+      return const Text('Episódios não disponíveis');
+    }
+
     return Column(
       crossAxisAlignment: .start,
       children: [
@@ -33,7 +106,7 @@ Color _ratingColor(double? rating) {
           'Notas dos episódios',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 16,),
+        const SizedBox(height: 16),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Table(
@@ -42,48 +115,75 @@ Color _ratingColor(double? rating) {
             children: [
               TableRow(
                 children: [
-                  const SizedBox(height: 36,),
-                  for(var season =1; season <=5; season++)
-                  Center(child: Text('T$season'),)
-                ]
+                  const SizedBox(height: 36),
+                  for (final season in seasons)
+                    Center(child: Text('T${season['season_number']}')),
+                ],
               ),
-              for(var episode = 0; episode <_ratings.length; episode++)
-              TableRow(
-                children: [
-                  Text('E${episode+1}',
-                  style: const TextStyle(color: Colors.white60),
-                  ),
-                  for(var season = 0; season < 5; season++)
-                  Container(
-                    height: 44,
-                    margin: const EdgeInsets.all(4),
-                    alignment: .center,
-                    decoration: BoxDecoration(
-                      color: _ratingColor(_ratings[episode][season]),
-                      borderRadius: .circular(8),
+              for (final number in episodeNumbers)
+                TableRow(
+                  children: [
+                    Text(
+                      'E$number',
+                      style: const TextStyle(color: Colors.white60),
                     ),
-                    child: Text(
-                      _ratings[episode][season]?.toStringAsFixed(1) ?? '-',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: .bold,
+                    for (var index = 0; index < seasons.length; index++)
+                      _buildCell(
+                        episodesBySeason[index][number],
+                        (seasons[index]['season_number'] as num).toInt(),
+                        number,
                       ),
-                      semanticsLabel: 
-                      'Temporada ${season + 1}, '
-                      'episódio ${episode + 1}: '
-                      '${_ratings[episode][season] ?? 'sem nota'}'
-                    ),
-                  )
-                ]
-              )
+                  ],
+                ),
             ],
           ),
         ),
-        const SizedBox(height: 10,),
-        const Text(
-          '9+ Excelente • 8+ Ótimo • 7+ Bom\n'
-          '6+ Regular • Abaixo de 6 Baixo • Cinza: sem nota',
-          style: TextStyle(fontSize: 12, color: Colors.white60),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 16,
+          runSpacing: 10,
+          children: [
+            for (final item in [
+              (9.5, 'Obra-prima'),
+              (9.0, 'Excepcional'),
+              (8.0, 'Excelente'),
+              (7.0, 'Muito bom'),
+              (6.0, 'Bom'),
+              (5.0, 'Regular'),
+              (3.0, 'Fraco'),
+              (0.0, 'Horrível'),
+            ])
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _ratingColor(item.$1),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(item.$2, style: const TextStyle(fontSize: 12)),
+                ],
+              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: _ratingColor(null),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text('Sem nota', style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          ],
         ),
       ],
     );

@@ -160,7 +160,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('busca encontra títulos e gêneros sem acento e abre detalhes', (
+  testWidgets('busca consulta backend após pausa e permite limpar', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -170,22 +170,37 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'ficcao');
+    expect(backend.requests, isEmpty);
+    expect(find.text('Digite o nome de um filme ou série.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'ava');
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(backend.requests, isEmpty);
+
+    await tester.enterText(find.byType(TextField), 'avatar');
+    await tester.pump(const Duration(milliseconds: 399));
+    expect(backend.requests, isEmpty);
+    await tester.pump(const Duration(milliseconds: 1));
     await tester.pumpAndSettle();
+    expect(backend.requests, ['GET /filmes/pesquisar']);
     expect(find.text('Avatar: O Caminho da Água'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'stranger');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stranger Things'));
-    await tester.pumpAndSettle();
-    expect(find.byType(DetailsPage), findsOneWidget);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+
     await tester.enterText(find.byType(TextField), 'titulo inexistente');
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     expect(
-      find.text('Nenhum título encontrado. Tente outro nome ou gênero.'),
+      find.text('Nenhum título encontrado. Tente outro nome.'),
       findsOneWidget,
     );
+
+    final requestCount = backend.requests.length;
+    await tester.enterText(find.byType(TextField), 'stranger');
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.tap(find.byTooltip('Limpar busca'));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(backend.requests, hasLength(requestCount));
+    expect(find.text('Digite o nome de um filme ou série.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

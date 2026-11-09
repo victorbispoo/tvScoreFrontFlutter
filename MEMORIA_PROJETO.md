@@ -1,3 +1,18 @@
+## Retomada e commit local — 2026-11-09
+
+Esta atualização prevalece sobre os registros históricos abaixo.
+
+- Branch de trabalho: victor. Usuário solicitou commit local do progresso desta sessão; não autorizou push nem integração na main nesta solicitação.
+- Episódios: getEpisodePanel() consulta GET /series/{id}/episodios/painel. DetailsPage carrega somente para TV, com carregamento, erro e nova tentativa. EpisodeRatingsGrid recebe temporadas reais, usa season_number/episode_number e vote_average/vote_count, diferencia episódio ausente de episódio sem votos e inclui legenda com bolinhas. A versão local do usuário usa gradiente de cores e roxo a partir de 9,5; foi preservada.
+- Usuário confirmou recebimento de duas temporadas no aparelho. Foram corrigidos na orientação a chave vote_count com espaço indevido e o número do episódio somado duas vezes. Validação manual completa do grid/legenda e da pesquisa ainda não foi confirmada pelo usuário.
+- Pesquisa: searchContents() consulta GET /filmes/pesquisar?q=...&pagina=..., que no serviço Java usa /search/multi e retorna filmes e séries com tipoConteudo MOVIE/TV. Resposta inclui results, page e total_pages; reutiliza _mapContent().
+- SearchPage agora pesquisa por título no backend após 400 ms sem digitação, ignora respostas antigas por versão, cancela o timer ao limpar/sair e trata vazio, erro e nova tentativa. Não baixa destaques ao abrir e não filtra mais por gênero localmente.
+- Teste de pesquisa e fixture HTTP atualizados para o novo contrato, incluindo pausa de digitação e limpeza antes do envio. Verificação anterior ao commit: flutter test --no-pub --dart-define=USE_MOCK_MOVIES=true, 32 testes passando; flutter analyze --no-pub, sem problemas. Testes usam HTTP simulado; não certificam backend publicado nem dispositivo.
+- Próximo passo combinado: adicionar Carregar mais na pesquisa (tela usa apenas página 1; serviço já recebe página) e otimizar catálogo da Home por seções/páginas pequenas. Home permanece usando em-alta para formar todas as seções. Recomendações, onde assistir e documentação continuam pendentes.
+- Excluídos deste commit e preservados localmente: pubspec.lock (quatro versões transitivas menores já presentes desde o pull) e api_services.dart (somente BOM/codificação). Não descartar essas alterações automaticamente.
+- Continuar orientando uma etapa por vez. Editar diretamente quando o usuário pedir, como ocorreu com a SearchPage. Não fazer commit/push/merge futuros sem pedido.
+
+
 ## Latest publication decision - 2026-11-08
 
 User explicitly authorized including the unfinished episode grid draft in the componentization commit and pushing ONLY victor. This overrides the earlier instruction below to exclude the grid. The grid uses hardcoded sample ratings, has no backend integration, and remains unfinished for tomorrow. Previous componentization checks: 32 tests passed and analysis was clean before the user added this grid draft; the draft has not been verified. Main must not be updated.

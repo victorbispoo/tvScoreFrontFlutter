@@ -101,6 +101,20 @@ class BackendHttp extends HttpOverrides {
       );
       return null;
     }
+    if (path == '/filmes/pesquisar') {
+      final term = (uri.queryParameters['q'] ?? '').toLowerCase();
+      return {
+        'results': catalog
+            .where((item) => item['title']!.toLowerCase().contains(term))
+            .map(details)
+            .toList(),
+        'page': 1,
+        'total_pages': 1,
+        'total_results': catalog
+            .where((item) => item['title']!.toLowerCase().contains(term))
+            .length,
+      };
+    }
     if (path.endsWith('/em-alta')) {
       final type = path.startsWith('/filmes') ? 'MOVIE' : 'TV';
       return {

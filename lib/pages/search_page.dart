@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:tv_score_front_flutter/core/app_theme.dart';
 
@@ -14,38 +16,66 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage>
     with AutomaticKeepAliveClientMixin {
   final _query = TextEditingController();
-  late Future<List<Map<String, String>>> _catalog;
+  final _api = ApiService();
 
-  @override
-  void initState() {
-    super.initState();
-    _catalog = ApiService().getHighlights();
-  }
+  Timer? _debounce;
+  int _searchVersion = 0;
+  bool _loading = false;
+  String? _error;
+  List<Map<String, String>> _results = [];
 
   @override
   bool get wantKeepAlive => true;
-  @override
-  void dispose() {
-    _query.dispose();
-    super.dispose();
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    final version = ++_searchVersion;
+    final term = value.trim();
+
+    setState(() {
+      _results = [];
+      _error = null;
+      _loading = term.isNotEmpty;
+    });
+
+    if (term.isEmpty) return;
+
+    _debounce = Timer(
+      const Duration(milliseconds: 400),
+      () => _search(term, version),
+    );
   }
 
-  String _normalize(String value) {
-    var result = value.toLowerCase().trim();
-    const groups = {
-      'a': 'áàâãä',
-      'e': 'éèêë',
-      'i': 'íìîï',
-      'o': 'óòôõö',
-      'u': 'úùûü',
-      'c': 'ç',
-    };
-    groups.forEach((letter, accents) {
-      for (final accent in accents.split('')) {
-        result = result.replaceAll(accent, letter);
+  Future<void> _search(String term, int version) async {
+    try {
+      final result = await _api.searchContents(term);
+
+      if (!mounted || version != _searchVersion) return;
+
+      setState(() {
+        _results = result.contents;
+      });
+    } catch (error) {
+      if (!mounted || version != _searchVersion) return;
+      debugPrint('Falha na pesquisa: $error');
+
+      setState(() {
+        _error = 'Não foi possível pesquisar. Tente novamente.';
+      });
+    } finally {
+      if (mounted && version == _searchVersion) {
+        setState(() {
+          _loading = false;
+        });
       }
-    });
-    return result;
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _query.dispose();
+    super.dispose();
   }
 
   @override
@@ -73,49 +103,54 @@ class _SearchPageState extends State<SearchPage>
               const SizedBox(height: 24),
               TextField(
                 controller: _query,
-                onChanged: (_) => setState(() {}),
+                onChanged: _onQueryChanged,
                 decoration: InputDecoration(
-                  hintText: 'Busque por título ou gênero...',
+                  hintText: 'Busque por título...',
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _query.text.isEmpty
                       ? null
                       : IconButton(
                           tooltip: 'Limpar busca',
-                          onPressed: () => setState(_query.clear),
+                          onPressed: () {
+                            _query.clear();
+                            _onQueryChanged('');
+                          },
                           icon: const Icon(Icons.close),
                         ),
                 ),
               ),
               const SizedBox(height: 20),
               Expanded(
-                child: FutureBuilder<List<Map<String, String>>>(
-                  future: _catalog,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
+                child: Builder(
+                  builder: (context) {
+                    if (_query.text.trim().isEmpty) {
+                      return const Center(
+                        child: Text('Digite o nome de um filme ou série.'),
+                      );
+                    }
+                    if (_loading) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    if (snapshot.hasError) {
+                    if (_error != null) {
                       return Center(
-                        child: FilledButton(
-                          onPressed: () => setState(
-                            () => _catalog = ApiService().getHighlights(),
-                          ),
-                          child: const Text('Tentar novamente'),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_error!, textAlign: TextAlign.center),
+                            const SizedBox(height: 12),
+                            FilledButton(
+                              onPressed: () => _onQueryChanged(_query.text),
+                              child: const Text('Tentar novamente'),
+                            ),
+                          ],
                         ),
                       );
                     }
-                    final query = _normalize(_query.text);
-                    final results = (snapshot.data ?? [])
-                        .where(
-                          (content) => _normalize(
-                            '${content['title']} ${content['genre']}',
-                          ).contains(query),
-                        )
-                        .toList();
+                    final results = _results;
                     if (results.isEmpty) {
                       return const Center(
                         child: Text(
-                          'Nenhum título encontrado. Tente outro nome ou gênero.',
+                          'Nenhum título encontrado. Tente outro nome.',
                           textAlign: TextAlign.center,
                         ),
                       );

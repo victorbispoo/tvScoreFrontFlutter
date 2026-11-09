@@ -26,6 +26,9 @@ class _DetailsPageState extends State<DetailsPage> {
   bool _loadingMyReview = true;
   String? _myReviewError;
   List<Map<String, dynamic>> _communityReviews = [];
+  Map<String, dynamic>? _episodePanel;
+  bool _loadingEpisodes = false;
+  String? _episodesError;
 
   @override
   void initState() {
@@ -34,6 +37,41 @@ class _DetailsPageState extends State<DetailsPage> {
     _comment = TextEditingController();
     _loadMyReview();
     _checkCommunityReviews();
+    if (widget.content['type'] == 'TV') {
+      _loadEpisodes();
+    }
+  }
+
+  Future<void> _loadEpisodes() async {
+    setState(() {
+      _loadingEpisodes = true;
+      _episodesError = null;
+    });
+
+    try {
+      final id = int.parse(widget.content['id']!);
+      final panel = await _api.getEpisodePanel(id);
+
+      if (!mounted) return;
+
+      setState(() {
+        _episodePanel = panel;
+      });
+    } catch (error) {
+      debugPrint('Falha ao carregar episódios: $error');
+
+      if (!mounted) return;
+
+      setState(() {
+        _episodesError = 'Não foi possivel carregar os episódios';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingEpisodes = false;
+        });
+      }
+    }
   }
 
   Future<void> _checkCommunityReviews() async {
@@ -280,14 +318,34 @@ class _DetailsPageState extends State<DetailsPage> {
                           : 'Adicionar aos favoritos',
                     ),
                   ),
-                  
+
                   if (content['type'] == 'TV') ...[
                     const SizedBox(height: 24),
-                    const EpisodeRatingsGrid(),
+
+                    if (_loadingEpisodes)
+                      const LinearProgressIndicator()
+                    else if (_episodesError != null)
+                      Column(
+                        crossAxisAlignment: .start,
+                        children: [
+                          Text(_episodesError!),
+                          TextButton(
+                            onPressed: _loadEpisodes,
+                            child: Text('Tentar Novamente'),
+                          ),
+                        ],
+                      )
+                    else
+                      EpisodeRatingsGrid(
+                        seasons: (_episodePanel?['temporadas'] as List? ?? [])
+                            .map(
+                              (item) => Map<String, dynamic>.from(item as Map),
+                            )
+                            .toList(),
+                      ),
                     const SizedBox(height: 24),
-                  ]
-                  else
-                  const SizedBox(height: 24),
+                  ] else
+                    const SizedBox(height: 24),
 
                   if (_loadingMyReview)
                     const LinearProgressIndicator()
