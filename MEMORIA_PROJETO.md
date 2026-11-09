@@ -1,3 +1,11 @@
+## Autorização de push — 2026-11-09
+
+- Usuário autorizou agora o push de victor para origin/victor, incluindo o commit 2badeb2 (episódios e pesquisa) e este commit adicional de memória. Esta autorização supera a anotação de commit somente local abaixo; main continua fora do escopo.
+- Verificação do código antes do commit 2badeb2: 32 testes passando e flutter analyze sem problemas. Nenhuma alteração de código desde essa verificação.
+- Paginação da pesquisa e otimização do catálogo da Home seguem como próximos passos. Alterações locais de pubspec.lock e BOM de api_services.dart continuam preservadas e fora dos commits.
+- Este registro documenta o envio autorizado; conferir o resultado do push e a sincronização no Git ao retomar.
+
+
 ## Retomada e commit local — 2026-11-09
 
 Esta atualização prevalece sobre os registros históricos abaixo.
