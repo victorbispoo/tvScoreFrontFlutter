@@ -1,3 +1,10 @@
+## Autorização de integração na main — 2026-11-10
+
+- Usuário autorizou integrar e enviar o trabalho da victor para main, incluindo o README b9825f9, a refatoração 5947f2a e os registros de memória. Esta autorização supera as restrições de main nas seções históricas abaixo.
+- origin/main é ancestral de victor após git fetch; integração pode ocorrer por avanço direto. A branch victor permanece como branch de trabalho.
+- Código validado com 48 testes passando e dart analyze sem problemas; nenhuma alteração de código desde a validação. Próximos passos e limitações permanecem registrados abaixo.
+- pubspec.lock, .agents/ e skills-lock.json continuam fora dos commits e do envio. Conferir a sincronização de victor/main no Git ao retomar.
+
 ## Autorização de push da refatoração — 2026-11-10
 
 - Usuário autorizou o push da branch victor, incluindo 5947f2a (refatoração, pesquisa, gêneros e episódios) e este registro de memória. Esta autorização supera a restrição de commit somente local da seção seguinte. Não inclui nova integração ou push na main.
