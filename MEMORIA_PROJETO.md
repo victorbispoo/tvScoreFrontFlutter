@@ -1,3 +1,10 @@
+## Autorização de push da refatoração — 2026-11-10
+
+- Usuário autorizou o push da branch victor, incluindo 5947f2a (refatoração, pesquisa, gêneros e episódios) e este registro de memória. Esta autorização supera a restrição de commit somente local da seção seguinte. Não inclui nova integração ou push na main.
+- Validação do código: 48 testes passando e dart analyze sem problemas, sem alterações de código desde essa verificação.
+- Próximos passos e limites de validação permanecem na seção de refatoração abaixo: validar paginação no dispositivo e seu feedback de carregamento, otimizar catálogo da Home e integrar recomendações/onde assistir.
+- pubspec.lock, .agents/ e skills-lock.json continuam preservados localmente e fora do envio. Conferir o resultado do push no Git ao retomar.
+
 ## Refatoração e commit local — 2026-11-10
 
 Esta atualização prevalece sobre os registros históricos abaixo.
