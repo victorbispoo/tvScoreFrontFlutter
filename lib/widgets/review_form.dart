@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/review.dart';
+
 class ReviewForm extends StatelessWidget {
   const ReviewForm({
     super.key,
@@ -34,9 +36,9 @@ class ReviewForm extends StatelessWidget {
       ),
       Slider(
         value: rating,
-        min: 0,
-        max: 10,
-        divisions: 20,
+        min: Review.minRating,
+        max: Review.maxRating,
+        divisions: Review.ratingDivisions,
         label: '$rating',
         onChanged: enabled ? onRatingChanged : null,
       ),

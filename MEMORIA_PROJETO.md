@@ -1,3 +1,20 @@
+## Refatoração e commit local — 2026-11-10
+
+Esta atualização prevalece sobre os registros históricos abaixo.
+
+- Usuário solicitou commit local do trabalho na branch victor. Não há autorização de push ou nova integração na main nesta solicitação. O envio anterior para main, até 1beefd9, foi autorizado e concluído nesta conversa; o README foi atualizado depois no commit b9825f9.
+- Executada a skill untangle-codebase com refatoração, limpeza de comentários e revisão de testes autorizadas. Decisões e limites em docs/refactoring/2026-11-10-untangle.md.
+- Metadados de conteúdo centralizados em models/content_metadata.dart: identidade por ID + tipo, validação da referência, conversão de gêneros e gênero principal. Cards e detalhes exibem apenas o primeiro gênero; filtros da Home consideram todos os IDs.
+- Confirmado no código Java e na API publicada: pesquisa e detalhes retornam genres como lista de nomes, sem genre_ids; listagens continuam aceitando IDs. Categorias de séries reconhecidas e traduzidas.
+- Episódios: seletor de temporada e grid responsivo sem linhas vazias de outras temporadas. Número do episódio e nota no mesmo quadrado. Cores locais do usuário preservadas. Carregamento, erro e nova tentativa isolados em EpisodePanel; pôster separado em ContentPoster para remover dependência da navegação dos cards.
+- Pesquisa: paginação automática ao chegar perto do fim, debounce de 400 ms e proteção contra respostas antigas preservados. Evita pedidos simultâneos e duplicatas por ID + tipo. Falha interrompe tentativas automáticas e permite nova tentativa pela mensagem. Limite de 500 páginas centralizado em ApiService.maxSearchPage. Indicador de carregamento adicional no rodapé e validação manual completa da paginação continuam pendentes.
+- Navegação de login/logout usa AppRoutes para remover ciclo de imports com main.dart. AuthTextField não tem mais herança pass-through. RegisterController mantém somente campos/regras de formulário, sem notificações sem ouvintes; o envio continua na página. LoginController não notifica após descarte.
+- Autorização HTTP, substituição de avaliação em memória e intervalo de notas foram unificados. Campos static e mapas permanecem como contratos atuais; proteção contra respostas de outra sessão preservada.
+- Validação final anterior ao commit: dart analyze sem problemas; flutter test --no-pub com 48 testes passando; diff sem erros de whitespace; grafo de imports locais sem ciclos. Não houve nova validação manual no emulador após esta refatoração.
+- O README foi redigido a pedido do usuário como apresentação do escopo completo. Isso não certifica que recomendações personalizadas, onde assistir e todos os filtros estejam implementados. Próximos trabalhos: concluir validação/feedback da pesquisa, otimizar as seções da Home e integrar recomendações/onde assistir com contratos atuais.
+- Preservados fora do commit: pubspec.lock (alterações transitivas preexistentes), .agents/skills/untangle-codebase/ e skills-lock.json (instalação local da ferramenta). Não descartar automaticamente.
+- Continuar explicando uma etapa por vez quando o usuário pedir orientação. Editar diretamente quando ele autorizar. Não fazer push/merge sem pedido.
+
 ## Autorização de push — 2026-11-09
 
 - Usuário autorizou agora o push de victor para origin/victor, incluindo o commit 2badeb2 (episódios e pesquisa) e este commit adicional de memória. Esta autorização supera a anotação de commit somente local abaixo; main continua fora do escopo.

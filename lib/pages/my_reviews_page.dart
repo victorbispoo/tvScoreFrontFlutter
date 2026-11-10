@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/review.dart';
 import '../services/api_services.dart';
-import '../widgets/content_card.dart';
+import '../widgets/content_poster.dart';
 import 'details_page.dart';
 
 class MyReviewsPage extends StatefulWidget {
@@ -54,7 +54,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
       context,
       MaterialPageRoute(builder: (_) => DetailsPage(content: review.content)),
     );
-    // Atualiza a lista depois de voltar da tela de detalhes.
+
     if (mounted) setState(() {});
   }
 

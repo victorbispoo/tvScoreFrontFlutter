@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tv_score_front_flutter/core/app_theme.dart';
 
+import '../models/content_metadata.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
 
@@ -17,15 +18,32 @@ class _SearchPageState extends State<SearchPage>
     with AutomaticKeepAliveClientMixin {
   final _query = TextEditingController();
   final _api = ApiService();
-
+  final _scrollController = ScrollController();
+  bool _loadMoreFailed = false;
   Timer? _debounce;
   int _searchVersion = 0;
   bool _loading = false;
+  bool _loadingMore = false;
+  int _currentPage = 0;
+  int _totalPages = 0;
   String? _error;
   List<Map<String, String>> _results = [];
 
   @override
   bool get wantKeepAlive => true;
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients || _loadMoreFailed) return;
+
+    if (_scrollController.position.extentAfter <= 300) {
+      _loadMore();
+    }
+  }
 
   void _onQueryChanged(String value) {
     _debounce?.cancel();
@@ -33,9 +51,13 @@ class _SearchPageState extends State<SearchPage>
     final term = value.trim();
 
     setState(() {
+      _loadMoreFailed = false;
       _results = [];
       _error = null;
       _loading = term.isNotEmpty;
+      _loadingMore = false;
+      _currentPage = 0;
+      _totalPages = 0;
     });
 
     if (term.isEmpty) return;
@@ -54,6 +76,8 @@ class _SearchPageState extends State<SearchPage>
 
       setState(() {
         _results = result.contents;
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
       });
     } catch (error) {
       if (!mounted || version != _searchVersion) return;
@@ -71,9 +95,73 @@ class _SearchPageState extends State<SearchPage>
     }
   }
 
+  Future<void> _loadMore() async {
+    if (_loading || _loadingMore || _currentPage == 0) return;
+    if (_currentPage >= _totalPages ||
+        _currentPage >= ApiService.maxSearchPage) {
+      return;
+    }
+
+    final term = _query.text.trim();
+    if (term.isEmpty) return;
+
+    final version = _searchVersion;
+    final nextPage = _currentPage + 1;
+
+    setState(() {
+      _loadingMore = true;
+      _loadMoreFailed = false;
+    });
+
+    try {
+      final result = await _api.searchContents(term, page: nextPage);
+
+      if (!mounted || version != _searchVersion) return;
+
+      setState(() {
+        final existing = _results.map((content) => content.contentKey).toSet();
+
+        for (final content in result.contents) {
+          if (existing.add(content.contentKey)) {
+            _results.add(content);
+          }
+        }
+
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
+      });
+    } catch (error) {
+      if (!mounted || version != _searchVersion) return;
+
+      debugPrint('Falha ao carregar mais resultados: $error');
+
+      setState(() {
+        _loadMoreFailed = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Não foi possível carregar mais resultados.'),
+          duration: const Duration(seconds: 10),
+          action: SnackBarAction(
+            label: 'Tentar novamente',
+            onPressed: _loadMore,
+          ),
+        ),
+      );
+    } finally {
+      if (mounted && version == _searchVersion) {
+        setState(() {
+          _loadingMore = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollController.dispose();
     _query.dispose();
     super.dispose();
   }
@@ -164,6 +252,7 @@ class _SearchPageState extends State<SearchPage>
                             columns;
 
                         return GridView.builder(
+                          controller: _scrollController,
                           keyboardDismissBehavior:
                               ScrollViewKeyboardDismissBehavior.onDrag,
                           gridDelegate:

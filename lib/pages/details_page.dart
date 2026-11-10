@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:tv_score_front_flutter/widgets/episode_ratings_grid.dart';
+
+import '../models/content_metadata.dart';
+import '../models/review.dart';
 import '../services/api_services.dart';
 import '../widgets/community_review_card.dart';
 import '../widgets/content_header.dart';
+import '../widgets/episode_panel.dart';
 import '../widgets/review_form.dart';
 
 class DetailsPage extends StatefulWidget {
@@ -26,10 +29,6 @@ class _DetailsPageState extends State<DetailsPage> {
   bool _loadingMyReview = true;
   String? _myReviewError;
   List<Map<String, dynamic>> _communityReviews = [];
-  Map<String, dynamic>? _episodePanel;
-  bool _loadingEpisodes = false;
-  String? _episodesError;
-
   @override
   void initState() {
     super.initState();
@@ -37,41 +36,6 @@ class _DetailsPageState extends State<DetailsPage> {
     _comment = TextEditingController();
     _loadMyReview();
     _checkCommunityReviews();
-    if (widget.content['type'] == 'TV') {
-      _loadEpisodes();
-    }
-  }
-
-  Future<void> _loadEpisodes() async {
-    setState(() {
-      _loadingEpisodes = true;
-      _episodesError = null;
-    });
-
-    try {
-      final id = int.parse(widget.content['id']!);
-      final panel = await _api.getEpisodePanel(id);
-
-      if (!mounted) return;
-
-      setState(() {
-        _episodePanel = panel;
-      });
-    } catch (error) {
-      debugPrint('Falha ao carregar episódios: $error');
-
-      if (!mounted) return;
-
-      setState(() {
-        _episodesError = 'Não foi possivel carregar os episódios';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loadingEpisodes = false;
-        });
-      }
-    }
   }
 
   Future<void> _checkCommunityReviews() async {
@@ -81,11 +45,10 @@ class _DetailsPageState extends State<DetailsPage> {
     });
 
     try {
-      final id = int.parse(widget.content['id']!);
-      final type = widget.content['type']!;
+      final reference = widget.content.apiReference;
       final (summary, reviews) = await (
-        _api.getContentReviewSummary(id, type),
-        _api.getContentReviews(id, type),
+        _api.getContentReviewSummary(reference.id, reference.type),
+        _api.getContentReviews(reference.id, reference.type),
       ).wait;
 
       if (!mounted) return;
@@ -120,7 +83,7 @@ class _DetailsPageState extends State<DetailsPage> {
       final review = _api.reviewFor(widget.content);
       final rating = review?.rating ?? 8.0;
 
-      if (!rating.isFinite || rating < 0 || rating > 10) {
+      if (!Review.isValidRating(rating)) {
         throw const FormatException(
           'A nota salva está fora do intervalo do formulário.',
         );
@@ -264,7 +227,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        '${content['year']}  •  ${content['genre']}',
+                        '${content['year']}  •  ${content.primaryGenre}',
                         style: const TextStyle(color: Colors.white70),
                       ),
                       const Icon(
@@ -321,32 +284,9 @@ class _DetailsPageState extends State<DetailsPage> {
 
                   if (content['type'] == 'TV') ...[
                     const SizedBox(height: 24),
-
-                    if (_loadingEpisodes)
-                      const LinearProgressIndicator()
-                    else if (_episodesError != null)
-                      Column(
-                        crossAxisAlignment: .start,
-                        children: [
-                          Text(_episodesError!),
-                          TextButton(
-                            onPressed: _loadEpisodes,
-                            child: Text('Tentar Novamente'),
-                          ),
-                        ],
-                      )
-                    else
-                      EpisodeRatingsGrid(
-                        seasons: (_episodePanel?['temporadas'] as List? ?? [])
-                            .map(
-                              (item) => Map<String, dynamic>.from(item as Map),
-                            )
-                            .toList(),
-                      ),
-                    const SizedBox(height: 24),
-                  ] else
-                    const SizedBox(height: 24),
-
+                    EpisodePanel(seriesId: int.parse(content['id']!)),
+                  ],
+                  const SizedBox(height: 24),
                   if (_loadingMyReview)
                     const LinearProgressIndicator()
                   else if (_myReviewError != null)

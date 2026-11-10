@@ -10,7 +10,7 @@ extension ReviewsService on ApiService {
 
     final response = await dio.get(
       '/avaliacoes/minhas',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: _authorizationOptions,
     );
 
     ApiService._checkSession(session);
@@ -22,16 +22,12 @@ extension ReviewsService on ApiService {
     int contentId,
     String type,
   ) async {
-    if (contentId <= 0 || (type != 'MOVIE' && type != 'TV')) {
-      throw ArgumentError('Conteúdo inválido');
-    }
+    requireContentReference(contentId, type);
 
     final response = await dio.get(
       '/avaliacoes/filme/$contentId',
       queryParameters: {'tipoConteudo': type},
-      options: Options(
-        headers: {'Authorization': 'Bearer ${ApiService.token}'},
-      ),
+      options: _authorizationOptions,
     );
 
     final items = response.data as List;
@@ -42,16 +38,12 @@ extension ReviewsService on ApiService {
     int contentId,
     String type,
   ) async {
-    if (contentId <= 0 || (type != 'MOVIE' && type != 'TV')) {
-      throw ArgumentError('Conteúdo inválido');
-    }
+    requireContentReference(contentId, type);
 
     final response = await dio.get(
       '/avaliacoes/conteudo/$contentId/resumo',
       queryParameters: {'tipoConteudo': type},
-      options: Options(
-        headers: {'Authorization': 'Bearer ${ApiService.token}'},
-      ),
+      options: _authorizationOptions,
     );
 
     return Map<String, dynamic>.from(response.data as Map);
@@ -77,16 +69,15 @@ extension ReviewsService on ApiService {
 
   Future<void> loadMyReviewFor(Map<String, String> content) async {
     final session = ApiService._sessionVersion;
-    final contentId = int.parse(content['id']!);
-    final type = content['type']!;
+    final reference = content.apiReference;
     final items = await getMyReviews();
 
     Review? found;
 
     for (final item in items) {
       final sameContent =
-          (item['filmeSerieId'] as num).toInt() == contentId &&
-          item['tipoConteudo'] == type;
+          (item['filmeSerieId'] as num).toInt() == reference.id &&
+          item['tipoConteudo'] == reference.type;
 
       if (sameContent) {
         found = Review.fromJson(item, content);
@@ -94,23 +85,19 @@ extension ReviewsService on ApiService {
       }
     }
     ApiService._checkSession(session);
-    final updated = List<Review>.from(ApiService.reviews)
-      ..removeWhere(
-        (review) =>
-            review.content['id'] == content['id'] &&
-            review.content['type'] == type,
-      );
+    _replaceReviewFor(content, found);
+  }
 
-    if (found != null) {
-      updated.add(found);
-    }
+  void _replaceReviewFor(Map<String, String> content, Review? review) {
+    final updated = List<Review>.from(ApiService.reviews)
+      ..removeWhere((item) => item.content.contentKey == content.contentKey);
+    if (review != null) updated.add(review);
     ApiService.reviews = updated;
   }
 
   Review? reviewFor(Map<String, String> content) {
     for (final review in ApiService.reviews) {
-      if (review.content['id'] == content['id'] &&
-          review.content['type'] == content['type']) {
+      if (review.content.contentKey == content.contentKey) {
         return review;
       }
     }
@@ -123,17 +110,10 @@ extension ReviewsService on ApiService {
     String comment,
   ) async {
     final session = ApiService._sessionVersion;
-    if (!rating.isFinite || rating < 0 || rating > 10) {
+    if (!Review.isValidRating(rating)) {
       throw ArgumentError('A nota deve ser de 0 a 10.');
     }
-    final contentId = int.tryParse(content['id'] ?? '');
-    final contentType = content['type'];
-    if (contentId == null || contentId <= 0) {
-      throw ArgumentError('ID do conteúdo inválido.');
-    }
-    if (contentType != 'MOVIE' && contentType != 'TV') {
-      throw ArgumentError('Tipo de conteúdo inválido.');
-    }
+    final reference = content.apiReference;
 
     final token = ApiService.token;
     if (token == null || token.isEmpty) {
@@ -143,12 +123,12 @@ extension ReviewsService on ApiService {
     final response = await dio.post(
       '/avaliacoes',
       data: {
-        'filmeSerieId': contentId,
-        'tipoConteudo': contentType,
+        'filmeSerieId': reference.id,
+        'tipoConteudo': reference.type,
         'nota': rating,
         'comentario': comment.trim(),
       },
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: _authorizationOptions,
     );
 
     ApiService._checkSession(session);
@@ -156,14 +136,7 @@ extension ReviewsService on ApiService {
 
     final savedReview = Review.fromJson(data, content);
 
-    final updatedReviews = List<Review>.from(ApiService.reviews);
-    updatedReviews.removeWhere(
-      (review) =>
-          review.content['id'] == content['id'] &&
-          review.content['type'] == content['type'],
-    );
-    updatedReviews.add(savedReview);
-    ApiService.reviews = updatedReviews;
+    _replaceReviewFor(content, savedReview);
   }
 
   Future<void> deleteReview(Review review) async {
@@ -178,10 +151,7 @@ extension ReviewsService on ApiService {
       throw StateError('Entre na sua conta pra remover a avaliação');
     }
 
-    await dio.delete(
-      '/avaliacoes/$id',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-    );
+    await dio.delete('/avaliacoes/$id', options: _authorizationOptions);
 
     ApiService._checkSession(session);
     ApiService.reviews = ApiService.reviews

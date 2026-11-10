@@ -1,34 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_theme.dart';
+import '../models/content_metadata.dart';
 import '../pages/details_page.dart';
-
-class ContentPoster extends StatelessWidget {
-  const ContentPoster({super.key, required this.content});
-
-  final Map<String, String> content;
-
-  @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(12),
-    child: Image.network(
-      content['poster_path'] ?? '',
-      fit: BoxFit.cover,
-      loadingBuilder: (context, child, progress) => progress == null
-          ? child
-          : const ColoredBox(
-              color: AppTheme.surfaceHighlight,
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            ),
-      errorBuilder: (_, error, stack) => const ColoredBox(
-        color: AppTheme.surfaceHighlight,
-        child: Center(
-          child: Icon(Icons.movie_outlined, size: 42, color: Colors.white54),
-        ),
-      ),
-    ),
-  );
-}
+import 'content_poster.dart';
 
 class ContentCard extends StatelessWidget {
   const ContentCard({super.key, required this.content, this.onChanged});
@@ -93,7 +67,7 @@ class ContentCard extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           Text(
-            '${content['year']} • ${content['genre']}',
+            '${content['year']} • ${content.primaryGenre}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 11, color: Colors.white60),

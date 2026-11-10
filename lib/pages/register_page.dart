@@ -39,7 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
             label: 'Nome',
             controller: _controller.nameController,
             textInputAction: TextInputAction.next,
-            onChanged: (_) => setState(_controller.onChanged),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           AuthTextField(
@@ -47,7 +47,7 @@ class _RegisterPageState extends State<RegisterPage> {
             controller: _controller.emailController,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            onChanged: (_) => setState(_controller.onChanged),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           AuthTextField(
@@ -55,7 +55,7 @@ class _RegisterPageState extends State<RegisterPage> {
             controller: _controller.passwordController,
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.done,
-            onChanged: (_) => setState(_controller.onChanged),
+            onChanged: (_) => setState(() {}),
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off : Icons.visibility,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class RegisterController extends ChangeNotifier {
+class RegisterController {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -10,13 +10,9 @@ class RegisterController extends ChangeNotifier {
       emailController.text.trim().isNotEmpty &&
       passwordController.text.isNotEmpty;
 
-  void onChanged() => notifyListeners();
-
-  @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    super.dispose();
   }
 }

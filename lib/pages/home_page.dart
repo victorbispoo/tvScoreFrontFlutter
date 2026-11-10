@@ -4,6 +4,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
 
 import '../core/app_theme.dart';
+import '../models/content_metadata.dart';
 import '../services/api_services.dart';
 import '../widgets/content_carousel.dart';
 
@@ -127,7 +128,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 title: 'Ação e aventura',
                 contents: contents
-                    .where((content) => content['genre']!.contains('Ação'))
+                    .where((content) => content.hasAnyGenre({28, 12, 10759}))
                     .toList(),
               ),
               ContentCarousel(
@@ -138,7 +139,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 title: 'Ficção científica',
                 contents: contents
-                    .where((content) => content['genre']!.contains('Ficção'))
+                    .where((content) => content.hasAnyGenre({878, 10765}))
                     .toList(),
               ),
               ContentCarousel(
@@ -149,7 +150,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 title: 'Drama e grandes clássicos',
                 contents: contents
-                    .where((content) => content['genre']!.contains('Drama'))
+                    .where((content) => content.hasAnyGenre({18}))
                     .toList(),
               ),
               ContentCarousel(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:tv_score_front_flutter/pages/favorites_page.dart';
 
+import 'core/app_routes.dart';
 import 'core/app_theme.dart';
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
@@ -25,6 +26,10 @@ class TvScoreApp extends StatelessWidget {
       title: 'TV Score',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
+      routes: {
+        AppRoutes.login: (_) => const LoginPage(),
+        AppRoutes.home: (_) => const AppShell(),
+      },
       home: loggedIn ? const AppShell() : const LoginPage(),
     );
   }

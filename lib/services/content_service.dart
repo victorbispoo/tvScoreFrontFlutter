@@ -1,27 +1,18 @@
 part of 'api_services.dart';
 
 extension ContentService on ApiService {
-
-  Future<Map<String,dynamic>> getEpisodePanel(int seriesId) async{
-    if(seriesId <= 0){
+  Future<Map<String, dynamic>> getEpisodePanel(int seriesId) async {
+    if (seriesId <= 0) {
       throw ArgumentError('O ID da série deve ser maior que zero.');
     }
 
     final response = await dio.get('/series/$seriesId/episodios/painel');
 
-    return Map<String,dynamic>.from(response.data as Map);
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<Map<String, String>> getContent(int id, String type) async {
-    if (id <= 0) {
-      throw ArgumentError('O ID do conteúdo deve ser maior que zero.');
-    }
-
-    if (type != 'MOVIE' && type != 'TV') {
-      throw ArgumentError(
-        'Tipo de conteúdo inválido. Deve ser "MOVIE" ou "TV".',
-      );
-    }
+    requireContentReference(id, type);
 
     final resource = type == 'MOVIE' ? 'filmes' : 'series';
 
@@ -32,50 +23,45 @@ extension ContentService on ApiService {
     return _mapContent(data, type);
   }
 
-  Future<({
-    List<Map<String,String>> contents,
-    int page,
-    int totalPages,
-  })> searchContents(String query, {int page = 1}) async {
+  Future<({List<Map<String, String>> contents, int page, int totalPages})>
+  searchContents(String query, {int page = 1}) async {
     final term = query.trim();
 
-     if (term.isEmpty) {
-    throw ArgumentError('Informe um título para pesquisar.');
-  }
+    if (term.isEmpty) {
+      throw ArgumentError('Informe um título para pesquisar.');
+    }
 
-  if (page < 1 || page > 500) {
-    throw ArgumentError('A página deve estar entre 1 e 500.');
-  }
+    if (page < 1 || page > ApiService.maxSearchPage) {
+      throw ArgumentError(
+        'A página deve estar entre 1 e ${ApiService.maxSearchPage}.',
+      );
+    }
 
-  final response = await dio.get(
-    '/filmes/pesquisar',
-    queryParameters: {'q': term, 'pagina': page},
-  );
+    final response = await dio.get(
+      '/filmes/pesquisar',
+      queryParameters: {'q': term, 'pagina': page},
+    );
 
-  final data = Map<String,dynamic>.from(response.data as Map);
-  final results = data['results'] as List? ?? [];
+    final data = Map<String, dynamic>.from(response.data as Map);
+    final results = data['results'] as List? ?? [];
 
-  final contents = results.map((item){
-    final content= Map<String,dynamic>.from(item as Map);
-    return _mapContent(content, content['tipoConteudo'] as String);
-  }).toList();
+    final contents = results.map((item) {
+      final content = Map<String, dynamic>.from(item as Map);
+      return _mapContent(content, content['tipoConteudo'] as String);
+    }).toList();
 
-  return(
-    contents: contents,
-    page: (data['page'] as num).toInt(),
-    totalPages: (data['total_pages'] as num).toInt(),
-  );
+    return (
+      contents: contents,
+      page: (data['page'] as num).toInt(),
+      totalPages: (data['total_pages'] as num).toInt(),
+    );
   }
 
   Map<String, String> _mapContent(Map<String, dynamic> data, String type) {
     final releaseDate = data['release_date'] as String? ?? '';
     final poster = data['poster_path'] as String? ?? '';
     final backdrop = data['backdrop_path'] as String? ?? '';
-    final genreIds = data['genre_ids'] as List? ?? [];
-
-    final mainGenre = genreIds.isEmpty
-        ? 'não informado'
-        : ApiService.generos[genreIds.first] ?? 'não informado';
+    final genres = ContentGenres.fromJson(data);
     return {
       'id': data['id'].toString(),
       'type': type,
@@ -89,8 +75,8 @@ extension ContentService on ApiService {
       'backdrop_path': backdrop.isEmpty
           ? ''
           : 'https://image.tmdb.org/t/p/w780$backdrop',
-      'genre_ids': genreIds.join(' | '),
-      'genre': mainGenre,
+      'genre_ids': genres.ids,
+      'genre': genres.labels,
     };
   }
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_routes.dart';
 import '../services/api_services.dart';
 import 'favorites_page.dart';
-import 'login_page.dart';
 import 'my_reviews_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -52,10 +52,9 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     if (!mounted) return;
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
   Future<void> _editProfile() async {

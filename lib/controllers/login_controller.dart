@@ -12,14 +12,10 @@ class LoginController extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
-  bool get canSubmit =>
-      emailController.text.trim().isNotEmpty &&
-      passwordController.text.isNotEmpty;
-
-  void onChanged() => notifyListeners();
+  bool _disposed = false;
 
   Future<bool> submit() async {
-    if (isLoading) return false;
+    if (_disposed || isLoading) return false;
     errorMessage = null;
     isLoading = true;
     notifyListeners();
@@ -28,7 +24,7 @@ class LoginController extends ChangeNotifier {
         emailController.text.trim(),
         passwordController.text,
       );
-      return true;
+      return !_disposed;
     } on FormatException catch (error) {
       errorMessage = error.message;
       return false;
@@ -39,12 +35,13 @@ class LoginController extends ChangeNotifier {
       return false;
     } finally {
       isLoading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
   @override
   void dispose() {
+    _disposed = true;
     emailController.dispose();
     passwordController.dispose();
     super.dispose();

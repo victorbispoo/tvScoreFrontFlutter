@@ -5,8 +5,6 @@ abstract final class AppTheme {
   static const scaffoldBackground = Color(0xFF091426);
   static const surface = Color(0xFF13243E);
   static const surfaceHighlight = Color(0xFF25446E);
-  static const pagePadding = EdgeInsets.all(20);
-  static const formPadding = EdgeInsets.all(24);
   static const fieldRadius = 12.0;
   static const primary = Color(0xFF4F8DF7);
 

@@ -1,5 +1,11 @@
-// Avaliação feita pelo usuário para um filme ou série.
 class Review {
+  static const minRating = 0.0;
+  static const maxRating = 10.0;
+  static const ratingDivisions = 20;
+
+  static bool isValidRating(double value) =>
+      value.isFinite && value >= minRating && value <= maxRating;
+
   const Review({
     this.id,
     required this.content,

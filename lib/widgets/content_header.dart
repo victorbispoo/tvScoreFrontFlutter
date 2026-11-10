@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'content_card.dart';
+import 'content_poster.dart';
 
 class ContentHeader extends StatelessWidget {
   const ContentHeader({super.key, required this.content});

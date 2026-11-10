@@ -5,99 +5,57 @@ extension FavoritesService on ApiService {
     final session = ApiService._sessionVersion;
     final response = await dio.get(
       '/favoritos',
-      options: Options(
-        headers: {'Authorization': 'Bearer ${ApiService.token}'},
-      ),
+      options: _authorizationOptions,
     );
     ApiService._checkSession(session);
-    final dados = response.data as List;
-
-    return dados.map((item) {
-      return Map<String, dynamic>.from(item);
-    }).toList();
+    return (response.data as List)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
   }
 
   Future<void> addFavourite(Map<String, String> content) async {
-    final id = int.tryParse(content['id'] ?? '');
-    final type = content['type'];
-    debugPrint('Favoritando: id=${content['id']}, type=${content['type']}');
-    if (id == null) {
-      throw ArgumentError('O conteúdo precisa ter um ID válido.');
-    }
-
-    if (type != 'MOVIE' && type != 'TV') {
-      throw ArgumentError('Tipo de conteúdo inválido.');
-    }
-
-    try {
-      await dio.post(
-        '/favoritos',
-        data: {'filmeSerieId': id, 'tipoConteudo': type},
-        options: Options(
-          headers: {'Authorization': 'Bearer ${ApiService.token}'},
-        ),
-      );
-    } on DioException catch (error) {
-      debugPrint('Erro ao adicionar favorito');
-      debugPrint('Tipo: ${error.type}');
-      debugPrint('Status: ${error.response?.statusCode}');
-      debugPrint('Resposta: ${error.response?.data}');
-      rethrow;
-    }
+    final reference = content.apiReference;
+    await dio.post(
+      '/favoritos',
+      data: {'filmeSerieId': reference.id, 'tipoConteudo': reference.type},
+      options: _authorizationOptions,
+    );
   }
 
   Future<void> removeFavourite(Map<String, String> content) async {
-    final id = int.tryParse(content['id'] ?? '');
-    final type = content['type'];
-
-    if (id == null) {
-      throw ArgumentError('O conteúdo precisa ter um ID válido.');
-    }
-    if (type != 'MOVIE' && type != 'TV') {
-      throw ArgumentError('Tipo de conteúdo inválido.');
-    }
-
+    final reference = content.apiReference;
     await dio.delete(
-      '/favoritos/$id',
-      queryParameters: {'tipoConteudo': type},
-      options: Options(
-        headers: {'Authorization': 'Bearer ${ApiService.token}'},
-      ),
+      '/favoritos/${reference.id}',
+      queryParameters: {'tipoConteudo': reference.type},
+      options: _authorizationOptions,
     );
   }
 
   Future<void> loadFavorites() async {
     final session = ApiService._sessionVersion;
     final favorites = await getFavorites();
-
     final contents = await Future.wait(
-      favorites.map((favorite) {
-        final id = (favorite['filmeSerieId'] as num).toInt();
-
-        final type = favorite['tipoConteudo'] as String;
-        return getContent(id, type);
-      }),
+      favorites.map(
+        (favorite) => getContent(
+          (favorite['filmeSerieId'] as num).toInt(),
+          favorite['tipoConteudo'] as String,
+        ),
+      ),
     );
     ApiService._checkSession(session);
     ApiService.savedContents = contents;
   }
 
-  bool isSaved(Map<String, String> content) {
-    return ApiService.savedContents.any(
-      (saved) =>
-          saved['id'] == content['id'] && saved['type'] == content['type'],
-    );
-  }
+  bool isSaved(Map<String, String> content) => ApiService.savedContents.any(
+    (saved) => saved.contentKey == content.contentKey,
+  );
 
   Future<void> toggleSaved(Map<String, String> content) async {
     final session = ApiService._sessionVersion;
     final contents = List<Map<String, String>>.from(ApiService.savedContents);
     if (isSaved(content)) {
       await removeFavourite(content);
-      contents.removeWhere(
-        (saved) =>
-            saved['id'] == content['id'] && saved['type'] == content['type'],
-      );
+      contents.removeWhere((saved) => saved.contentKey == content.contentKey);
     } else {
       await addFavourite(content);
       contents.add(content);

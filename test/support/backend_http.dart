@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:tv_score_front_flutter/data/mock_contents.dart';
-import 'package:tv_score_front_flutter/services/api_services.dart';
+import 'package:tv_score_front_flutter/models/content_metadata.dart';
 
 // Backend em memória exclusivo dos testes: nenhuma chamada de rede real.
 class BackendHttp extends HttpOverrides {
@@ -27,7 +27,7 @@ class BackendHttp extends HttpOverrides {
     'genre_ids': content['genre_ids'] != null
         ? content['genre_ids']!.split(' | ').map(int.parse).toList()
         : [
-            ApiService.generos.entries
+            ContentGenres.names.entries
                 .firstWhere(
                   (entry) => entry.value == content['genre'],
                   orElse: () => const MapEntry(18, 'Drama'),

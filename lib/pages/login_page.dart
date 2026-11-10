@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../controllers/login_controller.dart';
-import '../main.dart';
+import '../core/app_routes.dart';
 import '../widgets/auth_text_field.dart';
 import 'register_page.dart';
 
@@ -86,7 +86,6 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _controller.emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        onChanged: (_) => _controller.onChanged(),
                       ),
                       const SizedBox(height: 18),
                       const Text(
@@ -114,7 +113,6 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _controller.passwordController,
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.done,
-                        onChanged: (_) => _controller.onChanged(),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
@@ -156,11 +154,9 @@ class _LoginPageState extends State<LoginPage> {
                                         );
                                         return;
                                       }
-                                      Navigator.of(context).pushReplacement(
-                                        MaterialPageRoute(
-                                          builder: (_) => const AppShell(),
-                                        ),
-                                      );
+                                      Navigator.of(
+                                        context,
+                                      ).pushReplacementNamed(AppRoutes.home);
                                     },
                               child: _controller.isLoading
                                   ? const SizedBox(
