@@ -3,6 +3,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_routes.dart';
 import '../services/api_services.dart';
+import '../widgets/genre_preferences.dart';
 import 'favorites_page.dart';
 import 'my_reviews_page.dart';
 
@@ -56,6 +57,12 @@ class _ProfilePageState extends State<ProfilePage> {
       context,
     ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
+
+  Future<void> _editGenres() => showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const GenrePreferencesDialog(isEditing: true),
+  );
 
   Future<void> _editProfile() async {
     var editedName = ApiService.userName;
@@ -146,6 +153,18 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
         const SizedBox(height: 28),
+        Card(
+          child: ListTile(
+            leading: const Icon(
+              Icons.tune_rounded,
+              color: Colors.lightBlueAccent,
+            ),
+            title: const Text('Gêneros favoritos'),
+            subtitle: const Text('Veja e edite suas preferências'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _editGenres,
+          ),
+        ),
         Card(
           child: ListTile(
             leading: Icon(

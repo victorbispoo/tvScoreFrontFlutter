@@ -1,3 +1,19 @@
+## Cadastro e preferências de gêneros — commit local, 2026-11-11
+
+Esta atualização prevalece sobre os registros históricos abaixo.
+
+- Usuário solicitou commit local do fluxo de cadastro e preferências na branch victor. Não autorizou push nem nova integração na main nesta solicitação. O trabalho anterior já foi publicado em victor/main até d90e04a.
+- Cadastro: após criar a conta, RegisterPage usa loginApi com as credenciais do formulário, abre a seleção de gêneros e navega para Home. Distingue conta criada de falha no cadastro para orientar login manual se necessário. Usuário confirmou que o login automático funcionou.
+- PreferencesService integrado ao ApiService: GET /conteudos/generos lista opções; GET /usuarios/eu/generos consulta a seleção; PUT /usuarios/eu/generos substitui a seleção com token. Limite de cinco gêneros, conforme contrato Java.
+- Tela GenrePreferencesDialog em widgets/genre_preferences.dart: apresentação em tela inteira, cards responsivos em duas colunas, ícones, marcação azul, contador e botão fixo. Trata carregamento, erro, nova tentativa e falha ao salvar; bloqueia edição durante salvamento.
+- Perfil tem acesso Gêneros favoritos. O modo isEditing carrega a seleção remota antes de habilitar o salvamento; cancelar preserva as escolhas, salvar atualiza a conta. No modo de cadastro, Escolher depois não grava preferências e permite continuar para Home.
+- Diagnóstico do carregamento: rota pública /api/conteudos/generos conferida com HTTP 200 e oito gêneros; após a correção da rota e nova tentativa, o usuário confirmou o carregamento.
+- Validação mais recente deste código: dart analyze sem problemas e flutter test --no-pub com 50 testes passando. Os dois novos testes verificam reabertura pelo Perfil, seleção prévia, atualização, cancelamento e pular a configuração inicial; HTTP simulado, sem modificar contas reais.
+- Próxima intenção: ampliar opções de gêneros. Java atualmente aceita somente animacao, comedia, crime, documentario, drama, familia, misterio e faroeste em GeneroConteudo.java. Ampliar primeiro o backend e tratar diferenças de categorias entre filmes e séries. Nenhuma alteração foi feita no Java; a pasta do clone local ainda não foi informada.
+- Home dinâmica permanece pendente. Usuário deseja sugestões, gêneros preferidos primeiro e os demais em ordem aleatória. Backend Java já persiste preferências explícitas; Python calcula preferências de favoritos/avaliações, mas ainda não consulta a seleção de /usuarios/eu/generos. Usar rotas /recomendacoes/filmes/java e /series/java para contas reais; /personalizadas segue com dados fixos no código inspecionado.
+- Fora deste commit e preservados: pubspec.lock, .agents/, skills-lock.json, remoção isolada de comentário em content_metadata.dart e BOM de api_services.dart. Não descartar alterações do usuário automaticamente.
+- Manter orientação uma etapa por vez quando solicitada; o usuário pediu explicitamente execução para a prévia visual e o acesso pelo Perfil. Não interpretar este commit como autorização de push.
+
 ## Autorização de integração na main — 2026-11-10
 
 - Usuário autorizou integrar e enviar o trabalho da victor para main, incluindo o README b9825f9, a refatoração 5947f2a e os registros de memória. Esta autorização supera as restrições de main nas seções históricas abaixo.

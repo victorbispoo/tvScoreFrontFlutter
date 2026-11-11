@@ -13,6 +13,7 @@ part 'auth_service.dart';
 part 'content_service.dart';
 part 'favorites_service.dart';
 part 'reviews_service.dart';
+part 'preferences_service.dart';
 
 class ApiService {
   static const maxSearchPage = 500;
