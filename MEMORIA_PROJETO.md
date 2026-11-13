@@ -1,3 +1,14 @@
+## Ícones do catálogo de gêneros — push em victor, 2026-11-13
+
+Esta atualização prevalece sobre o registro de 2026-11-11.
+
+- A tela de preferências exibe gêneros obtidos de `GET /api/conteudos/generos`. A consulta pública atual retornou 27 opções: oito códigos próprios e 19 códigos `tmdb-*`. A captura com ícones genéricos ocorreu porque os novos códigos TMDB não estavam cobertos pelo mapeamento.
+- `lib/widgets/genre_preferences.dart` agora associa os 19 códigos `tmdb-*` a ícones específicos e preserva os mapeamentos próprios existentes e o fallback para códigos futuros. `test/genre_preferences_test.dart` cobre os novos códigos.
+- Commit `d0769fd` (`feat: add icons for all genres`) enviado para `origin/victor`; o remoto foi conferido no mesmo SHA. Só o mapeamento e o teste foram incluídos nesse commit.
+- Verificações: `flutter test test\genre_preferences_test.dart` passou; `dart analyze lib\widgets\genre_preferences.dart test\genre_preferences_test.dart` não encontrou problemas; formatação e `git diff --check` passaram.
+- Permanecem alterações locais não incluídas no commit: `README.md`, arquivos de cadastro/perfil/serviços e preferências, `pubspec.lock`, testes de fluxo e os arquivos novos de preferências de filmes/progresso, além de `.agents/` e `skills-lock.json`. Conferir cada diff antes de decidir o próximo commit; não descartar essas alterações.
+- Nenhuma alteração foi feita no backend nesta etapa. O registro anterior que dizia que o catálogo tinha apenas oito gêneros está superado pela consulta atual.
+
 ## Cadastro e preferências de gêneros — commit local, 2026-11-11
 
 Esta atualização prevalece sobre os registros históricos abaixo.
