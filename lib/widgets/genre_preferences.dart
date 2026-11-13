@@ -72,14 +72,33 @@ class _GenrePreferencesDialogState extends State<GenrePreferencesDialog> {
   }
 
   IconData _genreIcon(String code) => switch (code) {
+    'tmdb-10759' => Icons.explore_outlined,
+    'tmdb-12' => Icons.hiking_outlined,
+    'tmdb-28' => Icons.sports_martial_arts_outlined,
+    'tmdb-10770' => Icons.live_tv_outlined,
     'animacao' => Icons.animation_outlined,
     'comedia' => Icons.theater_comedy_outlined,
     'crime' => Icons.local_police_outlined,
     'documentario' => Icons.public_outlined,
     'drama' => Icons.auto_stories_outlined,
     'familia' => Icons.family_restroom_outlined,
+    'tmdb-14' => Icons.auto_awesome_outlined,
+    'tmdb-878' => Icons.science_outlined,
+    'tmdb-10752' => Icons.military_tech_outlined,
+    'tmdb-36' => Icons.history_edu_outlined,
+    'tmdb-10762' => Icons.child_care_outlined,
     'misterio' => Icons.travel_explore_outlined,
     'faroeste' => Icons.landscape_outlined,
+    'tmdb-10402' => Icons.music_note_outlined,
+    'tmdb-10763' => Icons.newspaper_outlined,
+    'tmdb-10764' => Icons.visibility_outlined,
+    'tmdb-10749' => Icons.favorite_border_rounded,
+    'tmdb-10765' => Icons.rocket_launch_outlined,
+    'tmdb-10766' => Icons.bubble_chart_outlined,
+    'tmdb-10767' => Icons.forum_outlined,
+    'tmdb-27' => Icons.mood_bad_outlined,
+    'tmdb-53' => Icons.psychology_alt_outlined,
+    'tmdb-10768' => Icons.policy_outlined,
     _ => Icons.movie_outlined,
   };
 
