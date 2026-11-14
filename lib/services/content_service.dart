@@ -24,17 +24,18 @@ extension ContentService on ApiService {
   }
 
   Future<List<Map<String, String>>> getContentsByGenre(String code) async {
-  final response = await dio.get(
-    '/conteudos/por-genero',
-    queryParameters: {'genero': code, 'pagina': 1},
-  );
+    final response = await dio.get(
+      '/conteudos/por-genero',
+      queryParameters: {'genero': code, 'pagina': 1},
+    );
 
-  final results = response.data['results'] as List? ?? [];
-  return results.map((item) {
-    final data = Map<String, dynamic>.from(item as Map);
-    return _mapContent(data, data['tipoConteudo'] as String);
-  }).toList();
-}
+    final results = response.data['results'] as List? ?? [];
+    return results.map((item) {
+      final data = Map<String, dynamic>.from(item as Map);
+      return _mapContent(data, data['tipoConteudo'] as String);
+    }).toList();
+  }
+
   Future<({List<Map<String, String>> contents, int page, int totalPages})>
   searchContents(String query, {int page = 1}) async {
     final term = query.trim();
@@ -67,6 +68,18 @@ extension ContentService on ApiService {
       page: (data['page'] as num).toInt(),
       totalPages: (data['total_pages'] as num).toInt(),
     );
+  }
+
+  Future<List<Map<String, String>>> getTopRatedMovies(int minimum) async {
+    final response = await dio.get(
+      '/filmes/por-nota',
+      queryParameters: {'minima': minimum, 'maxima': 10, 'pagina': 1},
+    );
+    final results = response.data['results'] as List? ?? [];
+    return results.map((item) {
+      final data = Map<String, dynamic>.from(item as Map);
+      return _mapContent(data, 'MOVIE');
+    }).toList();
   }
 
   Map<String, String> _mapContent(Map<String, dynamic> data, String type) {

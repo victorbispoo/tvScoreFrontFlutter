@@ -7,8 +7,14 @@ import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import '../widgets/content_carousel.dart';
 import '../widgets/genre_preferences.dart';
+import '../widgets/top_rated_carousel.dart';
+import '../widgets/trending_carousel.dart';
 
-typedef HomeSection = ({String title,IconData icon,List<Map<String, String>> contents});
+typedef HomeSection = ({
+  String title,
+  IconData icon,
+  List<Map<String, String>> contents,
+});
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,11 +26,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with AutomaticKeepAliveClientMixin {
   late Future<List<HomeSection>> _sections;
+  late Future<List<Map<String, String>>> _topRated;
+  int _topRatedRefresh = 0;
 
   @override
   void initState() {
     super.initState();
     _sections = _loadSections();
+    _topRated = ApiService().getTopRatedMovies(7);
   }
 
   @override
@@ -70,19 +79,36 @@ class _HomePageState extends State<HomePage>
     final sections = <HomeSection>[];
 
     if (preferredGenres.isNotEmpty) {
-      final forYou = preferredGenres
-          .take(5)
-          .expand(
+      final lists = preferredGenres
+          .map(
             (genre) =>
                 contentsByCode[genre['codigo']] ?? <Map<String, String>>[],
           )
-          .take(12)
           .toList();
+      final forYou = <Map<String, String>>[];
+      for (var index = 0; forYou.length < 12; index++) {
+        var added = false;
+        for (final list in lists) {
+          if (index < list.length && forYou.length < 12) {
+            forYou.add(list[index]);
+            added = true;
+          }
+        }
+        if (!added) break;
+      }
 
-      sections.add((title: 'Pra você', icon: HugeIconsSolid.sparkles,contents: forYou));
+      sections.add((
+        title: 'Para você',
+        icon: HugeIconsSolid.sparkles,
+        contents: forYou,
+      ));
     }
 
-    sections.add((title: 'Em alta', icon: HugeIconsSolid.arrowMoveUpRight,contents: trending.take(12).toList()));
+    sections.add((
+      title: 'Em alta',
+      icon: HugeIconsSolid.fire,
+      contents: trending,
+    ));
 
     for (final genre in mainGenres) {
       sections.add((
@@ -95,7 +121,7 @@ class _HomePageState extends State<HomePage>
     if (discoverGenre != null) {
       sections.add((
         title: 'Descubra algo',
-        icon: HugeIconsSolid.discoverCircle,
+        icon: HugeIconsSolid.compass01,
         contents: contentsByCode[discoverGenre['codigo']] ?? [],
       ));
     }
@@ -109,6 +135,8 @@ class _HomePageState extends State<HomePage>
       if (mounted) {
         setState(() {
           _sections = Future.value(sections);
+          _topRated = ApiService().getTopRatedMovies(7);
+          _topRatedRefresh++;
         });
       }
     } catch (error, stackTrace) {
@@ -131,7 +159,32 @@ class _HomePageState extends State<HomePage>
       future: _sections,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView(
+            padding: const EdgeInsets.only(top: 90),
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text('Carregando títulos...'),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 264,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: 3,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (_, _) => Container(
+                    width: 176,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
         }
 
         if (snapshot.hasError) {
@@ -149,39 +202,60 @@ class _HomePageState extends State<HomePage>
           onRefresh: _refresh,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: 24),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    SvgPicture.asset(
-                      'lib/assets/logoSemTexto.svg',
-                      width: 100,
-                      height: 55,
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      tooltip: 'Pesquisar',
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SearchPage()),
-                        );
-                      },
-                      icon: Icon(HugeIconsSolid.search01),
-                    ),
-                  ],
+                child: SizedBox(
+                  height: 64,
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'lib/assets/logoTvScore.svg',
+                        height: 44,
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: 'Pesquisar',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SearchPage(),
+                            ),
+                          );
+                        },
+                        icon: Icon(HugeIconsSolid.search01,color: AppTheme.primary,),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 28),
-              for (final section in sections)
-                ContentCarousel(
-                  onChanged: () => setState(() {}),
-                  icon: Icon(section.icon, color: AppTheme.primary),
-                  title: section.title,
-                  contents: section.contents,
-                ),
+              const SizedBox(height: 22),
+              for (final section in sections) ...[
+                if (section.title == 'Em alta') ...[
+                  TrendingCarousel(
+                    contents: section.contents,
+                    onChanged: () => setState(() {}),
+                  ),
+                  TopRatedCarousel(
+                    key: ValueKey(_topRatedRefresh),
+                    contents: _topRated,
+                    onChanged: () => setState(() {}),
+                  ),
+                ] else
+                  ContentCarousel(
+                    onChanged: () => setState(() {}),
+                    icon: Icon(
+                      section.icon,
+                      size: section.title == 'Para você' ? 18 : 16,
+                      color: AppTheme.primary,
+                    ),
+                    title: section.title,
+                    contents: section.contents,
+                    featured: section.title == 'Para você',
+                  ),
+              ],
             ],
           ),
         );

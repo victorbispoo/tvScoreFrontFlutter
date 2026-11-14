@@ -115,11 +115,31 @@ class BackendHttp extends HttpOverrides {
             .length,
       };
     }
+    if (path == '/conteudos/generos') {
+      return [
+        {'codigo': 'drama', 'nome': 'Drama'},
+        {'codigo': 'comedia', 'nome': 'Comédia'},
+      ];
+    }
+    if (path == '/usuarios/eu/generos') return {'generos': []};
+    if (path == '/conteudos/por-genero') {
+      return {'results': catalog.map(details).toList()};
+    }
     if (path.endsWith('/em-alta')) {
       final type = path.startsWith('/filmes') ? 'MOVIE' : 'TV';
       return {
         'results': catalog
             .where((item) => item['type'] == type)
+            .map(details)
+            .toList(),
+      };
+    }
+    if (path == '/filmes/por-nota') {
+      final minimum = double.parse(uri.queryParameters['minima'] ?? '0');
+      return {
+        'results': catalog
+            .where((item) => item['type'] == 'MOVIE')
+            .where((item) => double.parse(item['score'] ?? '0') >= minimum)
             .map(details)
             .toList(),
       };
