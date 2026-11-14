@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_theme.dart';
 import '../services/api_services.dart';
@@ -71,37 +72,6 @@ class _GenrePreferencesDialogState extends State<GenrePreferencesDialog> {
     }
   }
 
-  IconData _genreIcon(String code) => switch (code) {
-    'tmdb-10759' => Icons.explore_outlined,
-    'tmdb-12' => Icons.hiking_outlined,
-    'tmdb-28' => Icons.sports_martial_arts_outlined,
-    'tmdb-10770' => Icons.live_tv_outlined,
-    'animacao' => Icons.animation_outlined,
-    'comedia' => Icons.theater_comedy_outlined,
-    'crime' => Icons.local_police_outlined,
-    'documentario' => Icons.public_outlined,
-    'drama' => Icons.auto_stories_outlined,
-    'familia' => Icons.family_restroom_outlined,
-    'tmdb-14' => Icons.auto_awesome_outlined,
-    'tmdb-878' => Icons.science_outlined,
-    'tmdb-10752' => Icons.military_tech_outlined,
-    'tmdb-36' => Icons.history_edu_outlined,
-    'tmdb-10762' => Icons.child_care_outlined,
-    'misterio' => Icons.travel_explore_outlined,
-    'faroeste' => Icons.landscape_outlined,
-    'tmdb-10402' => Icons.music_note_outlined,
-    'tmdb-10763' => Icons.newspaper_outlined,
-    'tmdb-10764' => Icons.visibility_outlined,
-    'tmdb-10749' => Icons.favorite_border_rounded,
-    'tmdb-10765' => Icons.rocket_launch_outlined,
-    'tmdb-10766' => Icons.bubble_chart_outlined,
-    'tmdb-10767' => Icons.forum_outlined,
-    'tmdb-27' => Icons.mood_bad_outlined,
-    'tmdb-53' => Icons.psychology_alt_outlined,
-    'tmdb-10768' => Icons.policy_outlined,
-    _ => Icons.movie_outlined,
-  };
-
   Widget _genreCard(Map<String, dynamic> genre, double width) {
     final code = genre['codigo'] as String;
     final name = genre['nome'] as String;
@@ -160,7 +130,7 @@ class _GenrePreferencesDialogState extends State<GenrePreferencesDialog> {
                           child: Column(
                             children: [
                               Icon(
-                                _genreIcon(code),
+                                genreIcon(code),
                                 size: 30,
                                 color: selected
                                     ? AppTheme.primary
@@ -430,3 +400,34 @@ class _GenrePreferencesDialogState extends State<GenrePreferencesDialog> {
     ),
   );
 }
+
+IconData genreIcon(String code) => switch (code) {
+    'tmdb-10759' => HugeIconsSolid.adventure,
+    'tmdb-12' => HugeIconsSolid.compass01,
+    'tmdb-28' => HugeIconsSolid.sword01,
+    'tmdb-10770' => HugeIconsSolid.tv01,
+    'animacao' => HugeIconsSolid.magicWand01,
+    'comedia' => HugeIconsSolid.game,
+    'crime' => HugeIconsSolid.policeBadge,
+    'documentario' => HugeIconsSolid.globe02,
+    'drama' => HugeIconsSolid.bookOpen01,
+    'familia' => HugeIconsSolid.favourite,
+    'tmdb-14' => HugeIconsSolid.magicWand01,
+    'tmdb-878' => HugeIconsSolid.alien01,
+    'tmdb-10752' => HugeIconsSolid.shield01,
+    'tmdb-36' => HugeIconsSolid.book01,
+    'tmdb-10762' => HugeIconsSolid.baby01,
+    'misterio' => HugeIconsSolid.search01,
+    'faroeste' => HugeIconsSolid.mountain,
+    'tmdb-10402' => HugeIconsSolid.musicNote01,
+    'tmdb-10763' => HugeIconsSolid.globe02,
+    'tmdb-10764' => HugeIconsSolid.view,
+    'tmdb-10749' => HugeIconsSolid.favourite,
+    'tmdb-10765' => HugeIconsSolid.rocket01,
+    'tmdb-10766' => HugeIconsSolid.bubbleChat,
+    'tmdb-10767' => HugeIconsSolid.chat01,
+    'tmdb-27' => HugeIconsSolid.fire,
+    'tmdb-53' => HugeIconsSolid.brain,
+    'tmdb-10768' => HugeIconsSolid.shield01,
+    _ => HugeIconsSolid.film01,
+  };

@@ -4,9 +4,11 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
 
 import '../core/app_theme.dart';
-import '../models/content_metadata.dart';
 import '../services/api_services.dart';
 import '../widgets/content_carousel.dart';
+import '../widgets/genre_preferences.dart';
+
+typedef HomeSection = ({String title,IconData icon,List<Map<String, String>> contents});
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,32 +19,121 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with AutomaticKeepAliveClientMixin {
-  late Future<List<Map<String, String>>> _catalog;
+  late Future<List<HomeSection>> _sections;
 
   @override
   void initState() {
     super.initState();
-    _catalog = ApiService().getHighlights();
+    _sections = _loadSections();
   }
 
   @override
   bool get wantKeepAlive => true;
 
+  Future<List<HomeSection>> _loadSections() async {
+    final api = ApiService();
+
+    final trending = await api.getHighlights();
+    final available = await api.getAvailableGenres();
+
+    final preferred = ApiService.token == null
+        ? <Map<String, dynamic>>[]
+        : await api.getPreferredGenres();
+
+    final preferredCodes = preferred
+        .map((genre) => genre['codigo'] as String)
+        .toSet();
+
+    final preferredGenres = available
+        .where((genre) => preferredCodes.contains(genre['codigo']))
+        .toList();
+
+    final otherGenres = available
+        .where((genre) => !preferredCodes.contains(genre['codigo']))
+        .toList();
+    final mainGenres = preferredGenres;
+
+    final discoverGenre = otherGenres.firstOrNull;
+
+    final codesToLoad = <String>{
+      ...mainGenres.map((genre) => genre['codigo'] as String),
+      if (discoverGenre != null) discoverGenre['codigo'] as String,
+    };
+
+    final results = await Future.wait(codesToLoad.map(api.getContentsByGenre));
+
+    final contentsByCode = Map<String, List<Map<String, String>>>.fromIterables(
+      codesToLoad,
+      results,
+    );
+
+    final sections = <HomeSection>[];
+
+    if (preferredGenres.isNotEmpty) {
+      final forYou = preferredGenres
+          .take(5)
+          .expand(
+            (genre) =>
+                contentsByCode[genre['codigo']] ?? <Map<String, String>>[],
+          )
+          .take(12)
+          .toList();
+
+      sections.add((title: 'Pra você', icon: HugeIconsSolid.sparkles,contents: forYou));
+    }
+
+    sections.add((title: 'Em alta', icon: HugeIconsSolid.arrowMoveUpRight,contents: trending.take(12).toList()));
+
+    for (final genre in mainGenres) {
+      sections.add((
+        title: genre['nome'] as String,
+        icon: genreIcon(genre['codigo'] as String),
+        contents: contentsByCode[genre['codigo']] ?? [],
+      ));
+    }
+
+    if (discoverGenre != null) {
+      sections.add((
+        title: 'Descubra algo',
+        icon: HugeIconsSolid.discoverCircle,
+        contents: contentsByCode[discoverGenre['codigo']] ?? [],
+      ));
+    }
+
+    return sections;
+  }
+
   Future<void> _refresh() async {
-    final future = ApiService().getHighlights();
-    setState(() => _catalog = future);
-    await future;
+    try {
+      final sections = await _loadSections();
+      if (mounted) {
+        setState(() {
+          _sections = Future.value(sections);
+        });
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Erro ao atualizar Home: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível atualizar a Home.')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return FutureBuilder<List<Map<String, String>>>(
-      future: _catalog,
+
+    return FutureBuilder<List<HomeSection>>(
+      future: _sections,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
+
         if (snapshot.hasError) {
           return Center(
             child: FilledButton(
@@ -51,14 +142,9 @@ class _HomePageState extends State<HomePage>
             ),
           );
         }
-        final contents = snapshot.data ?? [];
-        final best = contents.toList()
-          ..sort(
-            (a, b) =>
-                double.parse(b['score']!).compareTo(double.parse(a['score']!)),
-          );
-        final recent = contents.toList()
-          ..sort((a, b) => b['year']!.compareTo(a['year']!));
+
+        final sections = snapshot.data ?? [];
+
         return RefreshIndicator(
           onRefresh: _refresh,
           child: ListView(
@@ -67,109 +153,35 @@ class _HomePageState extends State<HomePage>
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        SvgPicture.asset(
-                          'lib/assets/logoSemTexto.svg',
-                          width: 130,
-                          height: 70,
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          tooltip: 'Pesquisar',
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SearchPage(),
-                              ),
-                            );
-                          },
-                          icon: Icon(HugeIconsSolid.search01),
-                        ),
-                      ],
+                    SvgPicture.asset(
+                      'lib/assets/logoSemTexto.svg',
+                      width: 100,
+                      height: 55,
                     ),
-                    const SizedBox(height: 10),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Pesquisar',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SearchPage()),
+                        );
+                      },
+                      icon: Icon(HugeIconsSolid.search01),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 28),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(HugeIconsSolid.fire, color: AppTheme.primary),
-                title: 'Destaques',
-                subtitle: 'Histórias que merecem sua atenção',
-                contents: contents.take(6).toList(),
-              ),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(HugeIconsSolid.star, color: AppTheme.primary),
-                title: 'Mais bem avaliados',
-                subtitle: 'As maiores notas do catálogo',
-                contents: best.take(8).toList(),
-              ),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(
-                  HugeIconsSolid.clock01,
-                  color: AppTheme.primary,
+              for (final section in sections)
+                ContentCarousel(
+                  onChanged: () => setState(() {}),
+                  icon: Icon(section.icon, color: AppTheme.primary),
+                  title: section.title,
+                  contents: section.contents,
                 ),
-                title: 'Mais recentes no catálogo',
-                contents: recent.take(8).toList(),
-              ),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(
-                  HugeIconsSolid.sword01,
-                  color: AppTheme.primary,
-                ),
-                title: 'Ação e aventura',
-                contents: contents
-                    .where((content) => content.hasAnyGenre({28, 12, 10759}))
-                    .toList(),
-              ),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(
-                  HugeIconsSolid.rocket01,
-                  color: AppTheme.primary,
-                ),
-                title: 'Ficção científica',
-                contents: contents
-                    .where((content) => content.hasAnyGenre({878, 10765}))
-                    .toList(),
-              ),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(
-                  HugeIconsSolid.film01,
-                  color: AppTheme.primary,
-                ),
-                title: 'Drama e grandes clássicos',
-                contents: contents
-                    .where((content) => content.hasAnyGenre({18}))
-                    .toList(),
-              ),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(HugeIconsSolid.tv01, color: AppTheme.primary),
-                title: 'Séries para maratonar',
-                contents: contents
-                    .where((content) => content['type'] == 'TV')
-                    .toList(),
-              ),
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                icon: const Icon(
-                  HugeIconsSolid.bookmark01,
-                  color: AppTheme.primary,
-                ),
-                title: 'Na sua lista',
-                contents: ApiService.savedContents,
-              ),
             ],
           ),
         );
