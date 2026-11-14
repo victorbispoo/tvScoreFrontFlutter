@@ -1,3 +1,9 @@
+## Preferência de ícones — 2026-11-14
+
+- Usar a biblioteca HugeIcons nos ícones novos ou alterados da interface. Reutilizar os pacotes já instalados (`hugeicons_pro` e `hugeicons`), sem adicionar outra biblioteca de ícones.
+- Nos ícones de gêneros, manter `HugeIconsSolid`, conforme preferência explícita do usuário. Nos demais, escolher a variante adequada ao visual existente.
+- Respeitar os tipos de cada pacote: `HugeIconsSolid`/`HugeIconsStroke` de `hugeicons_pro` usam `Icon`; o pacote `hugeicons` usa `HugeIcon` com seus dados próprios.
+
 ## Ícones do catálogo de gêneros — push em victor, 2026-11-13
 
 Esta atualização prevalece sobre o registro de 2026-11-11.

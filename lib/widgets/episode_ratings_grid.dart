@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'episode_details_sheet.dart';
 
 class EpisodeRatingsGrid extends StatefulWidget {
   const EpisodeRatingsGrid({super.key, required this.seasons});
@@ -68,35 +69,56 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
           'Temporada $seasonNumber, episódio $episodeNumber: '
           '${rating?.toStringAsFixed(1) ?? 'sem nota'}',
       child: ExcludeSemantics(
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _ratingColor(rating),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'E$episodeNumber',
-                style: const TextStyle(color: Colors.white, fontSize: 11),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                rating?.toStringAsFixed(1) ?? '—',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () =>
+              _showEpisode(episode, seasonNumber, episodeNumber, rating),
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _ratingColor(rating),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'E$episodeNumber',
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  rating?.toStringAsFixed(1) ?? '—',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Future<void> _showEpisode(
+    Map<String, dynamic> episode,
+    int seasonNumber,
+    int episodeNumber,
+    double? rating,
+  ) => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => EpisodeDetailsSheet(
+      episode: episode,
+      seasonNumber: seasonNumber,
+      episodeNumber: episodeNumber,
+      rating: rating,
+    ),
+  );
   @override
   Widget build(BuildContext context) {
     final seasons = widget.seasons.toList()

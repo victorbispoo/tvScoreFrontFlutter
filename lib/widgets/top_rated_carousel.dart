@@ -2,43 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_theme.dart';
-import '../services/api_services.dart';
+
 import 'ranked_content_carousel.dart';
 
-class TopRatedCarousel extends StatefulWidget {
+class TopRatedCarousel extends StatelessWidget {
   const TopRatedCarousel({
     super.key,
     required this.contents,
+    required this.minimumRating,
+    required this.onMinimumSelected,
+    required this.onRetry,
     required this.onChanged,
   });
 
   final Future<List<Map<String, String>>> contents;
   final VoidCallback onChanged;
-
-  @override
-  State<TopRatedCarousel> createState() => _TopRatedCarouselState();
-}
-
-class _TopRatedCarouselState extends State<TopRatedCarousel> {
-  int _minimumRating = 7;
-  late Future<List<Map<String, String>>> _contents;
-
-  @override
-  void initState() {
-    super.initState();
-    _contents = widget.contents;
-  }
-
-  void _loadContents() {
-    _contents = ApiService().getTopRatedMovies(_minimumRating);
-  }
-
-  void _selectMinimum(int minimum) {
-    setState(() {
-      _minimumRating = minimum;
-      _loadContents();
-    });
-  }
+  final int minimumRating;
+  final ValueChanged<int> onMinimumSelected;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -66,15 +47,15 @@ class _TopRatedCarouselState extends State<TopRatedCarousel> {
             for (final minimum in [7, 8, 9])
               ChoiceChip(
                 label: Text('$minimum+'),
-                selected: _minimumRating == minimum,
-                onSelected: (_) => _selectMinimum(minimum),
+                selected: minimumRating == minimum,
+                onSelected: (_) => onMinimumSelected(minimum),
               ),
           ],
         ),
       ),
       const SizedBox(height: 14),
       FutureBuilder<List<Map<String, String>>>(
-        future: _contents,
+        future: contents,
         builder: (context, snapshot) {
           if (!snapshot.hasData && !snapshot.hasError) {
             return const SizedBox(
@@ -86,8 +67,10 @@ class _TopRatedCarouselState extends State<TopRatedCarousel> {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextButton(
-                onPressed: () => setState(_loadContents),
-                child: const Text('Não foi possível carregar. Tentar novamente'),
+                onPressed: onRetry,
+                child: const Text(
+                  'Não foi possível carregar. Tentar novamente',
+                ),
               ),
             );
           }
@@ -100,7 +83,7 @@ class _TopRatedCarouselState extends State<TopRatedCarousel> {
           }
           return RankedContentCarousel(
             contents: contents,
-            onChanged: widget.onChanged,
+            onChanged: onChanged,
           );
         },
       ),

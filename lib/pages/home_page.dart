@@ -10,7 +10,10 @@ import '../widgets/genre_preferences.dart';
 import '../widgets/top_rated_carousel.dart';
 import '../widgets/trending_carousel.dart';
 
+enum HomeSectionType { personalized, trending, genre, discover }
+
 typedef HomeSection = ({
+  HomeSectionType type,
   String title,
   IconData icon,
   List<Map<String, String>> contents,
@@ -27,13 +30,13 @@ class _HomePageState extends State<HomePage>
     with AutomaticKeepAliveClientMixin {
   late Future<List<HomeSection>> _sections;
   late Future<List<Map<String, String>>> _topRated;
-  int _topRatedRefresh = 0;
+  int _minimumRating = 7;
 
   @override
   void initState() {
     super.initState();
     _sections = _loadSections();
-    _topRated = ApiService().getTopRatedMovies(7);
+    _topRated = ApiService().getTopRatedMovies(_minimumRating);
   }
 
   @override
@@ -60,12 +63,11 @@ class _HomePageState extends State<HomePage>
     final otherGenres = available
         .where((genre) => !preferredCodes.contains(genre['codigo']))
         .toList();
-    final mainGenres = preferredGenres;
 
     final discoverGenre = otherGenres.firstOrNull;
 
     final codesToLoad = <String>{
-      ...mainGenres.map((genre) => genre['codigo'] as String),
+      ...preferredGenres.map((genre) => genre['codigo'] as String),
       if (discoverGenre != null) discoverGenre['codigo'] as String,
     };
 
@@ -98,6 +100,7 @@ class _HomePageState extends State<HomePage>
       }
 
       sections.add((
+        type: HomeSectionType.personalized,
         title: 'Para você',
         icon: HugeIconsSolid.sparkles,
         contents: forYou,
@@ -105,13 +108,15 @@ class _HomePageState extends State<HomePage>
     }
 
     sections.add((
+      type: HomeSectionType.trending,
       title: 'Em alta',
       icon: HugeIconsSolid.fire,
       contents: trending,
     ));
 
-    for (final genre in mainGenres) {
+    for (final genre in preferredGenres) {
       sections.add((
+        type: HomeSectionType.genre,
         title: genre['nome'] as String,
         icon: genreIcon(genre['codigo'] as String),
         contents: contentsByCode[genre['codigo']] ?? [],
@@ -120,6 +125,7 @@ class _HomePageState extends State<HomePage>
 
     if (discoverGenre != null) {
       sections.add((
+        type: HomeSectionType.discover,
         title: 'Descubra algo',
         icon: HugeIconsSolid.compass01,
         contents: contentsByCode[discoverGenre['codigo']] ?? [],
@@ -135,8 +141,7 @@ class _HomePageState extends State<HomePage>
       if (mounted) {
         setState(() {
           _sections = Future.value(sections);
-          _topRated = ApiService().getTopRatedMovies(7);
-          _topRatedRefresh++;
+          _topRated = ApiService().getTopRatedMovies(_minimumRating);
         });
       }
     } catch (error, stackTrace) {
@@ -225,7 +230,10 @@ class _HomePageState extends State<HomePage>
                             ),
                           );
                         },
-                        icon: Icon(HugeIconsSolid.search01,color: AppTheme.primary,),
+                        icon: Icon(
+                          HugeIconsSolid.search01,
+                          color: AppTheme.primary,
+                        ),
                       ),
                     ],
                   ),
@@ -233,13 +241,22 @@ class _HomePageState extends State<HomePage>
               ),
               const SizedBox(height: 22),
               for (final section in sections) ...[
-                if (section.title == 'Em alta') ...[
+                if (section.type == HomeSectionType.trending) ...[
                   TrendingCarousel(
                     contents: section.contents,
                     onChanged: () => setState(() {}),
                   ),
                   TopRatedCarousel(
-                    key: ValueKey(_topRatedRefresh),
+                    minimumRating: _minimumRating,
+                    onMinimumSelected: (minimum) => setState(() {
+                      _minimumRating = minimum;
+                      _topRated = ApiService().getTopRatedMovies(minimum);
+                    }),
+                    onRetry: () => setState(() {
+                      _topRated = ApiService().getTopRatedMovies(
+                        _minimumRating,
+                      );
+                    }),
                     contents: _topRated,
                     onChanged: () => setState(() {}),
                   ),
@@ -248,12 +265,14 @@ class _HomePageState extends State<HomePage>
                     onChanged: () => setState(() {}),
                     icon: Icon(
                       section.icon,
-                      size: section.title == 'Para você' ? 18 : 16,
+                      size: section.type == HomeSectionType.personalized
+                          ? 18
+                          : 16,
                       color: AppTheme.primary,
                     ),
                     title: section.title,
                     contents: section.contents,
-                    featured: section.title == 'Para você',
+                    featured: section.type == HomeSectionType.personalized,
                   ),
               ],
             ],

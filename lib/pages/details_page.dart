@@ -227,9 +227,14 @@ class _DetailsPageState extends State<DetailsPage> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        '${content['year']}  •  ${content.primaryGenre}',
+                        '${content['year']}  •  ${content['genre']?.trim().isNotEmpty == true ? content['genre'] : 'não informado'}',
                         style: const TextStyle(color: Colors.white70),
                       ),
+                      Text(
+                        ' • ',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+
                       const Icon(
                         HugeIconsSolid.star,
                         color: Colors.amber,
