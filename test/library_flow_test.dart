@@ -218,25 +218,31 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Destaques'), findsOneWidget);
+    expect(find.text('Em alta'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Séries para maratonar'),
+      find.text('Descubra algo'),
       400,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.text('Séries para maratonar'), findsOneWidget);
+    expect(find.text('Descubra algo'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('favoritos atualiza depois de remover um título nos detalhes', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.runAsync(() => ApiService().toggleSaved(content));
     await tester.pumpWidget(
       MaterialApp(theme: ThemeData.dark(), home: const FavoritesPage()),
     );
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Remover favorito'), findsOneWidget);
     await tester.tap(find.byType(ContentCard));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
@@ -249,6 +255,7 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Sua lista está vazia'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('perfil atualiza suas contagens ao mudar de aba', (tester) async {
