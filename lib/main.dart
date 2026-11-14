@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:tv_score_front_flutter/pages/favorites_page.dart';
 
 import 'core/app_routes.dart';
@@ -8,6 +7,7 @@ import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
 import 'services/api_services.dart';
+import 'widgets/floating_navigation_bar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,41 +49,26 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final pages = [
       HomePage(),
-      FavoritesPage(),
+      FavoritesPage(onExplore: () => setState(() => _index = 0)),
       ProfilePage(isActive: _index == 2),
     ];
     return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(index: _index, children: pages),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (index) => setState(() => _index = index),
-        destinations: const [
-          NavigationDestination(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedHome01),
-            selectedIcon: HugeIcon(
-              icon: HugeIcons.strokeRoundedHome01,
-              strokeWidth: 3,
-            ),
-            label: 'Início',
+      extendBody: true,
+      body: Stack(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: IndexedStack(index: _index, children: pages),
           ),
-
-          NavigationDestination(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedFavourite),
-            selectedIcon: HugeIcon(
-              icon: HugeIcons.strokeRoundedFavourite,
-              strokeWidth: 3,
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              top: false,
+              child: FloatingNavigationBar(
+                index: _index,
+                onSelected: (index) => setState(() => _index = index),
+              ),
             ),
-            label: 'Favoritos',
-          ),
-          NavigationDestination(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedUser),
-            selectedIcon: HugeIcon(
-              icon: HugeIcons.strokeRoundedUser,
-              strokeWidth: 3,
-            ),
-            label: 'Perfil',
           ),
         ],
       ),

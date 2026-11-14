@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppTheme {
@@ -11,8 +11,12 @@ abstract final class AppTheme {
   static ThemeData get dark => ThemeData(
     useMaterial3: true,
     navigationBarTheme: NavigationBarThemeData(
+      height: 68,
       backgroundColor: scaffoldBackground,
       indicatorColor: primary.withValues(alpha: .15),
+      indicatorShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
 
       iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
         final isSelected = states.contains(WidgetState.selected);
@@ -24,7 +28,7 @@ abstract final class AppTheme {
         final isSelected = states.contains(WidgetState.selected);
 
         return GoogleFonts.workSans(
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           color: isSelected ? primary : Colors.white60,
         );
@@ -36,6 +40,23 @@ abstract final class AppTheme {
     colorScheme: ColorScheme.fromSeed(
       seedColor: primary,
       brightness: Brightness.dark,
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: surface,
+      selectedColor: primary,
+      side: BorderSide(color: Colors.white.withValues(alpha: .1)),
+      shape: const StadiumBorder(),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+      labelStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+      showCheckmark: false,
+
+      elevation: 0,
+      pressElevation: 0,
     ),
     scaffoldBackgroundColor: scaffoldBackground,
     inputDecorationTheme: InputDecorationTheme(
