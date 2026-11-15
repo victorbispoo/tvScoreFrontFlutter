@@ -3,6 +3,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
+import '../widgets/poster_hero_tag.dart';
 import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
 
@@ -188,6 +189,8 @@ class _FavoritesPageState extends State<FavoritesPage>
                           children: [
                             ContentCard(
                               content: content,
+                              heroTag: posterHeroTag('favorites', content),
+                              onFavoriteChanged: () => setState(() {}),
                               onChanged: () => setState(() {}),
                             ),
                             Positioned(

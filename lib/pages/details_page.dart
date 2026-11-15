@@ -14,10 +14,16 @@ import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class DetailsPage extends StatefulWidget {
-  const DetailsPage({super.key, required this.content, this.heroTag});
+  const DetailsPage({
+    super.key,
+    required this.content,
+    this.heroTag,
+    this.onFavoriteChanged,
+  });
 
   final Map<String, String> content;
   final Object? heroTag;
+  final VoidCallback? onFavoriteChanged;
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();
@@ -127,6 +133,7 @@ class _DetailsPageState extends State<DetailsPage> {
     try {
       await _api.toggleSaved(widget.content);
       if (!mounted) return;
+      widget.onFavoriteChanged?.call();
       TvScoreSnackbar.info(
         context,
         wasSaved ? 'Removido dos favoritos.' : 'Adicionado aos favoritos.',

@@ -7,7 +7,7 @@ import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
 import 'package:tv_score_front_flutter/widgets/content_carousel.dart';
-import 'package:tv_score_front_flutter/widgets/home_poster_hero_tag.dart';
+import 'package:tv_score_front_flutter/widgets/poster_hero_tag.dart';
 import 'package:tv_score_front_flutter/widgets/ranked_content_carousel.dart';
 
 import 'support/backend_http.dart';
@@ -54,7 +54,7 @@ void main() {
         .toList();
     expect(tags, hasLength(2));
     expect(tags.toSet(), hasLength(2));
-    expect(homePosterHeroTag('personalized', 0, movie), tags.first);
+    expect(posterHeroTag('home:personalized', movie), tags.first);
   });
 
   testWidgets('Home leva pôster de filme aos Detalhes e devolve ao voltar', (
@@ -101,7 +101,7 @@ void main() {
     HttpOverrides.global = backend;
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = 'test-token';
-    final tag = homePosterHeroTag('top-rated', 0, movie);
+    final tag = posterHeroTag('home:top-rated', movie);
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -134,7 +134,7 @@ void main() {
     ApiService.token = 'test-token';
     final visible = ValueNotifier(true);
     addTearDown(visible.dispose);
-    final tag = homePosterHeroTag('personalized', 0, movie);
+    final tag = posterHeroTag('home:personalized', movie);
     await tester.pumpWidget(
       MaterialApp(
         home: ValueListenableBuilder<bool>(

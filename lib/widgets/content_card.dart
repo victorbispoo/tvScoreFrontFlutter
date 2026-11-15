@@ -12,10 +12,12 @@ class ContentCard extends StatelessWidget {
     super.key,
     required this.content,
     this.onChanged,
+    this.onFavoriteChanged,
     this.heroTag,
   });
 
   final VoidCallback? onChanged;
+  final VoidCallback? onFavoriteChanged;
   final Map<String, String> content;
   final Object? heroTag;
 
@@ -28,7 +30,11 @@ class ContentCard extends StatelessWidget {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DetailsPage(content: content, heroTag: heroTag),
+            builder: (_) => DetailsPage(
+              content: content,
+              heroTag: heroTag,
+              onFavoriteChanged: onFavoriteChanged,
+            ),
           ),
         );
         if (context.mounted) onChanged?.call();

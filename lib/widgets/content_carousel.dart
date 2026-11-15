@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'content_card.dart';
-import 'home_poster_hero_tag.dart';
+import 'poster_hero_tag.dart';
 
 class ContentCarousel extends StatelessWidget {
   const ContentCarousel({
@@ -80,7 +80,11 @@ class ContentCarousel extends StatelessWidget {
                   onChanged: onChanged,
                   heroTag: heroSection == null
                       ? null
-                      : homePosterHeroTag(heroSection!, index, contents[index]),
+                      : posterHeroTag(
+                          'home:$heroSection',
+                          contents[index],
+                          occurrence: index,
+                        ),
                 ),
               ),
             ),

@@ -9,6 +9,7 @@ import '../models/content_metadata.dart';
 import '../models/search_filters.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
+import '../widgets/poster_hero_tag.dart';
 import '../widgets/search_filter_sheet.dart';
 import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
@@ -427,8 +428,14 @@ class _SearchPageState extends State<SearchPage>
                                       mainAxisSpacing: 20,
                                     ),
                                 itemCount: results.length,
-                                itemBuilder: (_, index) =>
-                                    ContentCard(content: results[index]),
+                                itemBuilder: (_, index) => ContentCard(
+                                  content: results[index],
+                                  heroTag: posterHeroTag(
+                                    'search',
+                                    results[index],
+                                    occurrence: index,
+                                  ),
+                                ),
                               ),
                             ),
                             if (hasMore)

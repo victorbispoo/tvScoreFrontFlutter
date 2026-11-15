@@ -5,7 +5,7 @@ import '../core/rating_scale.dart';
 import '../models/content_metadata.dart';
 import '../pages/details_page.dart';
 import 'content_poster.dart';
-import 'home_poster_hero_tag.dart';
+import 'poster_hero_tag.dart';
 
 class RankedContentCarousel extends StatelessWidget {
   const RankedContentCarousel({
@@ -36,7 +36,11 @@ class RankedContentCarousel extends StatelessWidget {
             final content = contents[index];
             final heroTag = heroSection == null
                 ? null
-                : homePosterHeroTag(heroSection!, index, content);
+                : posterHeroTag(
+                    'home:$heroSection',
+                    content,
+                    occurrence: index,
+                  );
             return SizedBox(
               width: 248,
               child: InkWell(
