@@ -10,6 +10,7 @@ import '../models/review.dart';
 import '../services/api_services.dart';
 import '../widgets/content_poster.dart';
 import '../widgets/tv_score_confirmation_dialog.dart';
+import '../widgets/tv_score_segmented_control.dart';
 import '../widgets/tv_score_snackbar.dart';
 import 'details_page.dart';
 
@@ -200,21 +201,17 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('Mais recentes'),
-                        selected: !_highestFirst,
-                        onSelected: (_) =>
-                            setState(() => _highestFirst = false),
-                      ),
-                      ChoiceChip(
-                        label: const Text('Maiores notas'),
-                        selected: _highestFirst,
-                        onSelected: (_) => setState(() => _highestFirst = true),
-                      ),
-                    ],
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TvScoreSegmentedControl<bool>(
+                      options: const {
+                        false: 'Mais recentes',
+                        true: 'Maiores notas',
+                      },
+                      selectedValue: _highestFirst,
+                      onChanged: (value) =>
+                          setState(() => _highestFirst = value),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   for (final review in reviews)

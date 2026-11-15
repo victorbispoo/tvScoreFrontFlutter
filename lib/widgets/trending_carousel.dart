@@ -3,6 +3,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_theme.dart';
 import 'content_carousel.dart';
+import 'tv_score_segmented_control.dart';
 
 class TrendingCarousel extends StatefulWidget {
   const TrendingCarousel({
@@ -21,13 +22,12 @@ class TrendingCarousel extends StatefulWidget {
 }
 
 class _TrendingCarouselState extends State<TrendingCarousel> {
-  String _filter = 'Todos';
+  String _filter = 'ALL';
 
   @override
   Widget build(BuildContext context) {
     final contents = widget.contents.where((content) {
-      return _filter == 'Todos' ||
-          content['type'] == (_filter == 'Filmes' ? 'MOVIE' : 'TV');
+      return _filter == 'ALL' || content['type'] == _filter;
     }).toList();
 
     if (widget.contents.isEmpty) return const SizedBox.shrink();
@@ -53,16 +53,14 @@ class _TrendingCarouselState extends State<TrendingCarousel> {
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Wrap(
-              spacing: 6,
-              children: [
-                for (final option in ['Todos', 'Filmes', 'Séries'])
-                  ChoiceChip(
-                    label: Text(option),
-                    selected: _filter == option,
-                    onSelected: (_) => setState(() => _filter = option),
-                  ),
-              ],
+            child: TvScoreSegmentedControl<String>(
+              options: const {
+                'ALL': 'Todos',
+                'MOVIE': 'Filmes',
+                'TV': 'S\u00e9ries',
+              },
+              selectedValue: _filter,
+              onChanged: (value) => setState(() => _filter = value),
             ),
           ),
           const SizedBox(height: 10),

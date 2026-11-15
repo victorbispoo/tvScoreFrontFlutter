@@ -34,14 +34,14 @@ class _HomePageState extends State<HomePage>
   late Future<List<HomeSection>> _sections;
   late Future<List<Map<String, String>>> _trending;
   late Future<List<Map<String, String>>> _topRated;
-  int _minimumRating = 7;
+  String _topRatedType = 'ALL';
 
   @override
   void initState() {
     super.initState();
     _sections = _loadSections();
     _trending = ApiService().getHighlights();
-    _topRated = ApiService().getTopRatedMovies(_minimumRating);
+    _topRated = ApiService().getTopRatedContents(_topRatedType);
   }
 
   @override
@@ -139,7 +139,7 @@ class _HomePageState extends State<HomePage>
   Future<void> _refresh() async {
     final sections = _loadSections();
     final trending = ApiService().getHighlights();
-    final topRated = ApiService().getTopRatedMovies(_minimumRating);
+    final topRated = ApiService().getTopRatedContents(_topRatedType);
     setState(() {
       _sections = sections;
       _trending = trending;
@@ -265,13 +265,13 @@ class _HomePageState extends State<HomePage>
           ),
           TopRatedCarousel(
             heroSection: 'top-rated',
-            minimumRating: _minimumRating,
-            onMinimumSelected: (minimum) => setState(() {
-              _minimumRating = minimum;
-              _topRated = ApiService().getTopRatedMovies(minimum);
+            selectedType: _topRatedType,
+            onTypeSelected: (type) => setState(() {
+              _topRatedType = type;
+              _topRated = ApiService().getTopRatedContents(type);
             }),
             onRetry: () => setState(() {
-              _topRated = ApiService().getTopRatedMovies(_minimumRating);
+              _topRated = ApiService().getTopRatedContents(_topRatedType);
             }),
             contents: _topRated,
             onChanged: () => setState(() {}),

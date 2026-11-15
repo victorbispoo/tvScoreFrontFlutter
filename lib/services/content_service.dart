@@ -91,15 +91,43 @@ extension ContentService on ApiService {
     );
   }
 
-  Future<List<Map<String, String>>> getTopRatedMovies(int minimum) async {
+  Future<List<Map<String, String>>> getTopRatedMovies(int minimum) =>
+      _getContentsByRating('MOVIE', minimum);
+
+  Future<List<Map<String, String>>> getTopRatedContents(String type) async {
+    if (!const ['ALL', 'MOVIE', 'TV'].contains(type)) {
+      throw ArgumentError.value(
+        type,
+        'type',
+        'Tipo de conte\u00fado inv\u00e1lido',
+      );
+    }
+    const minimumRating = 7;
+    final types = type == 'ALL' ? ['MOVIE', 'TV'] : [type];
+    final responses = await Future.wait(
+      types.map((type) => _getContentsByRating(type, minimumRating)),
+    );
+    final contents = responses.expand((items) => items).toList();
+    contents.sort(
+      (a, b) => double.parse(b['score']!).compareTo(double.parse(a['score']!)),
+    );
+    return contents;
+  }
+
+  Future<List<Map<String, String>>> _getContentsByRating(
+    String type,
+    int minimum,
+  ) async {
+    final resource = type == 'MOVIE' ? 'filmes' : 'series';
+    // Series will use the same normalized response contract as filmes/por-nota.
     final response = await dio.get(
-      '/filmes/por-nota',
+      '/$resource/por-nota',
       queryParameters: {'minima': minimum, 'maxima': 10, 'pagina': 1},
     );
     final results = response.data['results'] as List? ?? [];
     return results.map((item) {
       final data = Map<String, dynamic>.from(item as Map);
-      return _mapContent(data, 'MOVIE');
+      return _mapContent(data, type);
     }).toList();
   }
 

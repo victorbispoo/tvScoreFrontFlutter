@@ -5,13 +5,14 @@ import '../core/app_theme.dart';
 
 import 'ranked_content_carousel.dart';
 import 'skeleton_loading.dart';
+import 'tv_score_segmented_control.dart';
 
 class TopRatedCarousel extends StatelessWidget {
   const TopRatedCarousel({
     super.key,
     required this.contents,
-    required this.minimumRating,
-    required this.onMinimumSelected,
+    required this.selectedType,
+    required this.onTypeSelected,
     required this.onRetry,
     required this.onChanged,
     this.heroSection,
@@ -20,8 +21,8 @@ class TopRatedCarousel extends StatelessWidget {
   final Future<List<Map<String, String>>> contents;
   final VoidCallback onChanged;
   final String? heroSection;
-  final int minimumRating;
-  final ValueChanged<int> onMinimumSelected;
+  final String selectedType;
+  final ValueChanged<String> onTypeSelected;
   final VoidCallback onRetry;
 
   @override
@@ -44,23 +45,21 @@ class TopRatedCarousel extends StatelessWidget {
       const SizedBox(height: 10),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Wrap(
-          spacing: 8,
-          children: [
-            for (final minimum in [7, 8, 9])
-              ChoiceChip(
-                label: Text('$minimum+'),
-                selected: minimumRating == minimum,
-                onSelected: (_) => onMinimumSelected(minimum),
-              ),
-          ],
+        child: TvScoreSegmentedControl<String>(
+          options: const {
+            'ALL': 'Todos',
+            'MOVIE': 'Filmes',
+            'TV': 'S\u00e9ries',
+          },
+          selectedValue: selectedType,
+          onChanged: onTypeSelected,
         ),
       ),
       const SizedBox(height: 14),
       FutureBuilder<List<Map<String, String>>>(
         future: contents,
         builder: (context, snapshot) {
-          if (!snapshot.hasData && !snapshot.hasError) {
+          if (snapshot.connectionState != ConnectionState.done) {
             return const SkeletonRankedCarousel();
           }
           if (snapshot.hasError) {
@@ -78,7 +77,7 @@ class TopRatedCarousel extends StatelessWidget {
           if (contents.isEmpty) {
             return const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text('Nenhum filme nesta faixa de nota.'),
+              child: Text('Nenhum t\u00edtulo nesta categoria.'),
             );
           }
           return RankedContentCarousel(

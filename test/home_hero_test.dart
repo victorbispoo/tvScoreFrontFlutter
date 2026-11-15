@@ -175,7 +175,7 @@ void main() {
       const MaterialApp(home: Scaffold(body: HomePage())),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Séries'));
+    await tester.tap(find.text('Séries').first);
     await tester.pumpAndSettle();
     final card = find.byType(ContentCard).first;
     await tester.ensureVisible(card);

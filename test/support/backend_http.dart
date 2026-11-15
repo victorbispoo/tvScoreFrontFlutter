@@ -158,11 +158,12 @@ class BackendHttp extends HttpOverrides {
             .toList(),
       };
     }
-    if (path == '/filmes/por-nota') {
+    if (path == '/filmes/por-nota' || path == '/series/por-nota') {
+      final type = path.startsWith('/filmes') ? 'MOVIE' : 'TV';
       final minimum = double.parse(uri.queryParameters['minima'] ?? '0');
       return {
         'results': catalog
-            .where((item) => item['type'] == 'MOVIE')
+            .where((item) => item['type'] == type)
             .where((item) => double.parse(item['score'] ?? '0') >= minimum)
             .map(details)
             .toList(),
