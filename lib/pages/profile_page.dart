@@ -22,9 +22,13 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with AutomaticKeepAliveClientMixin {
   final _api = ApiService();
   late Future<({int count, double? average})> _reviewStats;
+
+  @override
+  bool get wantKeepAlive => true;
 
   Future<({int count, double? average})> _fetchReviewStats() async {
     final reviews = await _api.getMyReviews();
@@ -99,6 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return BackdropGroup(
       child: ListView(
         padding: const EdgeInsets.all(20),
