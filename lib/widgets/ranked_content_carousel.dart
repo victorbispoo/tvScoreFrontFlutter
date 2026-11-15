@@ -105,7 +105,7 @@ class RankedContentCarousel extends StatelessWidget {
                               children: [
                                 Icon(
                                   HugeIconsSolid.star,
-                                  size: 13,
+                                  size: 20,
                                   color: RatingScale.color(
                                     double.tryParse(content['score'] ?? ''),
                                   ),
@@ -114,7 +114,7 @@ class RankedContentCarousel extends StatelessWidget {
                                 Text(
                                   '${content['score']}',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 20,
                                     color: RatingScale.color(
                                       double.tryParse(content['score'] ?? ''),
                                     ),

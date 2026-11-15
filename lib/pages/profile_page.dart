@@ -10,7 +10,7 @@ import '../services/api_services.dart';
 import '../widgets/edit_profile_sheet.dart';
 import '../widgets/genre_preferences.dart';
 import '../widgets/tv_score_snackbar.dart';
-import 'favorites_page.dart';
+
 import 'my_reviews_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -225,27 +225,7 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _ProfileGlassSurface(
-              child: ListTile(
-                leading: Icon(
-                  HugeIconsStroke.favourite,
-                  color: Colors.redAccent,
-                  size: 24,
-                ),
-                title: const Text('Favoritos'),
-                trailing: const Icon(HugeIconsStroke.arrowRight01),
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const FavoritesPage()),
-                  );
-                  if (mounted) setState(() {});
-                },
-              ),
-            ),
-          ),
+
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: _ProfileGlassSurface(

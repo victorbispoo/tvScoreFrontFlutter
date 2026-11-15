@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:tv_score_front_flutter/pages/profile_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/genre_preferences.dart';
@@ -165,28 +166,29 @@ void main() {
     await tester.tap(find.text('Abrir'));
     await tester.pumpAndSettle();
 
-    for (final icon in [
-      Icons.explore_outlined,
-      Icons.hiking_outlined,
-      Icons.sports_martial_arts_outlined,
-      Icons.live_tv_outlined,
-      Icons.auto_awesome_outlined,
-      Icons.science_outlined,
-      Icons.military_tech_outlined,
-      Icons.history_edu_outlined,
-      Icons.child_care_outlined,
-      Icons.music_note_outlined,
-      Icons.newspaper_outlined,
-      Icons.visibility_outlined,
-      Icons.favorite_border_rounded,
-      Icons.rocket_launch_outlined,
-      Icons.bubble_chart_outlined,
-      Icons.forum_outlined,
-      Icons.mood_bad_outlined,
-      Icons.psychology_alt_outlined,
-      Icons.policy_outlined,
-    ]) {
-      expect(find.byIcon(icon), findsOneWidget);
+    for (final entry in {
+      'tmdb-10759': HugeIconsSolid.adventure,
+      'tmdb-12': HugeIconsSolid.compass01,
+      'tmdb-28': HugeIconsSolid.sword01,
+      'tmdb-10770': HugeIconsSolid.tv01,
+      'tmdb-14': HugeIconsSolid.magicWand01,
+      'tmdb-878': HugeIconsSolid.alien01,
+      'tmdb-10752': HugeIconsSolid.shield01,
+      'tmdb-36': HugeIconsSolid.book01,
+      'tmdb-10762': HugeIconsSolid.baby01,
+      'tmdb-10402': HugeIconsSolid.musicNote01,
+      'tmdb-10763': HugeIconsSolid.globe02,
+      'tmdb-10764': HugeIconsSolid.view,
+      'tmdb-10749': HugeIconsSolid.favourite,
+      'tmdb-10765': HugeIconsSolid.rocket01,
+      'tmdb-10766': HugeIconsSolid.bubbleChat,
+      'tmdb-10767': HugeIconsSolid.chat01,
+      'tmdb-27': HugeIconsSolid.fire,
+      'tmdb-53': HugeIconsSolid.brain,
+      'tmdb-10768': HugeIconsSolid.shield01,
+    }.entries) {
+      expect(genreIcon(entry.key), entry.value);
+      expect(find.byIcon(entry.value), findsWidgets);
     }
     expect(tester.takeException(), isNull);
   });
