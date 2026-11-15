@@ -8,6 +8,7 @@ import 'pages/login_page.dart';
 import 'pages/profile_page.dart';
 import 'services/api_services.dart';
 import 'widgets/floating_navigation_bar.dart';
+import 'widgets/tv_score_snackbar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,23 +55,25 @@ class _AppShellState extends State<AppShell> {
     ];
     return Scaffold(
       extendBody: true,
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: IndexedStack(index: _index, children: pages),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: SafeArea(
-              top: false,
-              child: FloatingNavigationBar(
-                index: _index,
-                onSelected: (index) => setState(() => _index = index),
+      body: TvScoreSnackbar.withFloatingNavigation(
+        child: Stack(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: IndexedStack(index: _index, children: pages),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: SafeArea(
+                top: false,
+                child: FloatingNavigationBar(
+                  index: _index,
+                  onSelected: (index) => setState(() => _index = index),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

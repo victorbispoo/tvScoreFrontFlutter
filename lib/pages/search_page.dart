@@ -6,6 +6,7 @@ import 'package:tv_score_front_flutter/core/app_theme.dart';
 import '../models/content_metadata.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
+import '../widgets/tv_score_snackbar.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -139,15 +140,11 @@ class _SearchPageState extends State<SearchPage>
         _loadMoreFailed = true;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Não foi possível carregar mais resultados.'),
-          duration: const Duration(seconds: 10),
-          action: SnackBarAction(
-            label: 'Tentar novamente',
-            onPressed: _loadMore,
-          ),
-        ),
+      TvScoreSnackbar.error(
+        context,
+        'Não foi possível carregar mais resultados.',
+        actionLabel: 'Tentar novamente',
+        onAction: _loadMore,
       );
     } finally {
       if (mounted && version == _searchVersion) {

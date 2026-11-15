@@ -9,6 +9,7 @@ import '../widgets/content_carousel.dart';
 import '../widgets/genre_preferences.dart';
 import '../widgets/top_rated_carousel.dart';
 import '../widgets/trending_carousel.dart';
+import '../widgets/tv_score_snackbar.dart';
 
 enum HomeSectionType { personalized, trending, genre, discover }
 
@@ -149,8 +150,9 @@ class _HomePageState extends State<HomePage>
       debugPrintStack(stackTrace: stackTrace);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível atualizar a Home.')),
+        TvScoreSnackbar.error(
+          context,
+          'Não foi possível atualizar a página inicial. Tente novamente.',
         );
       }
     }
