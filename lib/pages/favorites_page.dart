@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_haptics.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
 import '../widgets/poster_hero_tag.dart';
@@ -50,10 +51,12 @@ class _FavoritesPageState extends State<FavoritesPage>
     try {
       await _api.toggleSaved(content);
       if (!mounted) return;
+      AppHaptics.confirmation();
       setState(() {});
       TvScoreSnackbar.info(context, 'Removido dos favoritos.');
     } catch (_) {
       if (!mounted) return;
+      AppHaptics.error();
       TvScoreSnackbar.error(context, 'Não foi possível remover o título.');
     }
   }

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
+import '../core/app_haptics.dart';
 import '../core/app_theme.dart';
 
 class FloatingNavigationBar extends StatefulWidget {
@@ -62,10 +63,12 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
   }
 
   void _updateDrag(DragUpdateDetails details, double slotWidth) {
+    final previousCandidate = _position.value.round();
     _position.value = (_position.value + details.delta.dx / slotWidth).clamp(
       0.0,
       (FloatingNavigationBar._labels.length - 1).toDouble(),
     );
+    if (_position.value.round() != previousCandidate) AppHaptics.selection();
   }
 
   void _finishDrag({bool canceled = false}) {

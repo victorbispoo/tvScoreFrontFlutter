@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_haptics.dart';
 import '../core/app_theme.dart';
 import '../core/rating_scale.dart';
 import '../models/review.dart';
@@ -91,9 +92,13 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
 
       try {
         await _api.deleteReview(review);
-        if (mounted) setState(() {});
+        if (mounted) {
+          AppHaptics.confirmation();
+          setState(() {});
+        }
       } catch (_) {
         if (!mounted) return;
+        AppHaptics.error();
         TvScoreSnackbar.error(
           context,
           'Não foi possível excluir a avaliação. Tente novamente.',

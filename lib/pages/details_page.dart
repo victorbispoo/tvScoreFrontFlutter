@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_haptics.dart';
 import '../models/content_metadata.dart';
 import '../models/review.dart';
 import '../services/api_services.dart';
@@ -133,6 +134,7 @@ class _DetailsPageState extends State<DetailsPage> {
     try {
       await _api.toggleSaved(widget.content);
       if (!mounted) return;
+      AppHaptics.confirmation();
       widget.onFavoriteChanged?.call();
       TvScoreSnackbar.info(
         context,
@@ -140,6 +142,7 @@ class _DetailsPageState extends State<DetailsPage> {
       );
     } catch (_) {
       if (!mounted) return;
+      AppHaptics.error();
       TvScoreSnackbar.error(
         context,
         'Não foi possível atualizar seus favoritos.',
@@ -154,12 +157,14 @@ class _DetailsPageState extends State<DetailsPage> {
     try {
       await _api.saveReview(widget.content, _rating, _comment.text);
       if (!mounted) return;
+      AppHaptics.confirmation();
       TvScoreSnackbar.success(context, 'Sua avaliação foi salva.');
       await _checkCommunityReviews();
     } catch (error, stackTrace) {
       debugPrint('falha: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
+      AppHaptics.error();
       TvScoreSnackbar.error(
         context,
         'Não foi possível salvar sua avaliação. Tente novamente.',
@@ -353,7 +358,11 @@ class _DetailsPageState extends State<DetailsPage> {
                     commentController: _comment,
                     enabled: canEditReview,
                     isSaving: _busy,
-                    onRatingChanged: (value) => setState(() => _rating = value),
+                    onRatingChanged: (value) {
+                      if (value == _rating) return;
+                      AppHaptics.selection();
+                      setState(() => _rating = value);
+                    },
                     onSave: _saveReview,
                   ),
                   const SizedBox(height: 12),
