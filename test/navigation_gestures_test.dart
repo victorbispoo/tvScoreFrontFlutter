@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -41,7 +42,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(selected, 1);
     expect(
-      tester.widget<AnimatedPositioned>(find.byType(AnimatedPositioned)).left,
+      tester
+          .widget<Positioned>(
+            find.byKey(const ValueKey('navigation-indicator')),
+          )
+          .left,
       greaterThan(5),
     );
 
@@ -86,14 +91,22 @@ void main() {
           tester.getSize(find.byType(FloatingNavigationBar)).width - 40;
       final slotWidth = barWidth / 3;
       expect(
-        tester.widget<AnimatedPositioned>(find.byType(AnimatedPositioned)).left,
+        tester
+            .widget<Positioned>(
+              find.byKey(const ValueKey('navigation-indicator')),
+            )
+            .left,
         closeTo(slotWidth * 2 + 5, 2),
       );
       expect(selections, isEmpty);
       await gesture.cancel();
       await tester.pumpAndSettle();
       expect(
-        tester.widget<AnimatedPositioned>(find.byType(AnimatedPositioned)).left,
+        tester
+            .widget<Positioned>(
+              find.byKey(const ValueKey('navigation-indicator')),
+            )
+            .left,
         5,
       );
       expect(selections, isEmpty);
@@ -103,6 +116,22 @@ void main() {
   testWidgets('swipe e toque mantêm página e indicador sincronizados', (
     tester,
   ) async {
+    final feedback = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate') {
+          feedback.add(call.arguments as String);
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
     final backend = BackendHttp();
     final previous = HttpOverrides.current;
     HttpOverrides.global = backend;
@@ -113,6 +142,138 @@ void main() {
     ApiService.token = 'test-token';
     await tester.pumpWidget(const MaterialApp(home: AppShell()));
     await tester.pumpAndSettle();
+
+    final controller = tester
+        .widget<PageView>(find.byType(PageView))
+        .controller!;
+    final indicator = find.byKey(const ValueKey('navigation-indicator'));
+    final layout = find.descendant(
+      of: find.byType(FloatingNavigationBar),
+      matching: find.byType(LayoutBuilder),
+    );
+    final slot = tester.getSize(layout).width / 3;
+    void expectConnected() {
+      expect(
+        tester.widget<Positioned>(indicator).left,
+        closeTo(5 + controller.page! * slot, .01),
+      );
+      final actual =
+          tester
+              .getTopLeft(
+                find.descendant(
+                  of: indicator,
+                  matching: find.byType(DecoratedBox),
+                ),
+              )
+              .dx -
+          tester.getTopLeft(layout).dx;
+      expect(actual, closeTo(5 + controller.page! * slot, .01));
+    }
+
+    for (final fraction in [
+      .25,
+      .5,
+      .75,
+      1.25,
+      1.5,
+      1.75,
+      1.5,
+      1.25,
+      .75,
+      .25,
+      0.0,
+    ]) {
+      controller.jumpTo(fraction * controller.position.viewportDimension);
+      await tester.pump();
+      expectConnected();
+    }
+    // Check rendered geometry on each gesture frame, including crossing an index.
+    for (final start in [0, 1, 2]) {
+      controller.jumpToPage(start);
+      await tester.pumpAndSettle();
+      final direction = start == 2 ? 1.0 : -1.0;
+      final slow = await tester.startGesture(
+        tester.getTopLeft(find.byType(PageView)) + const Offset(400, 90),
+      );
+      await slow.moveBy(Offset(direction * 30, 0));
+      await tester.pump();
+      for (var step = 0; step < 3; step++) {
+        await slow.moveBy(
+          Offset(direction * controller.position.viewportDimension / 4, 0),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+        expectConnected();
+        final held = controller.page;
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(controller.page, held);
+        expectConnected();
+      }
+      await slow.up();
+      for (var frame = 0; frame < 20; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        expectConnected();
+      }
+      await tester.pumpAndSettle();
+      expect(controller.page, start - direction);
+    }
+    controller.jumpToPage(0);
+    await tester.pumpAndSettle();
+    // A short, slow swipe returns to its starting page without releasing alignment.
+    final canceled = await tester.startGesture(
+      tester.getTopLeft(find.byType(PageView)) + const Offset(600, 90),
+    );
+    await canceled.moveBy(const Offset(-30, 0));
+    await tester.pump();
+    await canceled.moveBy(const Offset(-150, 0));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(controller.page, greaterThan(0));
+    expectConnected();
+    await canceled.up();
+    await tester.pumpAndSettle();
+    expect(controller.page, 0);
+    expectConnected();
+
+    expect(feedback, isEmpty);
+    final capsule = await tester.startGesture(
+      tester.getCenter(find.text('In\u00edcio')),
+    );
+    await capsule.moveBy(const Offset(30, 0));
+    await tester.pump();
+    await capsule.moveBy(Offset(slot * .8, 0));
+    await tester.pump();
+    expectConnected();
+    expect(controller.page, greaterThan(.5));
+    final heldCapsulePage = controller.page;
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(controller.page, heldCapsulePage);
+    expectConnected();
+    final beforeRelease = tester.widget<Positioned>(indicator).left!;
+    await capsule.up();
+    await tester.pump();
+    expect(
+      tester.widget<Positioned>(indicator).left,
+      closeTo(beforeRelease, .01),
+    );
+    expectConnected();
+    await tester.pumpAndSettle();
+    expect(controller.page, 1);
+    expect(feedback, ['HapticFeedbackType.selectionClick']);
+    await tester.tap(find.text('In\u00edcio'));
+    await tester.pumpAndSettle();
+
+    final canceledCapsule = await tester.startGesture(
+      tester.getCenter(find.text('In\u00edcio')),
+    );
+    await canceledCapsule.moveBy(const Offset(30, 0));
+    await tester.pump();
+    await canceledCapsule.moveBy(Offset(slot * .75, 0));
+    await tester.pump();
+    expect(controller.page, greaterThan(.5));
+    expectConnected();
+    await canceledCapsule.cancel();
+    await tester.pumpAndSettle();
+    expect(controller.page, 0);
+    expectConnected();
 
     Future<void> swipe(double distance) async {
       final origin =
@@ -155,6 +316,11 @@ void main() {
       0,
     );
     await tester.tap(find.text('Perfil'));
+    await tester.pump();
+    for (var frame = 0; frame < 20; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expectConnected();
+    }
     await tester.pumpAndSettle();
     expect(
       tester
@@ -162,6 +328,47 @@ void main() {
           .index,
       2,
     );
+    // Starting a capsule drag interrupts an in-flight tap animation.
+    await tester.tap(find.text('In\u00edcio'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 70));
+    final bar = tester.widget<FloatingNavigationBar>(
+      find.byType(FloatingNavigationBar),
+    );
+    final label = ['In\u00edcio', 'Favoritos', 'Perfil'][bar.index];
+    final interrupt = await tester.startGesture(
+      tester.getCenter(
+        find.descendant(
+          of: find.byType(FloatingNavigationBar),
+          matching: find.text(label),
+        ),
+      ),
+    );
+    await interrupt.moveBy(const Offset(30, 0));
+    await tester.pump();
+    final heldPage = controller.page!;
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(controller.page, closeTo(heldPage, .001));
+    await interrupt.moveBy(Offset(-slot * .2, 0));
+    await tester.pump();
+    final heldIndicator = tester.widget<Positioned>(indicator).left!;
+    await interrupt.up();
+    await tester.pump();
+    expect(
+      tester.widget<Positioned>(indicator).left,
+      closeTo(heldIndicator, .01),
+    );
+    expectConnected();
+    await tester.pumpAndSettle();
+    expectConnected();
+
+    controller.jumpToPage(0);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Perfil'));
+    await tester.tap(find.text('In\u00edcio'));
+    await tester.pumpAndSettle();
+    expect(controller.page, 0);
+
     expect(
       backend.requests.where((request) => request == 'GET /avaliacoes/minhas'),
       hasLength(1),
@@ -234,7 +441,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 401));
     await tester.pumpAndSettle();
     expect(
-      tester.widget<AnimatedPositioned>(find.byType(AnimatedPositioned)).left,
+      tester
+          .widget<Positioned>(
+            find.byKey(const ValueKey('navigation-indicator')),
+          )
+          .left,
       5,
     );
   });

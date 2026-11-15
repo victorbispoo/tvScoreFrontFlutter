@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -12,10 +11,18 @@ class FloatingNavigationBar extends StatefulWidget {
     super.key,
     required this.index,
     required this.onSelected,
+    this.pageController,
+    this.onIndicatorReleased,
+    this.onIndicatorDragStarted,
+    this.onIndicatorDragged,
   });
 
   final int index;
   final ValueChanged<int> onSelected;
+  final PageController? pageController;
+  final VoidCallback? onIndicatorDragStarted;
+  final ValueChanged<double>? onIndicatorDragged;
+  final void Function(double position, int target)? onIndicatorReleased;
 
   static const _icons = [
     HugeIcons.strokeRoundedHome01,
@@ -29,63 +36,52 @@ class FloatingNavigationBar extends StatefulWidget {
 }
 
 class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
-  late final ValueNotifier<double> _position = ValueNotifier(
-    widget.index.toDouble(),
-  );
-  bool _dragging = false;
-  int? _settlingTarget;
-  Timer? _settleTimeout;
-  static const _snapDuration = Duration(milliseconds: 220);
+  double? _dragPosition;
+  int? _dragStartIndex;
+  bool get _dragging => _dragPosition != null;
+  static const _indicatorInset = 5.0;
 
-  @override
-  void didUpdateWidget(covariant FloatingNavigationBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!_dragging && widget.index != oldWidget.index) {
-      if (_settlingTarget == null || widget.index == _settlingTarget) {
-        _settlingTarget = null;
-        _settleTimeout?.cancel();
-        _position.value = widget.index.toDouble();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _settleTimeout?.cancel();
-    _position.dispose();
-    super.dispose();
+  double get _pagePosition {
+    final controller = widget.pageController;
+    return controller != null &&
+            controller.hasClients &&
+            controller.position.hasContentDimensions
+        ? controller.page ?? widget.index.toDouble()
+        : widget.index.toDouble();
   }
 
   void _startDrag(DragStartDetails _) {
-    _settleTimeout?.cancel();
-    _settlingTarget = null;
-    setState(() => _dragging = true);
+    setState(() {
+      _dragPosition = _pagePosition;
+      _dragStartIndex = widget.index;
+    });
+    widget.onIndicatorDragStarted?.call();
   }
 
   void _updateDrag(DragUpdateDetails details, double slotWidth) {
-    final previousCandidate = _position.value.round();
-    _position.value = (_position.value + details.delta.dx / slotWidth).clamp(
-      0.0,
-      (FloatingNavigationBar._labels.length - 1).toDouble(),
+    final previousCandidate = _dragPosition!.round();
+    setState(
+      () => _dragPosition = (_dragPosition! + details.delta.dx / slotWidth)
+          .clamp(0.0, (FloatingNavigationBar._labels.length - 1).toDouble()),
     );
-    if (_position.value.round() != previousCandidate) AppHaptics.selection();
+    widget.onIndicatorDragged?.call(_dragPosition!);
+    if (_dragPosition!.round() != previousCandidate) AppHaptics.selection();
   }
 
   void _finishDrag({bool canceled = false}) {
     if (!_dragging) return;
-    final target = canceled ? widget.index : _position.value.round();
-    setState(() => _dragging = false);
-    _position.value = target.toDouble();
-    if (!canceled && target != widget.index) {
-      _settlingTarget = target;
-      _settleTimeout?.cancel();
-      _settleTimeout = Timer(const Duration(milliseconds: 400), () {
-        if (!mounted || _settlingTarget != target) return;
-        _settlingTarget = null;
-        _position.value = widget.index.toDouble();
-      });
+    final target = canceled ? _dragStartIndex! : _dragPosition!.round();
+    final position = _dragPosition!;
+    // Transfer at the same fraction before the page starts snapping.
+    if (widget.onIndicatorReleased != null) {
+      widget.onIndicatorReleased!(position, target);
+    } else if (!canceled && target != widget.index) {
       widget.onSelected(target);
     }
+    setState(() {
+      _dragPosition = null;
+      _dragStartIndex = null;
+    });
   }
 
   @override
@@ -113,54 +109,64 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
             builder: (context, constraints) {
               final width =
                   constraints.maxWidth / FloatingNavigationBar._labels.length;
-              return ValueListenableBuilder<double>(
-                valueListenable: _position,
-                builder: (context, position, _) => Stack(
-                  children: [
-                    AnimatedPositioned(
-                      duration: _dragging ? Duration.zero : _snapDuration,
-                      curve: Curves.easeOutCubic,
-                      left: position * width + 5,
-                      top: 5,
-                      bottom: 5,
-                      width: width - 10,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary.withValues(alpha: .2),
-                          borderRadius: BorderRadius.circular(30),
+              return AnimatedBuilder(
+                animation:
+                    widget.pageController ?? const AlwaysStoppedAnimation(0),
+                builder: (context, _) {
+                  final position = (_dragPosition ?? _pagePosition).clamp(
+                    0.0,
+                    (FloatingNavigationBar._labels.length - 1).toDouble(),
+                  );
+                  return Stack(
+                    children: [
+                      Positioned(
+                        key: const ValueKey('navigation-indicator'),
+                        left: position * width + _indicatorInset,
+                        top: 5,
+                        bottom: 5,
+                        width: width - _indicatorInset * 2,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: .2),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
                       ),
-                    ),
-                    Row(
-                      children: List.generate(
-                        FloatingNavigationBar._labels.length,
-                        (i) {
-                          final selected = i == widget.index;
-                          return Expanded(
-                            child: _NavigationItem(
-                              icon: FloatingNavigationBar._icons[i],
-                              label: FloatingNavigationBar._labels[i],
-                              selected: (position - i).abs() < .5,
-                              onTap: () => widget.onSelected(i),
-                              onHorizontalDragStart: selected
-                                  ? _startDrag
-                                  : null,
-                              onHorizontalDragUpdate: selected
-                                  ? (details) => _updateDrag(details, width)
-                                  : null,
-                              onHorizontalDragEnd: selected
-                                  ? (_) => _finishDrag()
-                                  : null,
-                              onHorizontalDragCancel: selected
-                                  ? () => _finishDrag(canceled: true)
-                                  : null,
-                            ),
-                          );
-                        },
+                      Row(
+                        children: List.generate(
+                          FloatingNavigationBar._labels.length,
+                          (i) {
+                            final selected =
+                                i == (_dragStartIndex ?? widget.index);
+                            return Expanded(
+                              child: _NavigationItem(
+                                icon: FloatingNavigationBar._icons[i],
+                                label: FloatingNavigationBar._labels[i],
+                                selection: (1 - (position - i).abs()).clamp(
+                                  0.0,
+                                  1.0,
+                                ),
+                                onTap: () => widget.onSelected(i),
+                                onHorizontalDragStart: selected
+                                    ? _startDrag
+                                    : null,
+                                onHorizontalDragUpdate: selected
+                                    ? (details) => _updateDrag(details, width)
+                                    : null,
+                                onHorizontalDragEnd: selected
+                                    ? (_) => _finishDrag()
+                                    : null,
+                                onHorizontalDragCancel: selected
+                                    ? () => _finishDrag(canceled: true)
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -174,7 +180,7 @@ class _NavigationItem extends StatefulWidget {
   const _NavigationItem({
     required this.icon,
     required this.label,
-    required this.selected,
+    required this.selection,
     required this.onTap,
     this.onHorizontalDragStart,
     this.onHorizontalDragUpdate,
@@ -183,7 +189,7 @@ class _NavigationItem extends StatefulWidget {
   });
   final List<List<dynamic>> icon;
   final String label;
-  final bool selected;
+  final double selection;
   final VoidCallback onTap;
   final GestureDragStartCallback? onHorizontalDragStart;
   final GestureDragUpdateCallback? onHorizontalDragUpdate;
@@ -217,25 +223,32 @@ class _NavigationItemState extends State<_NavigationItem> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedScale(
-              scale: widget.selected ? 1.08 : 1,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
+            Transform.scale(
+              scale: 1 + .08 * widget.selection,
               child: HugeIcon(
                 icon: widget.icon,
                 size: 23,
-                color: widget.selected
-                    ? const Color(0xFF75ADFF)
-                    : const Color(0xFFA0ADC0),
+                color: Color.lerp(
+                  const Color(0xFFA0ADC0),
+                  const Color(0xFF75ADFF),
+                  widget.selection,
+                ),
               ),
             ),
             const SizedBox(height: 2),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 250),
+            DefaultTextStyle(
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: widget.selected ? FontWeight.w600 : FontWeight.w400,
-                color: widget.selected ? Colors.white : const Color(0xFFA0ADC0),
+                fontWeight: FontWeight.lerp(
+                  FontWeight.w400,
+                  FontWeight.w600,
+                  widget.selection,
+                ),
+                color: Color.lerp(
+                  const Color(0xFFA0ADC0),
+                  Colors.white,
+                  widget.selection,
+                ),
               ),
               child: Text(widget.label),
             ),

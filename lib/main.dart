@@ -46,22 +46,23 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
   late final PageController _pages = PageController();
-  int? _navigationTarget;
+  ({int index, Future<void> animation})? _navigationTarget;
 
   static const _pageDuration = Duration(milliseconds: 300);
 
   Future<void> _selectPage(int index) async {
-    if (!_pages.hasClients || index == _navigationTarget) return;
-    if (index == _index && _navigationTarget == null) return;
-    _navigationTarget = index;
+    if (!_pages.hasClients || index == _navigationTarget?.index) return;
+    if (_pages.page == index && _navigationTarget == null) return;
+    final animation = _pages.animateToPage(
+      index,
+      duration: _pageDuration,
+      curve: Curves.easeOutCubic,
+    );
+    _navigationTarget = (index: index, animation: animation);
     try {
-      await _pages.animateToPage(
-        index,
-        duration: _pageDuration,
-        curve: Curves.easeOutCubic,
-      );
+      await animation;
     } finally {
-      if (_navigationTarget == index) _navigationTarget = null;
+      if (_navigationTarget?.animation == animation) _navigationTarget = null;
     }
   }
 
@@ -97,6 +98,20 @@ class _AppShellState extends State<AppShell> {
                 child: FloatingNavigationBar(
                   index: _index,
                   onSelected: _selectPage,
+                  pageController: _pages,
+                  onIndicatorDragStarted: () {
+                    _navigationTarget = null;
+                    _pages.position.hold(() {});
+                  },
+                  onIndicatorDragged: (position) {
+                    _pages.jumpTo(position * _pages.position.viewportDimension);
+                    _pages.position.hold(() {});
+                  },
+                  onIndicatorReleased: (position, target) {
+                    _navigationTarget = null;
+                    _pages.jumpTo(position * _pages.position.viewportDimension);
+                    _selectPage(target);
+                  },
                 ),
               ),
             ),
