@@ -7,6 +7,8 @@ import 'package:tv_score_front_flutter/models/content_metadata.dart';
 
 // Backend em memória exclusivo dos testes: nenhuma chamada de rede real.
 class BackendHttp extends HttpOverrides {
+  int searchPageSize = 1000;
+  bool failSearch = false;
   final requests = <String>[];
   final reviews = <Map<String, dynamic>>[];
   final communityReviews = <Map<String, dynamic>>[];
@@ -118,17 +120,21 @@ class BackendHttp extends HttpOverrides {
       return null;
     }
     if (path == '/filmes/pesquisar') {
+      if (failSearch) throw StateError('Falha simulada de pesquisa');
       final term = (uri.queryParameters['q'] ?? '').toLowerCase();
+      final matches = catalog
+          .where((item) => item['title']!.toLowerCase().contains(term))
+          .toList();
+      final page = int.parse(uri.queryParameters['pagina'] ?? '1');
       return {
-        'results': catalog
-            .where((item) => item['title']!.toLowerCase().contains(term))
+        'results': matches
+            .skip((page - 1) * searchPageSize)
+            .take(searchPageSize)
             .map(details)
             .toList(),
-        'page': 1,
-        'total_pages': 1,
-        'total_results': catalog
-            .where((item) => item['title']!.toLowerCase().contains(term))
-            .length,
+        'page': page,
+        'total_pages': (matches.length / searchPageSize).ceil(),
+        'total_results': matches.length,
       };
     }
     if (path == '/conteudos/generos') {

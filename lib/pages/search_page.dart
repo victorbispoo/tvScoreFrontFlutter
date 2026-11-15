@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:tv_score_front_flutter/core/app_theme.dart';
 
 import '../models/content_metadata.dart';
+import '../models/search_filters.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
+import '../widgets/search_filter_sheet.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class SearchPage extends StatefulWidget {
@@ -27,6 +31,8 @@ class _SearchPageState extends State<SearchPage>
   bool _loadingMore = false;
   int _currentPage = 0;
   int _totalPages = 0;
+  SearchFilters _filters = const SearchFilters();
+  Future<List<Map<String, dynamic>>>? _genresFuture;
   String? _error;
   List<Map<String, String>> _results = [];
 
@@ -69,6 +75,19 @@ class _SearchPageState extends State<SearchPage>
     );
   }
 
+  Future<void> _openFilters() async {
+    FocusScope.of(context).unfocus();
+    final selected = await showSearchFilters(
+      context,
+      current: _filters,
+      genres: _genresFuture ??= _api.getAvailableGenres(),
+      onRetryGenres: () => _genresFuture = _api.getAvailableGenres(),
+    );
+    if (!mounted || selected == null) return;
+    _filters = selected;
+    _onQueryChanged(_query.text);
+  }
+
   Future<void> _search(String term, int version) async {
     try {
       final result = await _api.searchContents(term);
@@ -76,7 +95,7 @@ class _SearchPageState extends State<SearchPage>
       if (!mounted || version != _searchVersion) return;
 
       setState(() {
-        _results = result.contents;
+        _results = result.contents.where(_filters.matches).toList();
         _currentPage = result.page;
         _totalPages = result.totalPages;
       });
@@ -123,7 +142,7 @@ class _SearchPageState extends State<SearchPage>
         final existing = _results.map((content) => content.contentKey).toSet();
 
         for (final content in result.contents) {
-          if (existing.add(content.contentKey)) {
+          if (_filters.matches(content) && existing.add(content.contentKey)) {
             _results.add(content);
           }
         }
@@ -169,9 +188,17 @@ class _SearchPageState extends State<SearchPage>
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.scaffoldBackground,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 64,
+        leading: IconButton(
+          tooltip: 'Voltar',
+          onPressed: () => Navigator.maybePop(context),
+          icon: const Icon(HugeIconsStroke.arrowLeft01),
+        ),
         title: const Text(
           'Pesquisar',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
         ),
       ),
       body: SafeArea(
@@ -180,31 +207,121 @@ class _SearchPageState extends State<SearchPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
-              const Text(
-                'Encontre filmes e séries do catálogo.',
-                style: TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _query,
-                onChanged: _onQueryChanged,
-                decoration: InputDecoration(
-                  hintText: 'Busque por título...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _query.text.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'Limpar busca',
-                          onPressed: () {
-                            _query.clear();
-                            _onQueryChanged('');
-                          },
-                          icon: const Icon(Icons.close),
+              Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                        child: TextField(
+                          controller: _query,
+                          onChanged: _onQueryChanged,
+                          textInputAction: TextInputAction.search,
+                          decoration: InputDecoration(
+                            hintText: 'Busque por título...',
+                            prefixIcon: const Icon(
+                              HugeIconsStroke.search01,
+                              size: 20,
+                            ),
+                            suffixIcon: _query.text.isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: 'Limpar busca',
+                                    onPressed: () {
+                                      _query.clear();
+                                      _onQueryChanged('');
+                                    },
+                                    icon: const Icon(
+                                      HugeIconsStroke.cancel01,
+                                      size: 18,
+                                    ),
+                                  ),
+                            filled: true,
+                            fillColor: const Color(0xEB14253D),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: AppTheme.primary.withValues(alpha: .16),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: BorderSide(
+                                color: AppTheme.primary.withValues(alpha: .16),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              borderSide: const BorderSide(
+                                color: AppTheme.primary,
+                                width: 1.4,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 15,
+                            ),
+                          ),
                         ),
-                ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton.filledTonal(
+                        tooltip: 'Filtros',
+                        onPressed: _openFilters,
+                        icon: const Icon(
+                          HugeIconsStroke.filterHorizontal,
+                          size: 21,
+                        ),
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(52, 52),
+                          backgroundColor: AppTheme.surface,
+                          foregroundColor: _filters.isActive
+                              ? AppTheme.primary
+                              : Colors.white70,
+                          side: BorderSide(
+                            color: AppTheme.primary.withValues(
+                              alpha: _filters.isActive ? .55 : .16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_filters.isActive)
+                        Positioned(
+                          right: 4,
+                          top: 4,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              if (_query.text.trim().isEmpty)
+                const Text(
+                  'Encontre filmes e séries do catálogo.',
+                  style: TextStyle(color: Colors.white60, fontSize: 13),
+                )
+              else
+                Text(
+                  'Resultados para “${_query.text.trim()}”',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
+                ),
+              const SizedBox(height: 16),
               Expanded(
                 child: Builder(
                   builder: (context) {
@@ -232,11 +349,33 @@ class _SearchPageState extends State<SearchPage>
                       );
                     }
                     final results = _results;
+                    final hasMore =
+                        _currentPage > 0 &&
+                        _currentPage < _totalPages &&
+                        _currentPage < ApiService.maxSearchPage;
                     if (results.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'Nenhum título encontrado. Tente outro nome.',
-                          textAlign: TextAlign.center,
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              hasMore
+                                  ? 'Nenhum título corresponde aos filtros nesta página.'
+                                  : _filters.isActive
+                                  ? 'Nenhum título encontrado. Ajuste os filtros ou o nome.'
+                                  : 'Nenhum título encontrado. Tente outro nome.',
+                              textAlign: TextAlign.center,
+                            ),
+                            if (hasMore) ...[
+                              const SizedBox(height: 12),
+                              _loadingMore
+                                  ? const CircularProgressIndicator()
+                                  : TextButton(
+                                      onPressed: _loadMore,
+                                      child: const Text('Buscar mais páginas'),
+                                    ),
+                            ],
+                          ],
                         ),
                       );
                     }
@@ -248,20 +387,40 @@ class _SearchPageState extends State<SearchPage>
                             (constraints.maxWidth - spacing * (columns - 1)) /
                             columns;
 
-                        return GridView.builder(
-                          controller: _scrollController,
-                          keyboardDismissBehavior:
-                              ScrollViewKeyboardDismissBehavior.onDrag,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: columns,
-                                mainAxisExtent: cardWidth * 1.5 + 64,
-                                crossAxisSpacing: spacing,
-                                mainAxisSpacing: 20,
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: GridView.builder(
+                                controller: _scrollController,
+                                keyboardDismissBehavior:
+                                    ScrollViewKeyboardDismissBehavior.onDrag,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: columns,
+                                      mainAxisExtent: cardWidth * 1.5 + 64,
+                                      crossAxisSpacing: spacing,
+                                      mainAxisSpacing: 20,
+                                    ),
+                                itemCount: results.length,
+                                itemBuilder: (_, index) =>
+                                    ContentCard(content: results[index]),
                               ),
-                          itemCount: results.length,
-                          itemBuilder: (_, index) =>
-                              ContentCard(content: results[index]),
+                            ),
+                            if (hasMore)
+                              _loadingMore
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(12),
+                                      child: CircularProgressIndicator(),
+                                    )
+                                  : TextButton(
+                                      onPressed: _loadMore,
+                                      child: Text(
+                                        _loadMoreFailed
+                                            ? 'Tentar novamente'
+                                            : 'Carregar mais',
+                                      ),
+                                    ),
+                          ],
                         );
                       },
                     );
