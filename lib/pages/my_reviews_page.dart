@@ -141,11 +141,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.star_outline_rounded,
-                        size: 64,
-                        color: Colors.amber,
-                      ),
+                      Icon(HugeIconsStroke.star, size: 64, color: Colors.amber),
                       SizedBox(height: 16),
                       Text(
                         'Sua opinião merece uma nota',

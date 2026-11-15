@@ -1,3 +1,13 @@
+## Continuidade — 2026-11-15
+
+- Branch de trabalho: `victor`. Commits recentes já enviados para `origin/victor`: `21c23c7` (Hero Home), `d621cb8` (Hero Pesquisa/Favoritos), `d4bb1ef` (Perfil e destaque das notas), `0b5d2d7` (feedback háptico) e `b04cfaa` (diálogo de exclusão). A `main` permanece em `6d3b3e0`; não presumir sincronização com `victor` sem conferir o Git.
+- Pesquisa e Favoritos reutilizam `ContentCard`/`ContentPoster` e tags geradas em `lib/widgets/poster_hero_tag.dart`; Home também usa essa função. Remover favorito nos detalhes atualiza a lista de origem antes do retorno. Testes específicos de Hero passaram; animação com imagem carregando ainda pede conferência em aparelho.
+- Feedback háptico centralizado em `lib/core/app_haptics.dart`: seleção no arraste entre abas e na mudança real da nota; confirmação somente após sucesso de favoritos/avaliações; erro discreto após falhas relevantes. Não vibrar em carregamento, rolagem ou transição Hero.
+- Exclusão de avaliação usa `showTvScoreConfirmation` em `lib/widgets/tv_score_confirmation_dialog.dart`: diálogo compacto, azul-marinho escuro, título e descrição com destaque discreto da obra, confirmação destrutiva em coral. Cancelar retorna `false`; Voltar/toque fora retornam `null`; `_deleteReview` mantém bloqueio, snackbar e feedback háptico. A variante neutra continua disponível.
+- A troca local do ícone do estado vazio de `MyReviewsPage` para `HugeIconsStroke.star` foi solicitada para entrar junto desta atualização de memória. Manter a preferência por HugeIcons nos ícones novos ou alterados.
+- Validação mais recente do diálogo: `dart format`, `flutter analyze --no-pub` sem problemas; 10 testes de diálogo/feedback háptico passaram. Teste existente de editar/excluir avaliação também passou. Não houve inspeção visual em aparelho ou medição em Profile Mode. O aumento local da nota no carrossel ranqueado pode causar overflow em tela estreita; revisar antes de afirmar que a suíte completa passa.
+- Alterações locais fora deste registro/commit: `.metadata`, `pubspec.lock`, `devtools_options.yaml`, `codex0811` e edição de `lib/widgets/community_review_card.dart` que marca o autor atual como “você”. Preservar e revisar separadamente; não incluir o dump de conversa `codex0811` em commits.
+
 ## Preferência de ícones — 2026-11-14
 
 - Usar a biblioteca HugeIcons nos ícones novos ou alterados da interface. Reutilizar os pacotes já instalados (`hugeicons_pro` e `hugeicons`), sem adicionar outra biblioteca de ícones.
