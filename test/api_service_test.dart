@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,6 +28,22 @@ void main() {
   });
 
   test('preserva nome sem persistir favoritos ou avaliações', () async {
+    ApiService.token = 'test-token';
+    api.dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          expect(options.method, 'PUT');
+          expect(options.path, '/usuarios/eu');
+          expect(options.headers['Authorization'], 'Bearer test-token');
+          handler.resolve(
+            Response(
+              requestOptions: options,
+              data: {'nome': options.data['nome']},
+            ),
+          );
+        },
+      ),
+    );
     ApiService.savedContents = [content];
     await api.updateName('José');
     await api.open('ana@teste.com', 'Ana');

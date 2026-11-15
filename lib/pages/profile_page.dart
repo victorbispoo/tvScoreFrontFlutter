@@ -1,9 +1,15 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:tv_score_front_flutter/core/app_theme.dart';
+import 'package:tv_score_front_flutter/widgets/user_avatar.dart';
 
 import '../core/app_routes.dart';
 import '../services/api_services.dart';
+import '../widgets/edit_profile_sheet.dart';
 import '../widgets/genre_preferences.dart';
+import '../widgets/tv_score_snackbar.dart';
 import 'favorites_page.dart';
 import 'my_reviews_page.dart';
 
@@ -18,24 +24,33 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final _api = ApiService();
-  late Future<int> _reviewCount;
+  late Future<({int count, double? average})> _reviewStats;
 
-  Future<int> _fetchReviewCount() async {
+  Future<({int count, double? average})> _fetchReviewStats() async {
     final reviews = await _api.getMyReviews();
-    return reviews.length;
+    final total = reviews.fold<double>(
+      0,
+      (sum, review) => sum + (review['nota'] as num).toDouble(),
+    );
+    return (
+      count: reviews.length,
+      average: reviews.isEmpty ? null : total / reviews.length,
+    );
   }
 
   @override
   void initState() {
     super.initState();
-    _reviewCount = widget.isActive ? _fetchReviewCount() : Future.value(0);
+    _reviewStats = widget.isActive
+        ? _fetchReviewStats()
+        : Future.value((count: 0, average: null));
   }
 
   @override
   void didUpdateWidget(covariant ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive && !oldWidget.isActive) {
-      _reviewCount = _fetchReviewCount();
+      _reviewStats = _fetchReviewStats();
     }
   }
 
@@ -44,10 +59,9 @@ class _ProfilePageState extends State<ProfilePage> {
       await _api.logout();
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível sair. Tente novamente.'),
-        ),
+      TvScoreSnackbar.error(
+        context,
+        'Não foi possível sair da conta. Tente novamente.',
       );
       return;
     }
@@ -64,167 +78,259 @@ class _ProfilePageState extends State<ProfilePage> {
     builder: (_) => const GenrePreferencesDialog(isEditing: true),
   );
 
-  Future<void> _editProfile() async {
-    var editedName = ApiService.userName;
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar perfil'),
-        content: TextFormField(
-          initialValue: editedName,
-          autofocus: true,
-          maxLength: 60,
-          onChanged: (value) => editedName = value,
-          decoration: const InputDecoration(labelText: 'Nome'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, editedName.trim()),
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-    if (name == null || !mounted) return;
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Informe seu nome.')));
-      return;
-    }
+  bool _editingProfile = false;
 
+  Future<void> _editProfile() async {
+    if (_editingProfile) return;
+    _editingProfile = true;
     try {
-      await _api.updateName(name);
-      if (mounted) setState(() {});
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível salvar o perfil.')),
+      final saved = await showEditProfileSheet(
+        context,
+        name: ApiService.userName,
+        onSave: _api.updateName,
       );
+      if (mounted && saved == true) {
+        setState(() {});
+      }
+    } finally {
+      _editingProfile = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const Text(
-          'Perfil',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 28),
-        Center(
-          child: CircleAvatar(
-            radius: 42,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            child: const Icon(Icons.person_outline, size: 42),
+    return BackdropGroup(
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const Text(
+            'Perfil',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          ApiService.userName,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          ApiService.userEmail,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white70),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FilledButton(
-              onPressed: _editProfile,
-              child: const Text('Editar perfil'),
-            ),
-            const SizedBox(width: 12),
-            OutlinedButton(
-              onPressed: _logout,
-              child: const Text('Sair da conta'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 28),
-        Card(
-          child: ListTile(
-            leading: const Icon(
-              Icons.tune_rounded,
-              color: Colors.lightBlueAccent,
-            ),
-            title: const Text('Gêneros favoritos'),
-            subtitle: const Text('Veja e edite suas preferências'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _editGenres,
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              UserAvatar(name: ApiService.userName, size: 72),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ApiService.userName,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      ApiService.userEmail,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextButton(
+                      onPressed: _editProfile,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.primary,
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(48, 48),
+                        alignment: Alignment.centerLeft,
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      child: const Text('Editar perfil'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
-        Card(
-          child: ListTile(
-            leading: Icon(
-              HugeIconsStroke.favourite,
-              color: Colors.redAccent,
-              size: 24,
-            ),
-            title: const Text('Favoritos'),
-            subtitle: Text('${ApiService.savedContents.length} títulos salvos'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const FavoritesPage()),
-              );
-              if (mounted) setState(() {});
-            },
+          const SizedBox(height: 20),
+          const Text(
+            'Suas estatísticas',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
-        ),
-        Card(
-          child: ListTile(
-            leading: Icon(HugeIconsStroke.star, color: Colors.amber, size: 24),
-            title: const Text('Minhas avaliações'),
-            subtitle: FutureBuilder<int>(
-              future: _reviewCount,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Text('Carregando contagem...');
-                }
-                if (snapshot.hasError) {
-                  return TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _reviewCount = _fetchReviewCount();
-                      });
-                    },
-                    child: const Text('Tentar carregar contagem novamente'),
+          const Divider(color: Colors.white12, height: 1),
+          const SizedBox(height: 20),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _ProfileStat(
+                  value: '${ApiService.savedContents.length}',
+                  label: 'Favoritos',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FutureBuilder<({int count, double? average})>(
+                  future: _reviewStats,
+                  builder: (context, snapshot) => _ProfileStat(
+                    value: snapshot.hasError
+                        ? '—'
+                        : snapshot.connectionState != ConnectionState.done
+                        ? '…'
+                        : '${snapshot.data?.count ?? 0}',
+                    label: 'Avaliações',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FutureBuilder<({int count, double? average})>(
+                  future: _reviewStats,
+                  builder: (context, snapshot) => _ProfileStat(
+                    value: snapshot.hasError
+                        ? '—'
+                        : snapshot.connectionState != ConnectionState.done
+                        ? '…'
+                        : snapshot.data?.average?.toStringAsFixed(1) ?? '—',
+                    label: 'Média',
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+          const Text(
+            'Sua biblioteca',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ProfileGlassSurface(
+              child: ListTile(
+                leading: const Icon(
+                  HugeIconsStroke.preferenceHorizontal,
+                  color: Colors.lightBlueAccent,
+                ),
+                title: const Text('Gêneros favoritos'),
+                trailing: const Icon(HugeIconsStroke.arrowRight01),
+                onTap: _editGenres,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ProfileGlassSurface(
+              child: ListTile(
+                leading: Icon(
+                  HugeIconsStroke.favourite,
+                  color: Colors.redAccent,
+                  size: 24,
+                ),
+                title: const Text('Favoritos'),
+                trailing: const Icon(HugeIconsStroke.arrowRight01),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FavoritesPage()),
                   );
-                }
-                final count = snapshot.data;
-                return Text(
-                  '$count ${count == 1 ? 'avaliação' : 'avaliações'}'
-                  ' • Veja suas notas e comentários',
-                );
-              },
+                  if (mounted) setState(() {});
+                },
+              ),
             ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MyReviewsPage()),
-              );
-              if (!mounted) return;
-              setState(() {
-                _reviewCount = _fetchReviewCount();
-              });
-            },
           ),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ProfileGlassSurface(
+              child: ListTile(
+                leading: Icon(
+                  HugeIconsStroke.star,
+                  color: Colors.amber,
+                  size: 24,
+                ),
+                title: const Text('Minhas avaliações'),
+                trailing: const Icon(HugeIconsStroke.arrowRight01),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MyReviewsPage()),
+                  );
+                  if (!mounted) return;
+                  setState(() {
+                    _reviewStats = _fetchReviewStats();
+                  });
+                },
+              ),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: _logout,
+            icon: Icon(HugeIconsStroke.logout01),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white60,
+              minimumSize: const Size(48, 48),
+            ),
+            label: const Text('Sair da conta'),
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _ProfileStat extends StatelessWidget {
+  const _ProfileStat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => _ProfileGlassSurface(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Colors.white60),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ProfileGlassSurface extends StatelessWidget {
+  const _ProfileGlassSurface({required this.child});
+
+  final Widget child;
+  static const double radius = 16;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(radius),
+    child: BackdropFilter.grouped(
+      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+      child: Material(
+        color: const Color(0xFF14253D).withValues(alpha: .96),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(color: AppTheme.primary.withValues(alpha: .14)),
+        ),
+        child: child,
+      ),
+    ),
+  );
 }

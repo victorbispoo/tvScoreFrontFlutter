@@ -65,16 +65,31 @@ class ApiService {
   Future<void> updateName(String name) async {
     final nomeTrim = name.trim();
 
-    if (nomeTrim.isEmpty) {
-      throw ArgumentError('Informe seu nome');
+    if (nomeTrim.isEmpty || nomeTrim.length > 60) {
+      throw ArgumentError('Informe um nome de até 60 caracteres.');
+    }
+    final session = _sessionVersion;
+    final email = userEmail;
+    if (token == null || token!.isEmpty) {
+      throw StateError('Entre na sua conta para editar o perfil.');
+    }
+    final response = await dio.put(
+      '/usuarios/eu',
+      data: {'nome': nomeTrim},
+      options: _authorizationOptions,
+    );
+    _checkSession(session);
+    final savedName = (response.data as Map)['nome'] as String;
+    if (savedName.trim().isEmpty) {
+      throw const FormatException('Nome ausente na resposta.');
     }
 
     final preferences = SharedPreferencesAsync();
     await preferences.setString(
-      'tv_score_library_$userEmail',
-      jsonEncode({'name': nomeTrim}),
+      'tv_score_library_$email',
+      jsonEncode({'name': savedName}),
     );
-
-    userName = nomeTrim;
+    _checkSession(session);
+    userName = savedName;
   }
 }
