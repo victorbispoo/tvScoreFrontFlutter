@@ -14,9 +14,10 @@ import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class DetailsPage extends StatefulWidget {
-  const DetailsPage({super.key, required this.content});
+  const DetailsPage({super.key, required this.content, this.heroTag});
 
   final Map<String, String> content;
+  final Object? heroTag;
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();
@@ -242,6 +243,7 @@ class _DetailsPageState extends State<DetailsPage> {
           children: [
             ContentHeader(
               content: content,
+              heroTag: widget.heroTag,
               isSaved: saved,
               onFavoritePressed: _busy ? null : _toggleSaved,
             ),

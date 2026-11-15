@@ -10,11 +10,13 @@ class ContentHeader extends StatelessWidget {
     required this.content,
     required this.onFavoritePressed,
     required this.isSaved,
+    this.heroTag,
   });
 
   final Map<String, String> content;
   final VoidCallback? onFavoritePressed;
   final bool isSaved;
+  final Object? heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +84,7 @@ class ContentHeader extends StatelessWidget {
             bottom: 20,
             width: 112,
             height: 168,
-            child: ContentPoster(content: content),
+            child: ContentPoster(content: content, heroTag: heroTag),
           ),
           Positioned(
             right: 20,

@@ -5,16 +5,19 @@ import '../core/rating_scale.dart';
 import '../models/content_metadata.dart';
 import '../pages/details_page.dart';
 import 'content_poster.dart';
+import 'home_poster_hero_tag.dart';
 
 class RankedContentCarousel extends StatelessWidget {
   const RankedContentCarousel({
     super.key,
     required this.contents,
     required this.onChanged,
+    this.heroSection,
   });
 
   final List<Map<String, String>> contents;
   final VoidCallback onChanged;
+  final String? heroSection;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +34,9 @@ class RankedContentCarousel extends StatelessWidget {
           separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (context, index) {
             final content = contents[index];
+            final heroTag = heroSection == null
+                ? null
+                : homePosterHeroTag(heroSection!, index, content);
             return SizedBox(
               width: 248,
               child: InkWell(
@@ -39,7 +45,8 @@ class RankedContentCarousel extends StatelessWidget {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => DetailsPage(content: content),
+                      builder: (_) =>
+                          DetailsPage(content: content, heroTag: heroTag),
                     ),
                   );
                   if (context.mounted) onChanged();
@@ -60,7 +67,7 @@ class RankedContentCarousel extends StatelessWidget {
                     SizedBox(
                       width: 100,
                       height: 150,
-                      child: ContentPoster(content: content),
+                      child: ContentPoster(content: content, heroTag: heroTag),
                     ),
                     const SizedBox(width: 10),
                     Expanded(

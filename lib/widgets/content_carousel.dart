@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'content_card.dart';
+import 'home_poster_hero_tag.dart';
 
 class ContentCarousel extends StatelessWidget {
   const ContentCarousel({
@@ -12,6 +13,7 @@ class ContentCarousel extends StatelessWidget {
     this.showHeading = true,
     required this.contents,
     required this.onChanged,
+    this.heroSection,
   });
 
   final Icon? icon;
@@ -21,6 +23,7 @@ class ContentCarousel extends StatelessWidget {
   final bool showHeading;
   final List<Map<String, String>> contents;
   final VoidCallback onChanged;
+  final String? heroSection;
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +78,9 @@ class ContentCarousel extends StatelessWidget {
                 child: ContentCard(
                   content: contents[index],
                   onChanged: onChanged,
+                  heroTag: heroSection == null
+                      ? null
+                      : homePosterHeroTag(heroSection!, index, contents[index]),
                 ),
               ),
             ),

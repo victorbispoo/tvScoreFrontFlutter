@@ -14,10 +14,12 @@ class TopRatedCarousel extends StatelessWidget {
     required this.onMinimumSelected,
     required this.onRetry,
     required this.onChanged,
+    this.heroSection,
   });
 
   final Future<List<Map<String, String>>> contents;
   final VoidCallback onChanged;
+  final String? heroSection;
   final int minimumRating;
   final ValueChanged<int> onMinimumSelected;
   final VoidCallback onRetry;
@@ -82,6 +84,7 @@ class TopRatedCarousel extends StatelessWidget {
           return RankedContentCarousel(
             contents: contents,
             onChanged: onChanged,
+            heroSection: heroSection,
           );
         },
       ),

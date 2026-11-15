@@ -76,7 +76,7 @@ void main() {
         home: Scaffold(
           body: SizedBox(
             width: 160,
-            height: 290,
+            height: 310,
             child: ContentCard(
               content: {
                 ...movie,

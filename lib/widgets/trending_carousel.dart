@@ -9,10 +9,12 @@ class TrendingCarousel extends StatefulWidget {
     super.key,
     required this.contents,
     required this.onChanged,
+    this.heroSection,
   });
 
   final List<Map<String, String>> contents;
   final VoidCallback onChanged;
+  final String? heroSection;
 
   @override
   State<TrendingCarousel> createState() => _TrendingCarouselState();
@@ -68,6 +70,7 @@ class _TrendingCarouselState extends State<TrendingCarousel> {
             title: '',
             contents: contents,
             onChanged: widget.onChanged,
+            heroSection: widget.heroSection,
             showHeading: false,
           ),
         ],

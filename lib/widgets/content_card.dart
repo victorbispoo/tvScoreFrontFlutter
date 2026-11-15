@@ -8,10 +8,16 @@ import '../pages/details_page.dart';
 import 'content_poster.dart';
 
 class ContentCard extends StatelessWidget {
-  const ContentCard({super.key, required this.content, this.onChanged});
+  const ContentCard({
+    super.key,
+    required this.content,
+    this.onChanged,
+    this.heroTag,
+  });
 
   final VoidCallback? onChanged;
   final Map<String, String> content;
+  final Object? heroTag;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -21,7 +27,9 @@ class ContentCard extends StatelessWidget {
       onTap: () async {
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => DetailsPage(content: content)),
+          MaterialPageRoute(
+            builder: (_) => DetailsPage(content: content, heroTag: heroTag),
+          ),
         );
         if (context.mounted) onChanged?.call();
       },
@@ -33,7 +41,7 @@ class ContentCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                ContentPoster(content: content),
+                ContentPoster(content: content, heroTag: heroTag),
                 if ((double.tryParse(content['score'] ?? '') ?? 0) > 0)
                   Positioned(
                     top: 8,
@@ -44,9 +52,14 @@ class ContentCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.scaffoldBackground.withValues(alpha: .75),
+                        color: AppTheme.scaffoldBackground.withValues(
+                          alpha: .75,
+                        ),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.surfaceHighlight, width: 0.5)
+                        border: Border.all(
+                          color: AppTheme.surfaceHighlight,
+                          width: 0.5,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,

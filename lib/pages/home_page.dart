@@ -16,6 +16,7 @@ enum HomeSectionType { personalized, trending, genre, discover }
 
 typedef HomeSection = ({
   HomeSectionType type,
+  String heroSection,
   String title,
   IconData icon,
   List<Map<String, String>> contents,
@@ -105,6 +106,7 @@ class _HomePageState extends State<HomePage>
 
       sections.add((
         type: HomeSectionType.personalized,
+        heroSection: 'personalized',
         title: 'Para você',
         icon: HugeIconsSolid.sparkles,
         contents: forYou,
@@ -114,6 +116,7 @@ class _HomePageState extends State<HomePage>
     for (final genre in preferredGenres) {
       sections.add((
         type: HomeSectionType.genre,
+        heroSection: 'genre:${genre['codigo']}',
         title: genre['nome'] as String,
         icon: genreIcon(genre['codigo'] as String),
         contents: contentsByCode[genre['codigo']] ?? [],
@@ -123,6 +126,7 @@ class _HomePageState extends State<HomePage>
     if (discoverGenre != null) {
       sections.add((
         type: HomeSectionType.discover,
+        heroSection: 'discover:${discoverGenre['codigo']}',
         title: 'Descubra algo',
         icon: HugeIconsSolid.compass01,
         contents: contentsByCode[discoverGenre['codigo']] ?? [],
@@ -185,6 +189,7 @@ class _HomePageState extends State<HomePage>
             if ((section.type == HomeSectionType.personalized) == personalized)
               ContentCarousel(
                 onChanged: () => setState(() {}),
+                heroSection: section.heroSection,
                 icon: Icon(
                   section.icon,
                   size: personalized ? 18 : 16,
@@ -254,10 +259,12 @@ class _HomePageState extends State<HomePage>
               return TrendingCarousel(
                 contents: snapshot.data!,
                 onChanged: () => setState(() {}),
+                heroSection: 'trending',
               );
             },
           ),
           TopRatedCarousel(
+            heroSection: 'top-rated',
             minimumRating: _minimumRating,
             onMinimumSelected: (minimum) => setState(() {
               _minimumRating = minimum;
