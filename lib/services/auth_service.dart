@@ -97,11 +97,15 @@ extension AuthService on ApiService {
       debugPrint('URL: ${error.requestOptions.uri}');
       debugPrint('Status: ${error.response?.statusCode}');
       _clearAccount();
-      final body = error.response?.data;
+      final status = error.response?.statusCode;
       throw FormatException(
-        body is Map
-            ? body['mensagem']?.toString() ?? 'Erro ao efetuar login.'
-            : 'Não foi possível conectar ao servidor.',
+        status == 401
+            ? 'E-mail ou senha incorretos.'
+            : error.response == null
+            ? 'Não foi possível conectar. Verifique sua internet.'
+            : status != null && status >= 500
+            ? 'O servidor está indisponível. Tente novamente.'
+            : 'Não foi possível entrar. Confira seus dados e tente novamente.',
       );
     } catch (_) {
       _clearAccount();
@@ -120,12 +124,15 @@ extension AuthService on ApiService {
         },
       );
     } on DioException catch (error) {
-      final body = error.response?.data;
-
       throw FormatException(
-        body is Map
-            ? body['message']?.toString() ?? 'Erro ao registrar usuário.'
-            : ' Não foi possível conectar ao servidor.',
+        error.response == null
+            ? 'Não foi possível conectar. Verifique sua internet.'
+            : error.response?.statusCode == 409
+            ? 'Este e-mail já está cadastrado.'
+            : error.response!.statusCode != null &&
+                  error.response!.statusCode! >= 500
+            ? 'O servidor está indisponível. Tente novamente.'
+            : 'Não foi possível criar a conta. Confira os dados e tente novamente.',
       );
     }
   }

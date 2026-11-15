@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:tv_score_front_flutter/widgets/genre_preferences.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../controllers/register_controller.dart';
 import '../core/app_routes.dart';
+import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import '../widgets/auth_text_field.dart';
+import '../widgets/genre_preferences.dart';
+import '../widgets/tv_score_snackbar.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,7 +18,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   late final RegisterController _controller;
-  bool _obscurePassword = true;
+
   bool _busy = false;
 
   @override
@@ -69,14 +72,11 @@ class _RegisterPageState extends State<RegisterPage> {
       if (!mounted) return;
 
       final message = accontCreated
-          ? 'Conta criada, mas não foi possível entrar automaticamente'
-                'Faça login para continuar'
+          ? 'Conta criada, mas não foi possível entrar automaticamente. Faça login para continuar.'
           : error is FormatException
           ? error.message
           : 'Não foi possível criar a conta. Tente novamente.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      TvScoreSnackbar.error(context, message);
 
       if (accontCreated) {
         Navigator.pop(context);
@@ -92,46 +92,149 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Criar conta')),
-    body: SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          AuthTextField(
-            label: 'Nome',
-            controller: _controller.nameController,
-            textInputAction: TextInputAction.next,
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          AuthTextField(
-            label: 'E-mail',
-            controller: _controller.emailController,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          AuthTextField(
-            label: 'Senha',
-            controller: _controller.passwordController,
-            obscureText: _obscurePassword,
-            textInputAction: TextInputAction.done,
-            onChanged: (_) => setState(() {}),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+    appBar: AppBar(
+      backgroundColor: AppTheme.scaffoldBackground,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        tooltip: 'Voltar',
+        onPressed: () => Navigator.maybePop(context),
+        icon: const Icon(HugeIconsStroke.arrowLeft01),
+      ),
+      title: const Text('Criar conta'),
+    ),
+    body: BackdropGroup(
+      child: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 36,
               ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const _RegistrationAvatar(),
+                      const SizedBox(height: 24),
+                      AuthTextField(
+                        label: 'Nome',
+                        controller: _controller.nameController,
+                        textInputAction: TextInputAction.next,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      AuthTextField(
+                        label: 'E-mail',
+                        controller: _controller.emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      AuthTextField(
+                        label: 'Senha',
+                        controller: _controller.passwordController,
+                        isPassword: true,
+                        textInputAction: TextInputAction.done,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton(
+                          onPressed: !_busy && _controller.canSubmit
+                              ? _register
+                              : null,
+                          child: _busy
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Cadastrar'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Text(
+                            'J\u00e1 tem uma conta?',
+                            style: TextStyle(color: Color(0xFF8B9BB8)),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.maybePop(context),
+                            child: const Text('Entrar'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: !_busy && _controller.canSubmit ? _register : null,
-            child: const SizedBox(
-              width: double.infinity,
-              child: Center(child: Text('Cadastrar')),
+        ),
+      ),
+    ),
+  );
+}
+
+class _RegistrationAvatar extends StatelessWidget {
+  const _RegistrationAvatar();
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Foto de perfil indispon\u00edvel no cadastro',
+    child: SizedBox.square(
+      dimension: 88,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.surfaceHighlight.withValues(alpha: .55),
+              border: Border.all(
+                color: AppTheme.primary.withValues(alpha: .22),
+              ),
+            ),
+            child: const Center(
+              child: Icon(
+                HugeIconsStroke.user,
+                size: 38,
+                color: Color(0xFFB6D0FF),
+              ),
+            ),
+          ),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.surface,
+                border: Border.all(
+                  color: AppTheme.scaffoldBackground,
+                  width: 2,
+                ),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(7),
+                child: Icon(
+                  HugeIconsStroke.camera01,
+                  size: 16,
+                  color: Colors.white38,
+                ),
+              ),
             ),
           ),
         ],

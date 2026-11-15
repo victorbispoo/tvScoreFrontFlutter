@@ -23,6 +23,15 @@ void main() {
     api.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          if (options.path == '/usuarios/eu' && options.method == 'PUT') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                data: {'nome': options.data['nome'], 'email': 'ana@teste.com'},
+              ),
+            );
+            return;
+          }
           expect(options.path, '/auth/login');
           expect(options.data, {
             'email': 'ana@teste.com',
@@ -164,7 +173,13 @@ void main() {
     );
     await expectLater(
       api.loginApi('ana@teste.com', 'senha-errada'),
-      throwsA(isA<FormatException>()),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'mensagem para o usuário',
+          'E-mail ou senha incorretos.',
+        ),
+      ),
     );
     expect(await storage.readAll(), isEmpty);
     expect(ApiService.token, isNull);
