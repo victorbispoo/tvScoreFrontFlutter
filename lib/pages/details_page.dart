@@ -10,6 +10,7 @@ import '../widgets/community_reviews_sheet.dart';
 import '../widgets/content_header.dart';
 import '../widgets/episode_panel.dart';
 import '../widgets/review_form.dart';
+import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class DetailsPage extends StatefulWidget {
@@ -162,7 +163,15 @@ class _DetailsPageState extends State<DetailsPage> {
 
   Widget _buildCommunitySection() {
     if (_loadingCommunity) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonShimmer(
+        child: Column(
+          children: [
+            SkeletonBlock(height: 96),
+            SizedBox(height: 12),
+            SkeletonBlock(height: 96),
+          ],
+        ),
+      );
     }
     if (_communityError != null) {
       return Column(
@@ -274,7 +283,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         style: const TextStyle(color: Colors.white70),
                       ),
                       if (_loadingCommunity)
-                        const LinearProgressIndicator()
+                        const SkeletonBlock(width: 110, height: 15)
                       else if (_communityError != null)
                         Column(
                           crossAxisAlignment: .start,

@@ -6,6 +6,7 @@ extension AuthService on ApiService {
 
   static void _clearAccount() {
     ApiService._sessionVersion++;
+    ApiService._clearReviewCache();
     ApiService.token = null;
     ApiService.userName = '';
     ApiService.userEmail = '';

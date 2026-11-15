@@ -42,8 +42,20 @@ class ApiService {
   static String userEmail = '';
   static List<Map<String, String>> savedContents = [];
   static List<Review> reviews = [];
+  static Future<List<Map<String, dynamic>>>? _myReviewsRequest;
+  static DateTime? _myReviewsFetchedAt;
+  static String? _myReviewsToken;
+  static final Map<int, (DateTime, Future<Map<String, dynamic>>)>
+  _episodePanels = {};
+
+  static void _clearReviewCache() {
+    _myReviewsRequest = null;
+    _myReviewsFetchedAt = null;
+    _myReviewsToken = null;
+  }
 
   Future<void> open(String email, String defaultName) async {
+    _clearReviewCache();
     final preferences = SharedPreferencesAsync();
     final value = await preferences.getString('tv_score_library_$email');
     final data = value == null

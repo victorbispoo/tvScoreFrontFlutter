@@ -7,6 +7,7 @@ import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import '../widgets/content_carousel.dart';
 import '../widgets/genre_preferences.dart';
+import '../widgets/skeleton_loading.dart';
 import '../widgets/top_rated_carousel.dart';
 import '../widgets/trending_carousel.dart';
 import '../widgets/tv_score_snackbar.dart';
@@ -30,6 +31,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with AutomaticKeepAliveClientMixin {
   late Future<List<HomeSection>> _sections;
+  late Future<List<Map<String, String>>> _trending;
   late Future<List<Map<String, String>>> _topRated;
   int _minimumRating = 7;
 
@@ -37,6 +39,7 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _sections = _loadSections();
+    _trending = ApiService().getHighlights();
     _topRated = ApiService().getTopRatedMovies(_minimumRating);
   }
 
@@ -46,12 +49,12 @@ class _HomePageState extends State<HomePage>
   Future<List<HomeSection>> _loadSections() async {
     final api = ApiService();
 
-    final trending = await api.getHighlights();
-    final available = await api.getAvailableGenres();
-
-    final preferred = ApiService.token == null
-        ? <Map<String, dynamic>>[]
-        : await api.getPreferredGenres();
+    final (available, preferred) = await (
+      api.getAvailableGenres(),
+      ApiService.token == null
+          ? Future.value(<Map<String, dynamic>>[])
+          : api.getPreferredGenres(),
+    ).wait;
 
     final preferredCodes = preferred
         .map((genre) => genre['codigo'] as String)
@@ -108,13 +111,6 @@ class _HomePageState extends State<HomePage>
       ));
     }
 
-    sections.add((
-      type: HomeSectionType.trending,
-      title: 'Em alta',
-      icon: HugeIconsSolid.fire,
-      contents: trending,
-    ));
-
     for (final genre in preferredGenres) {
       sections.add((
         type: HomeSectionType.genre,
@@ -137,14 +133,16 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _refresh() async {
+    final sections = _loadSections();
+    final trending = ApiService().getHighlights();
+    final topRated = ApiService().getTopRatedMovies(_minimumRating);
+    setState(() {
+      _sections = sections;
+      _trending = trending;
+      _topRated = topRated;
+    });
     try {
-      final sections = await _loadSections();
-      if (mounted) {
-        setState(() {
-          _sections = Future.value(sections);
-          _topRated = ApiService().getTopRatedMovies(_minimumRating);
-        });
-      }
+      await (sections, trending, topRated).wait;
     } catch (error, stackTrace) {
       debugPrint('Erro ao atualizar Home: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -158,129 +156,122 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  Widget _genreSections({
+    required bool personalized,
+  }) => FutureBuilder<List<HomeSection>>(
+    future: _sections,
+    builder: (context, snapshot) {
+      if (snapshot.hasError) {
+        return personalized
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextButton(
+                  onPressed: () => setState(() => _sections = _loadSections()),
+                  child: const Text(
+                    'Não foi possível carregar os gêneros. Tentar novamente',
+                  ),
+                ),
+              )
+            : const SizedBox.shrink();
+      }
+      if (!snapshot.hasData) {
+        return personalized
+            ? const SkeletonCarousel(featured: true)
+            : const SizedBox.shrink();
+      }
+      return Column(
+        children: [
+          for (final section in snapshot.data!)
+            if ((section.type == HomeSectionType.personalized) == personalized)
+              ContentCarousel(
+                onChanged: () => setState(() {}),
+                icon: Icon(
+                  section.icon,
+                  size: personalized ? 18 : 16,
+                  color: AppTheme.primary,
+                ),
+                title: section.title,
+                contents: section.contents,
+                featured: personalized,
+              ),
+        ],
+      );
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    return FutureBuilder<List<HomeSection>>(
-      future: _sections,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return ListView(
-            padding: const EdgeInsets.only(top: 90),
-            children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text('Carregando títulos...'),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 264,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: 3,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (_, _) => Container(
-                    width: 176,
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: FilledButton(
-              onPressed: _refresh,
-              child: const Text('Tentar novamente'),
-            ),
-          );
-        }
-
-        final sections = snapshot.data ?? [];
-
-        return RefreshIndicator(
-          onRefresh: _refresh,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  height: 64,
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'lib/assets/logoTvScore.svg',
-                        height: 44,
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        tooltip: 'Pesquisar',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SearchPage(),
-                            ),
-                          );
-                        },
-                        icon: Icon(
-                          HugeIconsSolid.search01,
-                          color: AppTheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 22),
-              for (final section in sections) ...[
-                if (section.type == HomeSectionType.trending) ...[
-                  TrendingCarousel(
-                    contents: section.contents,
-                    onChanged: () => setState(() {}),
-                  ),
-                  TopRatedCarousel(
-                    minimumRating: _minimumRating,
-                    onMinimumSelected: (minimum) => setState(() {
-                      _minimumRating = minimum;
-                      _topRated = ApiService().getTopRatedMovies(minimum);
-                    }),
-                    onRetry: () => setState(() {
-                      _topRated = ApiService().getTopRatedMovies(
-                        _minimumRating,
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  SvgPicture.asset('lib/assets/logoTvScore.svg', height: 44),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Pesquisar',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SearchPage()),
                       );
-                    }),
-                    contents: _topRated,
-                    onChanged: () => setState(() {}),
-                  ),
-                ] else
-                  ContentCarousel(
-                    onChanged: () => setState(() {}),
+                    },
                     icon: Icon(
-                      section.icon,
-                      size: section.type == HomeSectionType.personalized
-                          ? 18
-                          : 16,
+                      HugeIconsSolid.search01,
                       color: AppTheme.primary,
                     ),
-                    title: section.title,
-                    contents: section.contents,
-                    featured: section.type == HomeSectionType.personalized,
                   ),
-              ],
-            ],
+                ],
+              ),
+            ),
           ),
-        );
-      },
+          const SizedBox(height: 22),
+          _genreSections(personalized: true),
+          FutureBuilder<List<Map<String, String>>>(
+            future: _trending,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return TextButton(
+                  onPressed: () =>
+                      setState(() => _trending = ApiService().getHighlights()),
+                  child: const Text(
+                    'Não foi possível carregar Em alta. Tentar novamente',
+                  ),
+                );
+              }
+              if (!snapshot.hasData) {
+                return const SkeletonCarousel(showFilters: true);
+              }
+              return TrendingCarousel(
+                contents: snapshot.data!,
+                onChanged: () => setState(() {}),
+              );
+            },
+          ),
+          TopRatedCarousel(
+            minimumRating: _minimumRating,
+            onMinimumSelected: (minimum) => setState(() {
+              _minimumRating = minimum;
+              _topRated = ApiService().getTopRatedMovies(minimum);
+            }),
+            onRetry: () => setState(() {
+              _topRated = ApiService().getTopRatedMovies(_minimumRating);
+            }),
+            contents: _topRated,
+            onChanged: () => setState(() {}),
+          ),
+          _genreSections(personalized: false),
+        ],
+      ),
     );
   }
 }

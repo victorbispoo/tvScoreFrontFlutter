@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import 'content_poster.dart';
+import 'skeleton_loading.dart';
 
 class ContentHeader extends StatelessWidget {
   const ContentHeader({
     super.key,
     required this.content,
     required this.onFavoritePressed,
-    required this.isSaved
+    required this.isSaved,
   });
 
   final Map<String, String> content;
@@ -29,6 +30,8 @@ class ContentHeader extends StatelessWidget {
               backdrop ?? '',
               fit: BoxFit.cover,
               alignment: const Alignment(0.3, 0),
+              loadingBuilder: (_, child, progress) =>
+                  progress == null ? child : const SkeletonBlock(radius: 0),
               errorBuilder: (_, error, stackTrace) => const Center(
                 child: Icon(
                   HugeIconsStroke.film01,
@@ -85,13 +88,17 @@ class ContentHeader extends StatelessWidget {
             right: 20,
             bottom: 20,
             child: IconButton.filled(
-              tooltip: isSaved ? 'Remover dos favoritos': 'Adicionar aos favoritos',
+              tooltip: isSaved
+                  ? 'Remover dos favoritos'
+                  : 'Adicionar aos favoritos',
               style: IconButton.styleFrom(
                 backgroundColor: Colors.black.withValues(alpha: .70),
                 foregroundColor: isSaved ? Colors.redAccent : Colors.white70,
                 minimumSize: const Size(48, 48),
               ),
-              icon: isSaved ? Icon(HugeIconsSolid.favourite) : Icon(HugeIconsStroke.favourite),
+              icon: isSaved
+                  ? Icon(HugeIconsSolid.favourite)
+                  : Icon(HugeIconsStroke.favourite),
               onPressed: onFavoritePressed,
             ),
           ),

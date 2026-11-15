@@ -10,6 +10,7 @@ import '../models/search_filters.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
 import '../widgets/search_filter_sheet.dart';
+import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class SearchPage extends StatefulWidget {
@@ -26,6 +27,8 @@ class _SearchPageState extends State<SearchPage>
   final _scrollController = ScrollController();
   bool _loadMoreFailed = false;
   Timer? _debounce;
+  Timer? _skeletonDelay;
+  bool _showSkeleton = false;
   int _searchVersion = 0;
   bool _loading = false;
   bool _loadingMore = false;
@@ -54,6 +57,7 @@ class _SearchPageState extends State<SearchPage>
 
   void _onQueryChanged(String value) {
     _debounce?.cancel();
+    _skeletonDelay?.cancel();
     final version = ++_searchVersion;
     final term = value.trim();
 
@@ -62,6 +66,7 @@ class _SearchPageState extends State<SearchPage>
       _results = [];
       _error = null;
       _loading = term.isNotEmpty;
+      _showSkeleton = false;
       _loadingMore = false;
       _currentPage = 0;
       _totalPages = 0;
@@ -89,6 +94,11 @@ class _SearchPageState extends State<SearchPage>
   }
 
   Future<void> _search(String term, int version) async {
+    _skeletonDelay = Timer(const Duration(milliseconds: 150), () {
+      if (mounted && version == _searchVersion && _loading) {
+        setState(() => _showSkeleton = true);
+      }
+    });
     try {
       final result = await _api.searchContents(term);
 
@@ -108,6 +118,7 @@ class _SearchPageState extends State<SearchPage>
       });
     } finally {
       if (mounted && version == _searchVersion) {
+        _skeletonDelay?.cancel();
         setState(() {
           _loading = false;
         });
@@ -177,6 +188,7 @@ class _SearchPageState extends State<SearchPage>
   @override
   void dispose() {
     _debounce?.cancel();
+    _skeletonDelay?.cancel();
     _scrollController.dispose();
     _query.dispose();
     super.dispose();
@@ -331,7 +343,20 @@ class _SearchPageState extends State<SearchPage>
                       );
                     }
                     if (_loading) {
-                      return const Center(child: CircularProgressIndicator());
+                      if (!_showSkeleton) return const SizedBox.shrink();
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          const spacing = 14.0;
+                          final columns = (constraints.maxWidth / 174).ceil();
+                          final cardWidth =
+                              (constraints.maxWidth - spacing * (columns - 1)) /
+                              columns;
+                          return SkeletonGrid(
+                            columns: columns,
+                            mainAxisExtent: cardWidth * 1.5 + 64,
+                          );
+                        },
+                      );
                     }
                     if (_error != null) {
                       return Center(

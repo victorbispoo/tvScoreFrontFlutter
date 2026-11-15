@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
+import 'skeleton_loading.dart';
 
 class ContentPoster extends StatelessWidget {
   const ContentPoster({super.key, required this.content});
@@ -11,14 +12,14 @@ class ContentPoster extends StatelessWidget {
   Widget build(BuildContext context) => ClipRRect(
     borderRadius: BorderRadius.circular(12),
     child: Image.network(
-      content['poster_path'] ?? '',
+      (content['poster_path'] ?? '').replaceFirst(
+        'image.tmdb.org/t/p/w500/',
+        'image.tmdb.org/t/p/w342/',
+      ),
+      cacheWidth: 342,
       fit: BoxFit.cover,
-      loadingBuilder: (context, child, progress) => progress == null
-          ? child
-          : const ColoredBox(
-              color: AppTheme.surfaceHighlight,
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            ),
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : const SkeletonBlock(),
       errorBuilder: (_, error, stack) => const ColoredBox(
         color: AppTheme.surfaceHighlight,
         child: Center(

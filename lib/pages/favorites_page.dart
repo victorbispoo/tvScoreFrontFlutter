@@ -3,6 +3,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
+import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -14,10 +15,14 @@ class FavoritesPage extends StatefulWidget {
   State<FavoritesPage> createState() => _FavoritesPageState();
 }
 
-class _FavoritesPageState extends State<FavoritesPage> {
+class _FavoritesPageState extends State<FavoritesPage>
+    with AutomaticKeepAliveClientMixin {
   final _api = ApiService();
   bool _loading = true;
   String? _error;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -54,6 +59,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final contents = ApiService.savedContents;
     return Scaffold(
       body: SafeArea(
@@ -82,9 +88,24 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 ),
               ),
             ),
-            if (_loading)
-              const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+            if (_loading && contents.isEmpty)
+              SliverLayoutBuilder(
+                builder: (context, constraints) {
+                  const spacing = 14.0;
+                  final available = constraints.crossAxisExtent - 40;
+                  final columns = ((available + spacing) / (130 + spacing))
+                      .floor()
+                      .clamp(1, 6);
+                  final width = (available - spacing * (columns - 1)) / columns;
+                  return SliverToBoxAdapter(
+                    child: SkeletonGrid(
+                      columns: columns,
+                      mainAxisExtent: width * 1.5 + 65,
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                    ),
+                  );
+                },
               )
             else if (_error != null)
               SliverFillRemaining(

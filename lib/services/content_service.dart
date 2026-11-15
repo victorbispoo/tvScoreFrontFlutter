@@ -1,11 +1,32 @@
 part of 'api_services.dart';
 
 extension ContentService on ApiService {
-  Future<Map<String, dynamic>> getEpisodePanel(int seriesId) async {
+  Future<Map<String, dynamic>> getEpisodePanel(int seriesId) {
     if (seriesId <= 0) {
       throw ArgumentError('O ID da série deve ser maior que zero.');
     }
 
+    final cached = ApiService._episodePanels[seriesId];
+    if (cached != null &&
+        DateTime.now().difference(cached.$1) < const Duration(minutes: 2)) {
+      return cached.$2;
+    }
+    // shortcut: retain at most two recent panels; increase only after measuring.
+    if (ApiService._episodePanels.length >= 2) {
+      ApiService._episodePanels.remove(ApiService._episodePanels.keys.first);
+    }
+    final request = _fetchEpisodePanel(seriesId);
+    ApiService._episodePanels[seriesId] = (DateTime.now(), request);
+    request.catchError((Object _) {
+      if (identical(ApiService._episodePanels[seriesId]?.$2, request)) {
+        ApiService._episodePanels.remove(seriesId);
+      }
+      return <String, dynamic>{};
+    });
+    return request;
+  }
+
+  Future<Map<String, dynamic>> _fetchEpisodePanel(int seriesId) async {
     final response = await dio.get('/series/$seriesId/episodios/painel');
 
     return Map<String, dynamic>.from(response.data as Map);

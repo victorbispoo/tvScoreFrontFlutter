@@ -4,6 +4,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import '../core/app_theme.dart';
 
 import 'ranked_content_carousel.dart';
+import 'skeleton_loading.dart';
 
 class TopRatedCarousel extends StatelessWidget {
   const TopRatedCarousel({
@@ -58,10 +59,7 @@ class TopRatedCarousel extends StatelessWidget {
         future: contents,
         builder: (context, snapshot) {
           if (!snapshot.hasData && !snapshot.hasError) {
-            return const SizedBox(
-              height: 180,
-              child: Center(child: CircularProgressIndicator()),
-            );
+            return const SkeletonRankedCarousel();
           }
           if (snapshot.hasError) {
             return Padding(

@@ -31,7 +31,29 @@ extension ReviewsService on ApiService {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getMyReviews() async {
+  Future<List<Map<String, dynamic>>> getMyReviews({bool refresh = false}) {
+    final fetchedAt = ApiService._myReviewsFetchedAt;
+    if (!refresh &&
+        ApiService._myReviewsToken == ApiService.token &&
+        fetchedAt != null &&
+        DateTime.now().difference(fetchedAt) < const Duration(seconds: 30) &&
+        ApiService._myReviewsRequest != null) {
+      return ApiService._myReviewsRequest!;
+    }
+    final request = _fetchMyReviews();
+    ApiService._myReviewsRequest = request;
+    ApiService._myReviewsFetchedAt = DateTime.now();
+    ApiService._myReviewsToken = ApiService.token;
+    request.catchError((Object _) {
+      if (identical(ApiService._myReviewsRequest, request)) {
+        ApiService._clearReviewCache();
+      }
+      return <Map<String, dynamic>>[];
+    });
+    return request;
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchMyReviews() async {
     final session = ApiService._sessionVersion;
     final token = ApiService.token;
     if (token == null || token.isEmpty) {
@@ -81,7 +103,7 @@ extension ReviewsService on ApiService {
 
   Future<void> loadMyReviews() async {
     final session = ApiService._sessionVersion;
-    final items = await getMyReviews();
+    final items = await getMyReviews(refresh: true);
 
     final loadedReviews = await Future.wait(
       items.map((item) async {
@@ -167,6 +189,7 @@ extension ReviewsService on ApiService {
     final savedReview = Review.fromJson(data, content);
 
     _replaceReviewFor(content, savedReview);
+    ApiService._clearReviewCache();
   }
 
   Future<void> deleteReview(Review review) async {
@@ -187,5 +210,6 @@ extension ReviewsService on ApiService {
     ApiService.reviews = ApiService.reviews
         .where((item) => item.id != id)
         .toList();
+    ApiService._clearReviewCache();
   }
 }

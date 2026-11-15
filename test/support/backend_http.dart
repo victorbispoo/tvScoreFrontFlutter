@@ -9,6 +9,8 @@ import 'package:tv_score_front_flutter/models/content_metadata.dart';
 class BackendHttp extends HttpOverrides {
   int searchPageSize = 1000;
   bool failSearch = false;
+  Duration responseDelay = Duration.zero;
+  final delayedPaths = <String>{};
   final requests = <String>[];
   final reviews = <Map<String, dynamic>>[];
   final communityReviews = <Map<String, dynamic>>[];
@@ -224,8 +226,13 @@ class _Request implements HttpClientRequest {
   }
 
   @override
-  Future<HttpClientResponse> close() async =>
-      _Response(backend.respond(method, uri, utf8.decode(_bytes)));
+  Future<HttpClientResponse> close() async {
+    if (backend.delayedPaths.contains(uri.path.replaceFirst('/api', ''))) {
+      await Future<void>.delayed(backend.responseDelay);
+    }
+    return _Response(backend.respond(method, uri, utf8.decode(_bytes)));
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => null;
 }
