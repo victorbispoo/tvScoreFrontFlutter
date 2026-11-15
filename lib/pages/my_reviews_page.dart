@@ -9,6 +9,7 @@ import '../core/rating_scale.dart';
 import '../models/review.dart';
 import '../services/api_services.dart';
 import '../widgets/content_poster.dart';
+import '../widgets/tv_score_confirmation_dialog.dart';
 import '../widgets/tv_score_snackbar.dart';
 import 'details_page.dart';
 
@@ -69,24 +70,14 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
     if (_deleting) return;
     setState(() => _deleting = true);
     try {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Excluir avaliação?'),
-          content: Text(
-            'Excluir sua nota e comentário de "${review.content['title']}"?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Excluir'),
-            ),
-          ],
-        ),
+      final confirmed = await showTvScoreConfirmation(
+        context,
+        title: 'Excluir avaliação',
+        description:
+            'Sua avaliação de ${review.content['title'] ?? 'este título'} será removida permanentemente.',
+        emphasis: review.content['title'],
+        confirmLabel: 'Excluir',
+        destructive: true,
       );
       if (confirmed != true || !mounted) return;
 
