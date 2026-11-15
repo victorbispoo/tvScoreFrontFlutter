@@ -40,6 +40,12 @@ class BackendHttp extends HttpOverrides {
   Object? respond(String method, Uri uri, String body) {
     final path = uri.path.replaceFirst('/api', '');
     requests.add('$method $path');
+    if (path == '/usuarios/eu' && method == 'PUT') {
+      return {
+        'nome': (jsonDecode(body) as Map)['nome'],
+        'email': 'victor@teste.com',
+      };
+    }
     if (path == '/avaliacoes/minhas') return reviews;
     if (path == '/avaliacoes' && method == 'POST') {
       final data = jsonDecode(body) as Map<String, dynamic>;
@@ -75,6 +81,16 @@ class BackendHttp extends HttpOverrides {
                 item['tipoConteudo'] == uri.queryParameters['tipoConteudo'],
           )
           .toList();
+      if (path.endsWith('/paginadas')) {
+        items.sort((a, b) => (a['id'] as num).compareTo(b['id'] as num));
+        final page = int.parse(uri.queryParameters['pagina'] ?? '0');
+        final size = int.parse(uri.queryParameters['tamanho'] ?? '20');
+        return {
+          'content': items.skip(page * size).take(size).toList(),
+          'totalElements': items.length,
+          'totalPages': (items.length / size).ceil(),
+        };
+      }
       if (!path.endsWith('/resumo')) return items;
       return {
         'totalAvaliacoes': items.length,

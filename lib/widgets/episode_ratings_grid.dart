@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../core/rating_scale.dart';
 import 'episode_details_sheet.dart';
+import 'season_selector.dart';
 
 class EpisodeRatingsGrid extends StatefulWidget {
   const EpisodeRatingsGrid({super.key, required this.seasons});
@@ -12,41 +14,6 @@ class EpisodeRatingsGrid extends StatefulWidget {
 
 class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
   int? _selectedSeasonNumber;
-
-  Color _ratingColor(double? rating) {
-    if (rating == null) {
-      return const Color(0xFF64748B);
-    }
-
-    final value = rating.clamp(0.0, 10.0).toDouble();
-    if (value >= 9.5) {
-      return const Color(0xFF8B3DFF);
-    }
-    const stops = <(double, Color)>[
-      (0.0, Color(0xFFC21842)),
-      (3.0, Color(0xFFDF4936)),
-      (5.0, Color(0xFFE87513)),
-      (6.0, Color(0xFFC29B00)),
-      (7.0, Color(0xFF79A500)),
-      (7.5, Color(0xFF24A66A)),
-      (8.0, Color(0xFF009BBD)),
-      (8.5, Color(0xFF246BDD)),
-      (9.5, Color(0xFF3654C7)),
-    ];
-
-    for (int i = 0; i < stops.length - 1; i++) {
-      final (start, startColor) = stops[i];
-      final (end, endColor) = stops[i + 1];
-
-      if (value <= end) {
-        final t = (value - start) / (end - start);
-
-        return Color.lerp(startColor, endColor, t)!;
-      }
-    }
-
-    return stops.last.$2;
-  }
 
   Widget _buildCell(
     Map<String, dynamic> episode,
@@ -76,7 +43,7 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: _ratingColor(rating),
+              color: RatingScale.color(rating),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
@@ -152,31 +119,24 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Notas dos episódios',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<int>(
-          key: ValueKey(seasonNumber),
-          initialValue: seasonNumber,
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Temporada',
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            for (final season in seasons)
-              DropdownMenuItem(
-                value: (season['season_number'] as num).toInt(),
-                child: Text(
-                  season['season_number'] == 0
-                      ? 'Especiais'
-                      : 'Temporada ${season['season_number']}',
-                ),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Notas dos episódios',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
+            ),
+            const SizedBox(width: 12),
+            SeasonSelector(
+              seasons: seasons
+                  .map((season) => (season['season_number'] as num).toInt())
+                  .toList(),
+              value: seasonNumber,
+              onChanged: (value) =>
+                  setState(() => _selectedSeasonNumber = value),
+            ),
           ],
-          onChanged: (value) => setState(() => _selectedSeasonNumber = value),
         ),
         const SizedBox(height: 12),
         Text(
@@ -218,16 +178,7 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
           spacing: 16,
           runSpacing: 10,
           children: [
-            for (final item in [
-              (9.5, 'Obra-prima'),
-              (9.0, 'Excepcional'),
-              (8.0, 'Excelente'),
-              (7.0, 'Muito bom'),
-              (6.0, 'Bom'),
-              (5.0, 'Regular'),
-              (3.0, 'Fraco'),
-              (0.0, 'Horrível'),
-            ])
+            for (final item in RatingScale.bands)
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -235,7 +186,7 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: _ratingColor(item.$1),
+                      color: RatingScale.color(item.$1),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -250,7 +201,7 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: _ratingColor(null),
+                    color: RatingScale.color(null),
                     shape: BoxShape.circle,
                   ),
                 ),

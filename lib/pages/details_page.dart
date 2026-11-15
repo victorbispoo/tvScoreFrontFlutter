@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../models/content_metadata.dart';
 import '../models/review.dart';
 import '../services/api_services.dart';
 import '../widgets/community_review_card.dart';
+import '../widgets/community_reviews_sheet.dart';
 import '../widgets/content_header.dart';
 import '../widgets/episode_panel.dart';
 import '../widgets/review_form.dart';
+import '../widgets/tv_score_snackbar.dart';
 
 class DetailsPage extends StatefulWidget {
   const DetailsPage({super.key, required this.content});
@@ -29,6 +32,7 @@ class _DetailsPageState extends State<DetailsPage> {
   bool _loadingMyReview = true;
   String? _myReviewError;
   List<Map<String, dynamic>> _communityReviews = [];
+  int _communityTotal = 0;
   @override
   void initState() {
     super.initState();
@@ -48,13 +52,14 @@ class _DetailsPageState extends State<DetailsPage> {
       final reference = widget.content.apiReference;
       final (summary, reviews) = await (
         _api.getContentReviewSummary(reference.id, reference.type),
-        _api.getContentReviews(reference.id, reference.type),
+        _api.getContentReviewsPage(reference.id, reference.type, size: 3),
       ).wait;
 
       if (!mounted) return;
       setState(() {
         _reviewSummary = summary;
-        _communityReviews = reviews;
+        _communityReviews = reviews.reviews;
+        _communityTotal = reviews.totalElements;
       });
     } catch (error) {
       if (!mounted) return;
@@ -115,17 +120,20 @@ class _DetailsPageState extends State<DetailsPage> {
   }
 
   Future<void> _toggleSaved() async {
+    final wasSaved = _api.isSaved(widget.content);
     setState(() => _busy = true);
     try {
       await _api.toggleSaved(widget.content);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sua lista foi atualizada.')),
+      TvScoreSnackbar.info(
+        context,
+        wasSaved ? 'Removido dos favoritos.' : 'Adicionado aos favoritos.',
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível atualizar sua lista.')),
+      TvScoreSnackbar.error(
+        context,
+        'Não foi possível atualizar seus favoritos.',
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -137,46 +145,66 @@ class _DetailsPageState extends State<DetailsPage> {
     try {
       await _api.saveReview(widget.content, _rating, _comment.text);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Avaliação salva!')));
+      TvScoreSnackbar.success(context, 'Sua avaliação foi salva.');
       await _checkCommunityReviews();
     } catch (error, stackTrace) {
       debugPrint('falha: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível salvar a avaliação.')),
+      TvScoreSnackbar.error(
+        context,
+        'Não foi possível salvar sua avaliação. Tente novamente.',
       );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  Widget _buildCommunitySection(List<Map<String, dynamic>> reviews) {
-    if (_loadingCommunity || _loadingMyReview) {
+  Widget _buildCommunitySection() {
+    if (_loadingCommunity) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (_communityError != null || _myReviewError != null) {
-      return const Text('Carregue as avaliações tentando novamente');
+    if (_communityError != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_communityError!),
+          TextButton(
+            onPressed: _checkCommunityReviews,
+            child: const Text('Tentar novamente'),
+          ),
+        ],
+      );
     }
-    if (reviews.isEmpty) {
-      return const Text('Ainda não há avaliações de outras pessoas.');
+    if (_communityReviews.isEmpty) {
+      return const Text('Ainda não há avaliações para este título.');
     }
-
     return Column(
-      crossAxisAlignment: .stretch,
-      children: reviews.map((item) {
-        final author = item['nomeUsuario'] as String?;
-        final comment = item['comentario'] as String? ?? '';
-        final rating = (item['nota'] as num).toDouble();
-
-        return CommunityReviewCard(
-          author: author,
-          rating: rating,
-          comment: comment,
-        );
-      }).toList(),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final review in _communityReviews)
+          CommunityReviewCard.fromJson(review),
+        if (_communityTotal > 3)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () {
+                final reference = widget.content.apiReference;
+                showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  useSafeArea: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => CommunityReviewsSheet(
+                    contentId: reference.id,
+                    type: reference.type,
+                  ),
+                );
+              },
+              child: const Text('Ver todas as avaliações'),
+            ),
+          ),
+      ],
     );
   }
 
@@ -185,9 +213,6 @@ class _DetailsPageState extends State<DetailsPage> {
     final content = widget.content;
     final saved = _api.isSaved(content);
     final review = _api.reviewFor(content);
-    final otherReviews = _communityReviews
-        .where((item) => item['id'] != review?.id)
-        .toList();
     final totalReviews =
         (_reviewSummary?['totalAvaliacoes'] as num?)?.toInt() ?? 0;
     final communityAverage = _reviewSummary?['media'] as num?;
@@ -206,7 +231,11 @@ class _DetailsPageState extends State<DetailsPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            ContentHeader(content: content),
+            ContentHeader(
+              content: content,
+              isSaved: saved,
+              onFavoritePressed: _busy ? null : _toggleSaved,
+            ),
 
             Padding(
               padding: EdgeInsets.only(left: 20, right: 20),
@@ -240,7 +269,38 @@ class _DetailsPageState extends State<DetailsPage> {
                         color: Colors.amber,
                         size: 14,
                       ),
-                      Text('TMDB: ${content['score']}'),
+                      Text(
+                        'TMDB: ${content['score']}/10',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      if (_loadingCommunity)
+                        const LinearProgressIndicator()
+                      else if (_communityError != null)
+                        Column(
+                          crossAxisAlignment: .start,
+                          children: [
+                            Text(_communityError!),
+                            TextButton(
+                              onPressed: _checkCommunityReviews,
+                              child: const Text('Tentar novamente'),
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            SvgPicture.asset(
+                              'lib/assets/logoSemTexto.svg',
+                              height: 15,
+                            ),
+                            Text(
+                              totalReviews == 0
+                                  ? 'TVScore: ainda sem avaliações'
+                                  : 'TVScore: ${communityAverage?.toStringAsFixed(1) ?? '—'}/10',
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                   if (content['overview'] != null) ...[
@@ -250,42 +310,6 @@ class _DetailsPageState extends State<DetailsPage> {
                       style: const TextStyle(height: 1.6),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  if (_loadingCommunity)
-                    const LinearProgressIndicator()
-                  else if (_communityError != null)
-                    Column(
-                      crossAxisAlignment: .start,
-                      children: [
-                        Text(_communityError!),
-                        TextButton(
-                          onPressed: _checkCommunityReviews,
-                          child: const Text('Tentar novamente'),
-                        ),
-                      ],
-                    )
-                  else
-                    Text(
-                      totalReviews == 0
-                          ? 'TVScore: ainda sem avaliações'
-                          : 'TVScore: ${communityAverage?.toStringAsFixed(1) ?? '—'}/10'
-                                ' • $totalReviews '
-                                '${totalReviews == 1 ? 'avaliação' : 'avaliações'}',
-                    ),
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : _toggleSaved,
-                    icon: Icon(
-                      saved
-                          ? HugeIconsSolid.favourite
-                          : HugeIconsStroke.favourite,
-                    ),
-                    label: Text(
-                      saved
-                          ? 'Remover dos favoritos'
-                          : 'Adicionar aos favoritos',
-                    ),
-                  ),
 
                   if (content['type'] == 'TV') ...[
                     const SizedBox(height: 24),
@@ -320,7 +344,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  _buildCommunitySection(otherReviews),
+                  _buildCommunitySection(),
                   const SizedBox(height: 24),
                 ],
               ),

@@ -1,6 +1,36 @@
 part of 'api_services.dart';
 
 extension ReviewsService on ApiService {
+  Future<
+    ({List<Map<String, dynamic>> reviews, int totalPages, int totalElements})
+  >
+  getContentReviewsPage(
+    int contentId,
+    String type, {
+    int page = 0,
+    int size = 20,
+  }) async {
+    requireContentReference(contentId, type);
+    if (page < 0 || size < 1 || size > 100) {
+      throw ArgumentError('Página inválida ou tamanho fora de 1 a 100.');
+    }
+    final session = ApiService._sessionVersion;
+    final response = await dio.get(
+      '/avaliacoes/filme/$contentId/paginadas',
+      queryParameters: {'tipoConteudo': type, 'pagina': page, 'tamanho': size},
+      options: _authorizationOptions,
+    );
+    ApiService._checkSession(session);
+    final data = response.data as Map;
+    return (
+      reviews: (data['content'] as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(),
+      totalPages: (data['totalPages'] as num).toInt(),
+      totalElements: (data['totalElements'] as num).toInt(),
+    );
+  }
+
   Future<List<Map<String, dynamic>>> getMyReviews() async {
     final session = ApiService._sessionVersion;
     final token = ApiService.token;

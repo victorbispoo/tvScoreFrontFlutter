@@ -9,6 +9,7 @@ import 'package:tv_score_front_flutter/controllers/login_controller.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/episode_panel.dart';
 import 'package:tv_score_front_flutter/widgets/episode_ratings_grid.dart';
+import 'package:tv_score_front_flutter/widgets/season_selector.dart';
 
 import 'support/backend_http.dart';
 
@@ -98,7 +99,7 @@ void main() {
       expect(find.text('E229'), findsOneWidget);
       expect(find.text('—'), findsOneWidget);
       expect(find.text('E1000'), findsNothing);
-      await tester.tap(find.byType(DropdownButtonFormField<int>));
+      await tester.tap(find.byType(SeasonSelector));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Temporada 2').last);
       await tester.pumpAndSettle();
