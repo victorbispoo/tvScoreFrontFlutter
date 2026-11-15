@@ -3,6 +3,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
+import '../widgets/tv_score_snackbar.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key, this.onExplore});
@@ -42,12 +43,12 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Future<void> _removeContent(Map<String, String> content) async {
     try {
       await _api.toggleSaved(content);
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {});
+      TvScoreSnackbar.info(context, 'Removido dos favoritos.');
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível remover o título.')),
-      );
+      TvScoreSnackbar.error(context, 'Não foi possível remover o título.');
     }
   }
 
@@ -156,34 +157,37 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       itemCount: contents.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: columns,
-                        mainAxisExtent: width * 1.5 + 7 + 40 + 18 + 48,
+                        mainAxisExtent: width * 1.5 + 7 + 40 + 18,
                         crossAxisSpacing: spacing,
                         mainAxisSpacing: 20,
                       ),
                       itemBuilder: (context, index) {
                         final content = contents[index];
-                        return Column(
+                        return Stack(
                           children: [
                             ContentCard(
                               content: content,
                               onChanged: () => setState(() {}),
                             ),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: TextButton.icon(
+                            Positioned(
+                              top: width * 1.5 - 56,
+                              left: 8,
+                              width: 48,
+                              height: 48,
+                              child: IconButton.filled(
+                                tooltip: 'Remover dos favoritos',
                                 onPressed: () => _removeContent(content),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.white60,
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(0, 48),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: .65,
+                                  ),
+                                  foregroundColor: Colors.redAccent,
+                                  padding: const EdgeInsets.all(12),
+                                  shape: const CircleBorder(),
                                 ),
                                 icon: const Icon(
-                                  HugeIconsStroke.favourite,
-                                  size: 16,
-                                ),
-                                label: const Text(
-                                  'Remover favorito',
-                                  style: TextStyle(fontSize: 11),
+                                  HugeIconsSolid.heartRemove,
+                                  size: 22,
                                 ),
                               ),
                             ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/rating_scale.dart';
 import '../models/content_metadata.dart';
 import '../pages/details_page.dart';
 import 'content_poster.dart';
@@ -56,8 +58,8 @@ class RankedContentCarousel extends StatelessWidget {
                       ),
                     ),
                     SizedBox(
-                      width: 66,
-                      height: 99,
+                      width: 100,
+                      height: 150,
                       child: ContentPoster(content: content),
                     ),
                     const SizedBox(width: 10),
@@ -71,7 +73,7 @@ class RankedContentCarousel extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -81,16 +83,33 @@ class RankedContentCarousel extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 13,
                               color: Colors.white60,
                             ),
                           ),
                           if ((double.tryParse(content['score'] ?? '') ?? 0) >
                               0) ...[
                             const SizedBox(height: 5),
-                            Text(
-                              'TMDB ${content['score']}',
-                              style: const TextStyle(fontSize: 12),
+                            Row(
+                              children: [
+                                Icon(
+                                  HugeIconsSolid.star,
+                                  size: 13,
+                                  color: RatingScale.color(
+                                    double.tryParse(content['score'] ?? ''),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${content['score']}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: RatingScale.color(
+                                      double.tryParse(content['score'] ?? ''),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ] else
                             const Text(

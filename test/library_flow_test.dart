@@ -108,16 +108,17 @@ void main() {
     );
     await tester.enterText(find.byType(TextField), 'Gostei da história!');
     await tester.scrollUntilVisible(
-      find.text('Salvar avaliação'),
+      find.text('Publicar avaliação'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Salvar avaliação'));
+    await tester.tap(find.text('Publicar avaliação'));
     await tester.pumpAndSettle();
     expect(ApiService.reviews.single.comment, 'Gostei da história!');
     expect(ApiService.reviews.single.rating, 8);
+    expect(find.text('Atualizar avaliação'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -144,6 +145,16 @@ void main() {
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
       'Muito bom',
     );
+    await tester.enterText(find.byType(TextField), 'Comentário atualizado');
+    await tester.scrollUntilVisible(
+      find.text('Atualizar avaliação'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Atualizar avaliação'));
+    await tester.pumpAndSettle();
+    expect(ApiService.reviews.single.comment, 'Comentário atualizado');
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.tap(find.text('Excluir'));
@@ -242,7 +253,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.text('Remover favorito'), findsOneWidget);
+    expect(find.byTooltip('Remover dos favoritos'), findsOneWidget);
     await tester.tap(find.byType(ContentCard));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
@@ -255,6 +266,24 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Sua lista está vazia'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('botão sobre o pôster remove favorito sem abrir detalhes', (
+    tester,
+  ) async {
+    await tester.runAsync(() => ApiService().toggleSaved(content));
+    await tester.pumpWidget(
+      MaterialApp(theme: ThemeData.dark(), home: const FavoritesPage()),
+    );
+    await tester.pumpAndSettle();
+    final button = find.byTooltip('Remover dos favoritos');
+    expect(tester.getSize(button), const Size(48, 48));
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(ApiService.savedContents, isEmpty);
+    expect(find.text('Sua lista está vazia'), findsOneWidget);
+    expect(find.byType(DetailsPage), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

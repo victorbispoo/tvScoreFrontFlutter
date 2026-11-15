@@ -59,7 +59,7 @@ class TopRatedCarousel extends StatelessWidget {
         builder: (context, snapshot) {
           if (!snapshot.hasData && !snapshot.hasError) {
             return const SizedBox(
-              height: 144,
+              height: 180,
               child: Center(child: CircularProgressIndicator()),
             );
           }

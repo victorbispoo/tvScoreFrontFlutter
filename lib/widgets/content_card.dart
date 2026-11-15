@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:tv_score_front_flutter/core/app_theme.dart';
 
+import '../core/rating_scale.dart';
 import '../models/content_metadata.dart';
 import '../pages/details_page.dart';
 import 'content_poster.dart';
@@ -41,19 +44,29 @@ class ContentCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: .75),
+                        color: AppTheme.scaffoldBackground.withValues(alpha: .75),
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.surfaceHighlight, width: 0.5)
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Colors.amber,
-                            size: 16,
+                          Icon(
+                            HugeIconsSolid.star,
+                            color: RatingScale.color(
+                              double.tryParse(content['score'] ?? ''),
+                            ),
+                            size: 13,
                           ),
                           const SizedBox(width: 4),
-                          Text(content['score'] ?? '—'),
+                          Text(
+                            content['score'] ?? '—',
+                            style: TextStyle(
+                              color: RatingScale.color(
+                                double.tryParse(content['score'] ?? ''),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
