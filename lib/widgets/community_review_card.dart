@@ -11,6 +11,7 @@ class CommunityReviewCard extends StatefulWidget {
     required this.rating,
     required this.comment,
     this.date,
+    this.photoUrl,
     this.preview = true,
   });
 
@@ -20,6 +21,7 @@ class CommunityReviewCard extends StatefulWidget {
   }) => CommunityReviewCard(
     key: ValueKey(review['id']),
     author: review['nomeUsuario'] as String?,
+    photoUrl: review['fotoUsuarioUrl'] as String?,
     rating: (review['nota'] as num).toDouble(),
     comment: review['comentario'] as String? ?? '',
     date: DateTime.tryParse(review['dataCriacao'] as String? ?? ''),
@@ -27,6 +29,7 @@ class CommunityReviewCard extends StatefulWidget {
   );
 
   final String? author;
+  final String? photoUrl;
   final double rating;
   final String comment;
   final DateTime? date;
@@ -74,7 +77,7 @@ class _CommunityReviewCardState extends State<CommunityReviewCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                UserAvatar(name: author),
+                UserAvatar(name: author, imageUrl: widget.photoUrl),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

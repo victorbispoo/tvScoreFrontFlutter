@@ -92,6 +92,10 @@ class _ProfilePageState extends State<ProfilePage>
         context,
         name: ApiService.userName,
         onSave: _api.updateName,
+        photoUrl: ApiService.userPhotoUrl,
+        onUploadPhoto: (bytes, progress) =>
+            _api.uploadProfilePhoto(bytes, onProgress: progress),
+        onRemovePhoto: _api.removeProfilePhoto,
         onChangePassword: (current, next) async {
           try {
             await _api.changePassword(current, next);
@@ -131,7 +135,14 @@ class _ProfilePageState extends State<ProfilePage>
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              UserAvatar(name: ApiService.userName, size: 72),
+              ValueListenableBuilder<String?>(
+                valueListenable: ApiService.userPhotoUrl,
+                builder: (_, url, _) => UserAvatar(
+                  name: ApiService.userName,
+                  imageUrl: url,
+                  size: 72,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

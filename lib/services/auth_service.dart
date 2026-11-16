@@ -129,6 +129,7 @@ extension AuthService on ApiService {
     ApiService._clearReviewCache();
     ApiService.token = null;
     ApiService.userName = '';
+    ApiService.userPhotoUrl.value = null;
     ApiService.userEmail = '';
     ApiService.savedContents = [];
     ApiService.reviews = [];
@@ -226,6 +227,12 @@ extension AuthService on ApiService {
       }
       await open(email, name);
       ApiService.token = token;
+      try {
+        await loadProfilePhoto();
+      } on DioException catch (error) {
+        if (error.response?.statusCode == 401) rethrow;
+        // A temporary connection failure must not discard a valid saved session.
+      }
       return true;
     } catch (_) {
       _clearAccount();
@@ -260,6 +267,14 @@ extension AuthService on ApiService {
         }),
       );
       ApiService.token = tokenRecebido;
+      ApiService.userPhotoUrl.value = dados['fotoUrl'] as String?;
+      if (!dados.containsKey('fotoUrl')) {
+        try {
+          await loadProfilePhoto();
+        } on DioException catch (error) {
+          if (error.response?.statusCode == 401) rethrow;
+        }
+      }
     } on DioException catch (error) {
       debugPrint('Tipo: ${error.type}');
       debugPrint('URL: ${error.requestOptions.uri}');

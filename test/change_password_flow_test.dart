@@ -4,12 +4,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/login_page.dart';
 import 'package:tv_score_front_flutter/pages/profile_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 
 import 'support/backend_http.dart';
+import 'support/gallery.dart';
 
 class PasswordBackend extends BackendHttp {
   PasswordBackend(this.status);
@@ -36,6 +38,11 @@ class PasswordBackend extends BackendHttp {
 }
 
 void main() {
+  setUp(() {
+    final previous = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = TestGallery();
+    addTearDown(() => ImagePickerPlatform.instance = previous);
+  });
   for (final status in [204, 401, 403]) {
     testWidgets('troca de senha no perfil: HTTP $status', (tester) async {
       FlutterSecureStorage.setMockInitialValues({'tv_score_session': 'old'});

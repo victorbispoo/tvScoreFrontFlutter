@@ -1,0 +1,211 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../services/api_services.dart';
+import 'user_avatar.dart';
+
+class ProfilePhotoEditor extends StatefulWidget {
+  const ProfilePhotoEditor({
+    super.key,
+    required this.name,
+    required this.photoUrl,
+    required this.onUpload,
+    required this.onRemove,
+    required this.onBusy,
+    required this.onPendingChanged,
+    this.enabled = true,
+  });
+
+  final String name;
+  final ValueListenable<String?> photoUrl;
+  final Future<void> Function(Uint8List, void Function(int, int)) onUpload;
+  final Future<void> Function() onRemove;
+  final ValueChanged<bool> onBusy;
+  final ValueChanged<bool> onPendingChanged;
+  final bool enabled;
+
+  @override
+  State<ProfilePhotoEditor> createState() => _ProfilePhotoEditorState();
+}
+
+class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
+  final _picker = ImagePicker();
+  Uint8List? _selected;
+  bool _busy = false;
+  bool _confirmingRemoval = false;
+  double? _progress;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _recoverSelection());
+    }
+  }
+
+  Future<void> _recoverSelection() async {
+    if (!mounted) return;
+    await _run(() async {
+      final result = await _picker.retrieveLostData();
+      if (result.files?.isNotEmpty ?? false) {
+        await _preview(result.files!.first);
+      }
+    });
+  }
+
+  Future<void> _preview(XFile file) async {
+    if (await file.length() > 5 * 1024 * 1024) {
+      throw const FormatException('Escolha uma imagem de até 5 MiB.');
+    }
+    final bytes = await file.readAsBytes();
+    ApiService.profilePhotoMimeType(bytes);
+    if (!mounted) return;
+    setState(() {
+      _selected = bytes;
+      _error = null;
+    });
+    widget.onPendingChanged(true);
+  }
+
+  Future<void> _pick() async {
+    if (_busy || !widget.enabled) return;
+    await _run(() async {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        requestFullMetadata: false,
+      );
+      if (file != null) await _preview(file);
+    });
+  }
+
+  Future<void> _run(Future<void> Function() action) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _progress = null;
+    });
+    widget.onBusy(true);
+    try {
+      await action();
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _error = error is FormatException
+              ? error.message
+              : 'Não foi possível atualizar a foto. Tente novamente.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        widget.onBusy(false);
+      }
+    }
+  }
+
+  void _cancel() {
+    setState(() {
+      _selected = null;
+      _error = null;
+    });
+    widget.onPendingChanged(false);
+  }
+
+  Future<void> _upload() async {
+    if (_busy || !widget.enabled || _selected == null) return;
+    await _run(() async {
+      await widget.onUpload(_selected!, (sent, total) {
+        if (mounted) {
+          setState(() => _progress = total > 0 ? sent / total : null);
+        }
+      });
+      if (mounted) _cancel();
+    });
+  }
+
+  Future<void> _remove() async {
+    if (_busy || !widget.enabled) return;
+    _confirmingRemoval = true;
+    // Lock the parent editor while the confirmation dialog is open too.
+    await _run(() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Remover foto?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Remover'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _confirmingRemoval = false);
+      if (confirmed == true && mounted) await widget.onRemove();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<String?>(
+    valueListenable: widget.photoUrl,
+    builder: (context, url, _) => Column(
+      children: [
+        UserAvatar(
+          name: widget.name,
+          imageUrl: url,
+          imageBytes: _selected,
+          size: 64,
+        ),
+        if (_selected == null)
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              TextButton(
+                onPressed: _busy || !widget.enabled ? null : _pick,
+                child: const Text('Escolher foto'),
+              ),
+              if (url != null)
+                TextButton(
+                  onPressed: _busy || !widget.enabled ? null : _remove,
+                  child: const Text('Remover foto'),
+                ),
+            ],
+          )
+        else
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              TextButton(
+                onPressed: _busy || !widget.enabled ? null : _upload,
+                child: const Text('Confirmar foto'),
+              ),
+              TextButton(
+                onPressed: _busy || !widget.enabled ? null : _cancel,
+                child: const Text('Cancelar foto'),
+              ),
+            ],
+          ),
+        if (_busy && !_confirmingRemoval)
+          SizedBox(
+            width: 120,
+            child: LinearProgressIndicator(value: _progress),
+          ),
+        if (_error != null)
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+      ],
+    ),
+  );
+}

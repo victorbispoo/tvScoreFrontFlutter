@@ -47,6 +47,9 @@ class BackendHttp extends HttpOverrides {
   Object? respond(String method, Uri uri, String body) {
     final path = uri.path.replaceFirst('/api', '');
     requests.add('$method $path');
+    if (path == '/usuarios/eu' && method == 'GET') {
+      return {'fotoUrl': null};
+    }
     if (path == '/usuarios/eu' && method == 'PUT') {
       return {
         'nome': (jsonDecode(body) as Map)['nome'],

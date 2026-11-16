@@ -1,17 +1,23 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/profile_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'support/backend_http.dart';
+import 'support/gallery.dart';
 
 void main() {
-  setUp(() {
+  setUp(() async {
+    final previous = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = TestGallery();
+    addTearDown(() => ImagePickerPlatform.instance = previous);
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
+    await ApiService().open('victor@teste.com', 'Victor');
   });
   for (final width in [320.0, 390.0, 600.0]) {
     for (final ratings in [
@@ -61,7 +67,7 @@ void main() {
           await tester.tap(save);
           await tester.pumpAndSettle();
           expect(ApiService.userName, 'Victor atualizado');
-          expect(find.text('Perfil atualizado.'), findsOneWidget);
+          expect(find.text('Victor atualizado'), findsOneWidget);
           expect(
             backend.requests.where((request) => request == 'PUT /usuarios/eu'),
             hasLength(1),

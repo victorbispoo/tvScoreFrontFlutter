@@ -1,8 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import '../core/app_theme.dart';
 
 class UserAvatar extends StatelessWidget {
-  const UserAvatar({super.key, this.name, this.imageUrl, this.size = 42});
+  const UserAvatar({
+    super.key,
+    this.name,
+    this.imageUrl,
+    this.imageBytes,
+    this.size = 42,
+  });
+  final Uint8List? imageBytes;
   final String? name;
   final String? imageUrl;
   final double size;
@@ -27,7 +36,15 @@ class UserAvatar extends StatelessWidget {
       child: SizedBox.square(
         dimension: size,
         child: ClipOval(
-          child: imageUrl == null || imageUrl!.trim().isEmpty
+          child: imageBytes != null
+              ? Image.memory(
+                  imageBytes!,
+                  fit: BoxFit.cover,
+                  cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                      .ceil(),
+                  errorBuilder: (_, _, _) => fallback,
+                )
+              : imageUrl == null || imageUrl!.trim().isEmpty
               ? fallback
               : Image.network(
                   imageUrl!,

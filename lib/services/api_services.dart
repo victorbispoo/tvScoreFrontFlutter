@@ -39,6 +39,7 @@ class ApiService {
   }
 
   static String userName = '';
+  static final userPhotoUrl = ValueNotifier<String?>(null);
   static String userEmail = '';
   static List<Map<String, String>> savedContents = [];
   static List<Review> reviews = [];
@@ -55,6 +56,8 @@ class ApiService {
   }
 
   Future<void> open(String email, String defaultName) async {
+    _sessionVersion++;
+    userPhotoUrl.value = null;
     _clearReviewCache();
     final preferences = SharedPreferencesAsync();
     final value = await preferences.getString('tv_score_library_$email');
@@ -73,6 +76,98 @@ class ApiService {
     savedContents = [];
     reviews = [];
   }
+
+  static String profilePhotoMimeType(Uint8List bytes) {
+    if (bytes.length > 5 * 1024 * 1024) {
+      throw const FormatException('Escolha uma imagem de até 5 MiB.');
+    }
+    if (bytes.length >= 8 &&
+        bytes[0] == 137 &&
+        bytes[1] == 80 &&
+        bytes[2] == 78 &&
+        bytes[3] == 71 &&
+        bytes[4] == 13 &&
+        bytes[5] == 10 &&
+        bytes[6] == 26 &&
+        bytes[7] == 10) {
+      return 'image/png';
+    }
+    if (bytes.length >= 3 &&
+        bytes[0] == 255 &&
+        bytes[1] == 216 &&
+        bytes[2] == 255) {
+      return 'image/jpeg';
+    }
+    throw const FormatException('Escolha uma imagem JPEG ou PNG.');
+  }
+
+  Future<void> loadProfilePhoto() async {
+    final session = _sessionVersion;
+    final response = await dio.get(
+      '/usuarios/eu',
+      options: _authorizationOptions,
+    );
+    _checkSession(session);
+    userPhotoUrl.value =
+        (response.data as Map<String, dynamic>)['fotoUrl'] as String?;
+  }
+
+  Future<void> uploadProfilePhoto(
+    Uint8List bytes, {
+    ProgressCallback? onProgress,
+  }) async {
+    final mime = profilePhotoMimeType(bytes);
+    final session = _sessionVersion;
+    try {
+      final response = await dio.put(
+        '/usuarios/eu/foto',
+        data: FormData.fromMap({
+          'arquivo': MultipartFile.fromBytes(
+            bytes,
+            filename: mime == 'image/png' ? 'perfil.png' : 'perfil.jpg',
+            contentType: DioMediaType.parse(mime),
+          ),
+        }),
+        options: _authorizationOptions,
+        onSendProgress: onProgress,
+      );
+      _checkSession(session);
+      final url = (response.data as Map<String, dynamic>)['fotoUrl'];
+      if (response.statusCode != 200 || url is! String || url.isEmpty) {
+        throw const FormatException('Resposta inválida ao atualizar a foto.');
+      }
+      userPhotoUrl.value = url;
+    } on DioException catch (error) {
+      throw FormatException(_photoError(error));
+    }
+  }
+
+  Future<void> removeProfilePhoto() async {
+    final session = _sessionVersion;
+    try {
+      final response = await dio.delete(
+        '/usuarios/eu/foto',
+        options: _authorizationOptions,
+      );
+      _checkSession(session);
+      if (response.statusCode != 204) {
+        throw const FormatException('Não foi possível remover a foto.');
+      }
+      userPhotoUrl.value = null;
+    } on DioException catch (error) {
+      throw FormatException(_photoError(error));
+    }
+  }
+
+  static String _photoError(DioException error) =>
+      switch (error.response?.statusCode) {
+        400 => 'A imagem é inválida. Escolha outra foto.',
+        413 => 'Escolha uma imagem de até 5 MiB.',
+        415 => 'Escolha uma imagem JPEG ou PNG.',
+        503 => 'O armazenamento está indisponível. Tente novamente mais tarde.',
+        401 => 'Sua sessão expirou. Entre novamente na sua conta.',
+        _ => 'Não foi possível atualizar a foto. Tente novamente.',
+      };
 
   Future<void> updateName(String name) async {
     final nomeTrim = name.trim();

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tv_score_front_flutter/core/app_theme.dart';
 import 'package:tv_score_front_flutter/pages/details_page.dart';
@@ -30,7 +31,9 @@ class _Backend extends BackendHttp {
 
 void main() {
   late _Backend backend;
-  setUp(() {
+  setUp(() async {
+    FlutterSecureStorage.setMockInitialValues({});
+    await ApiService().logout();
     backend = _Backend();
     final previous = HttpOverrides.current;
     HttpOverrides.global = backend;

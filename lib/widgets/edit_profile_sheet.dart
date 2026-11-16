@@ -1,10 +1,12 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_theme.dart';
 import 'change_password_form.dart';
+import 'profile_photo_editor.dart';
 import 'user_avatar.dart';
 
 Future<bool?> showEditProfileSheet(
@@ -12,6 +14,9 @@ Future<bool?> showEditProfileSheet(
   required String name,
   required Future<void> Function(String) onSave,
   Future<void> Function(String, String)? onChangePassword,
+  ValueListenable<String?>? photoUrl,
+  Future<void> Function(Uint8List, void Function(int, int))? onUploadPhoto,
+  Future<void> Function()? onRemovePhoto,
 }) => showModalBottomSheet<bool>(
   context: context,
   isScrollControlled: true,
@@ -28,6 +33,9 @@ Future<bool?> showEditProfileSheet(
     name: name,
     onSave: onSave,
     onChangePassword: onChangePassword,
+    photoUrl: photoUrl,
+    onUploadPhoto: onUploadPhoto,
+    onRemovePhoto: onRemovePhoto,
   ),
 );
 
@@ -36,10 +44,17 @@ class _EditProfileSheet extends StatefulWidget {
     required this.name,
     required this.onSave,
     this.onChangePassword,
+    this.photoUrl,
+    this.onUploadPhoto,
+    this.onRemovePhoto,
   });
   final String name;
   final Future<void> Function(String) onSave;
   final Future<void> Function(String, String)? onChangePassword;
+  final ValueListenable<String?>? photoUrl;
+  final Future<void> Function(Uint8List, void Function(int, int))?
+  onUploadPhoto;
+  final Future<void> Function()? onRemovePhoto;
 
   @override
   State<_EditProfileSheet> createState() => _EditProfileSheetState();
@@ -49,13 +64,14 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final _name = TextEditingController(text: widget.name);
   final _form = GlobalKey<FormState>();
   bool _saving = false;
+  bool _photoPending = false;
   bool _changingPassword = false;
   bool _confirming = false;
   bool _allowClose = false;
   String? _error;
   double _dragDistance = 0;
 
-  bool get _dirty => _name.text.trim() != widget.name.trim();
+  bool get _dirty => _photoPending || _name.text.trim() != widget.name.trim();
   bool get _valid =>
       _name.text.trim().isNotEmpty && _name.text.trim().length <= 60;
 
@@ -84,7 +100,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Descartar alterações?'),
-        content: const Text('As mudanças no nome ainda não foram salvas.'),
+        content: Text(
+          _photoPending
+              ? 'A foto selecionada ainda não foi enviada. Descartar as alterações?'
+              : 'As mudanças no nome ainda não foram salvas.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -107,12 +127,18 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       setState(() {
         _name.text = widget.name;
         _changingPassword = true;
+        _photoPending = false;
       });
     }
   }
 
   Future<void> _save() async {
-    if (_saving || !_dirty || !_form.currentState!.validate()) return;
+    if (_saving ||
+        _photoPending ||
+        !_dirty ||
+        !_form.currentState!.validate()) {
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -285,10 +311,39 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                 ),
                                                 const SizedBox(height: 20),
                                                 Center(
-                                                  child: UserAvatar(
-                                                    name: _name.text,
-                                                    size: 64,
-                                                  ),
+                                                  child:
+                                                      widget.photoUrl != null &&
+                                                          widget.onUploadPhoto !=
+                                                              null &&
+                                                          widget.onRemovePhoto !=
+                                                              null
+                                                      ? ProfilePhotoEditor(
+                                                          name: _name.text,
+                                                          photoUrl:
+                                                              widget.photoUrl!,
+                                                          onUpload: widget
+                                                              .onUploadPhoto!,
+                                                          onRemove: widget
+                                                              .onRemovePhoto!,
+                                                          enabled: !_saving,
+                                                          onBusy: (busy) =>
+                                                              setState(
+                                                                () => _saving =
+                                                                    busy,
+                                                              ),
+                                                          onPendingChanged:
+                                                              (
+                                                                pending,
+                                                              ) => setState(
+                                                                () =>
+                                                                    _photoPending =
+                                                                        pending,
+                                                              ),
+                                                        )
+                                                      : UserAvatar(
+                                                          name: _name.text,
+                                                          size: 64,
+                                                        ),
                                                 ),
                                                 const SizedBox(height: 24),
                                                 const Text(
@@ -479,6 +534,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                   child: FilledButton.icon(
                                                     onPressed:
                                                         _saving ||
+                                                            _photoPending ||
                                                             !_dirty ||
                                                             !_valid
                                                         ? null

@@ -23,6 +23,16 @@ void main() {
     api.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          if (options.path == '/usuarios/eu' && options.method == 'GET') {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {'fotoUrl': 'https://example.com/avatar.png'},
+              ),
+            );
+            return;
+          }
           if (options.path == '/usuarios/eu' && options.method == 'PUT') {
             handler.resolve(
               Response(
@@ -69,6 +79,7 @@ void main() {
   test('login persiste a sessão sem guardar a senha', () async {
     await login();
     expect(ApiService.token, validToken);
+    expect(ApiService.userPhotoUrl.value, 'https://example.com/avatar.png');
     final values = await storage.readAll();
     expect(values, hasLength(1));
     expect(jsonDecode(values.values.single), {
@@ -87,7 +98,8 @@ void main() {
     ApiService.token = null;
     await api.open('outra@teste.com', 'Outra conta');
 
-    expect(await ApiService().restoreSession(), isTrue);
+    expect(await api.restoreSession(), isTrue);
+    expect(ApiService.userPhotoUrl.value, 'https://example.com/avatar.png');
     expect(ApiService.token, validToken);
     expect(ApiService.userEmail, 'ana@teste.com');
     expect(ApiService.userName, 'Ana Silva');
