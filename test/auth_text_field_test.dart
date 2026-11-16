@@ -85,6 +85,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('cadastro bloqueia e-mail inválido e senha curta', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.dark, home: const RegisterPage()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Maria');
+    await tester.enterText(find.byType(TextFormField).at(1), 'email-invalido');
+    await tester.enterText(find.byType(TextFormField).at(2), '123');
+    await tester.ensureVisible(find.text('Cadastrar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cadastrar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Por favor, insira um e-mail válido.'), findsOneWidget);
+    expect(
+      find.text('A senha deve ter pelo menos 6 caracteres.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('cadastro apresenta avatar inativo e link para entrar', (
     tester,
   ) async {

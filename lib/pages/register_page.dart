@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../controllers/register_controller.dart';
 import '../core/app_routes.dart';
 import '../core/app_theme.dart';
 import '../services/api_services.dart';
@@ -17,31 +16,48 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  late final RegisterController _controller;
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  static bool _isValidEmail(String value) {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegex.hasMatch(value);
+  }
 
   bool _busy = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = RegisterController();
+  String _errorMessageFor(Object? error, {required bool accountCreated}) {
+    if (accountCreated) {
+      return 'Conta criada, mas não foi possível entrar automaticamente. Faça login para continuar.';
+    }
+    if (error is FormatException) {
+      return error.message;
+    }
+    return 'Não foi possível criar a conta. Tente novamente.';
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _register() async {
-    if (_busy || !_controller.canSubmit) return;
+    if (_busy) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     final api = ApiService();
-    final name = _controller.nameController.text.trim();
-    final email = _controller.emailController.text.trim();
-    final password = _controller.passwordController.text;
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-    var accontCreated = false;
+    var accountCreated = false;
 
     setState(() {
       _busy = true;
@@ -49,7 +65,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       await api.register(name, email, password);
-      accontCreated = true;
+      accountCreated = true;
 
       if (!mounted) return;
 
@@ -60,7 +76,7 @@ class _RegisterPageState extends State<RegisterPage> {
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const GenrePreferencesDialog(),
+        builder: (_) => const GenrePreferencesDialog(onboarding: true),
       );
 
       if (!mounted) return;
@@ -71,15 +87,13 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (error) {
       if (!mounted) return;
 
-      final message = accontCreated
-          ? 'Conta criada, mas não foi possível entrar automaticamente. Faça login para continuar.'
-          : error is FormatException
-          ? error.message
-          : 'Não foi possível criar a conta. Tente novamente.';
+      final message = _errorMessageFor(error, accountCreated: accountCreated);
       TvScoreSnackbar.error(context, message);
 
-      if (accontCreated) {
-        Navigator.pop(context);
+      if (accountCreated) {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
       }
     } finally {
       if (mounted) {
@@ -115,68 +129,93 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const _RegistrationAvatar(),
-                      const SizedBox(height: 24),
-                      AuthTextField(
-                        label: 'Nome',
-                        controller: _controller.nameController,
-                        textInputAction: TextInputAction.next,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 12),
-                      AuthTextField(
-                        label: 'E-mail',
-                        controller: _controller.emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 12),
-                      AuthTextField(
-                        label: 'Senha',
-                        controller: _controller.passwordController,
-                        isPassword: true,
-                        textInputAction: TextInputAction.done,
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: !_busy && _controller.canSubmit
-                              ? _register
-                              : null,
-                          child: _busy
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Cadastrar'),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const _RegistrationAvatar(),
+                        const SizedBox(height: 24),
+                        AuthTextField(
+                          label: 'Nome',
+                          controller: _nameController,
+                          textInputAction: TextInputAction.next,
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Por favor, insira seu nome.';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          const Text(
-                            'J\u00e1 tem uma conta?',
-                            style: TextStyle(color: Color(0xFF8B9BB8)),
+                        const SizedBox(height: 12),
+                        AuthTextField(
+                          label: 'E-mail',
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Por favor, insira seu e-mail.';
+                            }
+                            if (!_isValidEmail(value.trim())) {
+                              return 'Por favor, insira um e-mail válido.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        AuthTextField(
+                          label: 'Senha',
+                          controller: _passwordController,
+                          isPassword: true,
+                          textInputAction: TextInputAction.done,
+                          onChanged: (_) => setState(() {}),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor, insira sua senha.';
+                            }
+                            if (value.length < 6) {
+                              return 'A senha deve ter pelo menos 6 caracteres.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: FilledButton(
+                            onPressed: _busy ? null : _register,
+                            child: _busy
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Cadastrar'),
                           ),
-                          TextButton(
-                            onPressed: () => Navigator.maybePop(context),
-                            child: const Text('Entrar'),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'J\u00e1 tem uma conta?',
+                              style: TextStyle(color: Color(0xFF8B9BB8)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.maybePop(context),
+                              child: const Text('Entrar'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
