@@ -76,7 +76,7 @@ class _RegisterPageState extends State<RegisterPage> {
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const GenrePreferencesDialog(onboarding: true),
+        builder: (_) => const GenrePreferencesDialog(),
       );
 
       if (!mounted) return;

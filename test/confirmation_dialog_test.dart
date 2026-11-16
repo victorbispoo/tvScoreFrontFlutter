@@ -1,14 +1,13 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/my_reviews_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/tv_score_confirmation_dialog.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -20,6 +19,7 @@ void main() {
       bool? result;
       await tester.pumpWidget(
         MaterialApp(
+          onGenerateRoute: AppRoutes.generate,
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -55,6 +55,7 @@ void main() {
     bool? result = true;
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
@@ -92,6 +93,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
@@ -130,6 +132,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(
             context,
@@ -181,7 +184,9 @@ void main() {
       'genre': 'Drama',
     };
     await tester.runAsync(() => ApiService().saveReview(content, 8, 'Bom'));
-    await tester.pumpWidget(const MaterialApp(home: MyReviewsPage()));
+    await tester.pumpWidget(
+      MaterialApp(onGenerateRoute: AppRoutes.generate, home: MyReviewsPage()),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Excluir'));
     await tester.pumpAndSettle();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/core/app_theme.dart';
 import 'package:tv_score_front_flutter/pages/login_page.dart';
 import 'package:tv_score_front_flutter/pages/register_page.dart';
@@ -18,6 +19,7 @@ void main() {
         addTearDown(tester.view.resetDevicePixelRatio);
         await tester.pumpWidget(
           MaterialApp(
+            onGenerateRoute: AppRoutes.generate,
             theme: AppTheme.dark,
             home: login ? const LoginPage() : const RegisterPage(),
           ),
@@ -68,7 +70,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.dark, home: const LoginPage()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: AppTheme.dark,
+        home: const LoginPage(),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).first, 'invalido');
@@ -89,7 +95,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.dark, home: const RegisterPage()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: AppTheme.dark,
+        home: const RegisterPage(),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -117,7 +127,11 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.dark, home: const RegisterPage()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: AppTheme.dark,
+        home: const RegisterPage(),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -133,7 +147,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.dark, home: const LoginPage()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: AppTheme.dark,
+        home: const LoginPage(),
+      ),
     );
     final logo = tester.widget<SizedBox>(
       find
@@ -155,6 +173,7 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         theme: AppTheme.dark,
         home: Scaffold(
           body: AuthTextField(

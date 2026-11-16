@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/profile_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/genre_preferences.dart';
-
 import 'support/backend_http.dart';
 
 class PreferencesBackend extends BackendHttp {
@@ -60,6 +59,7 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          onGenerateRoute: AppRoutes.generate,
           theme: ThemeData.dark(),
           home: const Scaffold(body: ProfilePage(isActive: false)),
         ),
@@ -99,6 +99,7 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          onGenerateRoute: AppRoutes.generate,
           theme: ThemeData.dark(),
           home: Builder(
             builder: (context) => Scaffold(
@@ -149,6 +150,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         theme: ThemeData.dark(),
         home: Builder(
           builder: (context) => Scaffold(

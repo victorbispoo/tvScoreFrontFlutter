@@ -1,7 +1,7 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/details_page.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
@@ -9,7 +9,6 @@ import 'package:tv_score_front_flutter/widgets/content_card.dart';
 import 'package:tv_score_front_flutter/widgets/content_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/poster_hero_tag.dart';
 import 'package:tv_score_front_flutter/widgets/ranked_content_carousel.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -27,6 +26,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: ListView(
             children: [
@@ -66,7 +66,10 @@ void main() {
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = 'test-token';
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: HomePage())),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: Scaffold(body: HomePage()),
+      ),
     );
     await tester.pumpAndSettle();
     final card = find.byType(ContentCard).first;
@@ -104,6 +107,7 @@ void main() {
     final tag = posterHeroTag('home:top-rated', movie);
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: RankedContentCarousel(
             contents: const [movie],
@@ -137,6 +141,7 @@ void main() {
     final tag = posterHeroTag('home:personalized', movie);
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: ValueListenableBuilder<bool>(
           valueListenable: visible,
           builder: (context, show, _) => Scaffold(
@@ -172,7 +177,10 @@ void main() {
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = 'test-token';
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: HomePage())),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: Scaffold(body: HomePage()),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Séries').first);
@@ -196,7 +204,8 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: SizedBox(
             width: 144,

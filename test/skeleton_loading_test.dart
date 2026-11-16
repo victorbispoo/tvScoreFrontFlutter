@@ -1,9 +1,9 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/details_page.dart';
 import 'package:tv_score_front_flutter/pages/favorites_page.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
@@ -12,7 +12,6 @@ import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
 import 'package:tv_score_front_flutter/widgets/content_poster.dart';
 import 'package:tv_score_front_flutter/widgets/skeleton_loading.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -24,7 +23,8 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(320, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: MediaQuery(
           data: MediaQueryData(disableAnimations: true),
           child: Scaffold(body: SkeletonCarousel(showFilters: true)),
@@ -46,7 +46,10 @@ void main() {
     HttpOverrides.global = backend;
     addTearDown(() => HttpOverrides.global = previous);
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: SearchPage())),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: Scaffold(body: SearchPage()),
+      ),
     );
     await tester.enterText(find.byType(TextField), 'avatar');
     await tester.pump(const Duration(milliseconds: 400));
@@ -71,7 +74,10 @@ void main() {
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = null;
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: HomePage())),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: Scaffold(body: HomePage()),
+      ),
     );
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(SkeletonCarousel), findsWidgets);
@@ -95,7 +101,8 @@ void main() {
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = 'test-token';
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: DetailsPage(
           content: {
             'id': '123',
@@ -121,7 +128,8 @@ void main() {
 
   testWidgets('imagem indisponível mantém fallback no pôster', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: SizedBox(
           width: 144,
           height: 216,
@@ -147,7 +155,9 @@ void main() {
     HttpOverrides.global = backend;
     addTearDown(() => HttpOverrides.global = previous);
 
-    await tester.pumpWidget(const MaterialApp(home: FavoritesPage()));
+    await tester.pumpWidget(
+      MaterialApp(onGenerateRoute: AppRoutes.generate, home: FavoritesPage()),
+    );
     await tester.pump();
     expect(find.byType(SkeletonGrid), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
@@ -159,7 +169,9 @@ void main() {
       {'id': '123', 'type': 'MOVIE', 'title': 'Salvo', 'poster_path': ''},
     ];
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(const MaterialApp(home: FavoritesPage()));
+    await tester.pumpWidget(
+      MaterialApp(onGenerateRoute: AppRoutes.generate, home: FavoritesPage()),
+    );
     await tester.pump();
     expect(find.byType(SkeletonGrid), findsNothing);
     expect(find.byType(ContentCard), findsOneWidget);

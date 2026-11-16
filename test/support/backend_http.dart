@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:tv_score_front_flutter/data/mock_contents.dart';
 import 'package:tv_score_front_flutter/models/content_metadata.dart';
@@ -40,6 +41,8 @@ class BackendHttp extends HttpOverrides {
           ],
     'tipoConteudo': content['type'],
   };
+
+  int responseStatus(String method, Uri uri) => 200;
 
   Object? respond(String method, Uri uri, String body) {
     final path = uri.path.replaceFirst('/api', '');
@@ -231,7 +234,10 @@ class _Request implements HttpClientRequest {
     if (backend.delayedPaths.contains(uri.path.replaceFirst('/api', ''))) {
       await Future<void>.delayed(backend.responseDelay);
     }
-    return _Response(backend.respond(method, uri, utf8.decode(_bytes)));
+    return _Response(
+      backend.respond(method, uri, utf8.decode(_bytes)),
+      backend.responseStatus(method, uri),
+    );
   }
 
   @override
@@ -239,10 +245,11 @@ class _Request implements HttpClientRequest {
 }
 
 class _Response extends Stream<List<int>> implements HttpClientResponse {
-  _Response(Object? data) : bytes = utf8.encode(jsonEncode(data));
+  _Response(Object? data, this.statusCode)
+    : bytes = statusCode == 204 ? Uint8List(0) : utf8.encode(jsonEncode(data));
   final List<int> bytes;
   @override
-  int get statusCode => 200;
+  final int statusCode;
   @override
   int get contentLength => bytes.length;
   @override

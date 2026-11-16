@@ -1,15 +1,14 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/pages/my_reviews_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/top_rated_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/tv_score_segmented_control.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -54,7 +53,10 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: HomePage())),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: Scaffold(body: HomePage()),
+      ),
     );
     await tester.pumpAndSettle();
     final control = find.descendant(
@@ -115,7 +117,9 @@ void main() {
         'dataCriacao': '2026-11-15T12:00:00',
       },
     ]);
-    await tester.pumpWidget(const MaterialApp(home: MyReviewsPage()));
+    await tester.pumpWidget(
+      MaterialApp(onGenerateRoute: AppRoutes.generate, home: MyReviewsPage()),
+    );
     await tester.pumpAndSettle();
     final requests = [...backend.requests];
     double recentY() => tester.getTopLeft(find.text('Recente')).dy;

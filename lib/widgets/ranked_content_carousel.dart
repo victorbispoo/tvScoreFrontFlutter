@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_routes.dart';
 import '../core/rating_scale.dart';
 import '../models/content_metadata.dart';
-import '../pages/details_page.dart';
 import 'content_poster.dart';
 import 'poster_hero_tag.dart';
 
@@ -46,12 +46,10 @@ class RankedContentCarousel extends StatelessWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () async {
-                  await Navigator.push(
+                  await AppRoutes.openDetails(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          DetailsPage(content: content, heroTag: heroTag),
-                    ),
+                    content: content,
+                    heroTag: heroTag,
                   );
                   if (context.mounted) onChanged();
                 },

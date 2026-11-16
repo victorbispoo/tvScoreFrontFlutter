@@ -6,16 +6,21 @@ import 'package:tv_score_front_flutter/widgets/edit_profile_sheet.dart';
 
 Future<void> openEditor(
   WidgetTester tester,
-  Future<void> Function(String) onSave,
-) async {
+  Future<void> Function(String) onSave, {
+  Future<void> Function(String, String)? onChangePassword,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: ThemeData.dark(),
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
-            onPressed: () =>
-                showEditProfileSheet(context, name: 'Victor', onSave: onSave),
+            onPressed: () => showEditProfileSheet(
+              context,
+              name: 'Victor',
+              onSave: onSave,
+              onChangePassword: onChangePassword,
+            ),
             child: const Text('Abrir'),
           ),
         ),
@@ -139,43 +144,58 @@ void main() {
     expect(find.text('Informações da sua conta'), findsNothing);
   });
 
-  testWidgets(
-    'tela estreita com teclado rola sem overflow e senha não tem ação',
-    (tester) async {
-      tester.view.physicalSize = const Size(320, 740);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      addTearDown(tester.view.resetViewInsets);
-      var requests = 0;
-      await openEditor(tester, (_) async {
-        requests++;
-      });
-      await tester.tap(find.text('Alterar senha'));
-      await tester.pumpAndSettle();
-      expect(find.text('Disponível em breve'), findsOneWidget);
-      expect(find.byType(TextFormField), findsOneWidget);
-      expect(requests, 0);
-      await tester.tap(find.byType(TextFormField));
-      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField), 'Novo');
-      await tester.scrollUntilVisible(
-        find.text('Salvar alterações'),
-        100,
-        scrollable: find
-            .descendant(
-              of: find.byType(SingleChildScrollView),
-              matching: find.byType(Scrollable),
-            )
-            .first,
-      );
-      await tester.pumpAndSettle();
-      expect(
-        tester.getBottomRight(find.text('Salvar alterações')).dy,
-        lessThanOrEqualTo(440),
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+  testWidgets('senha respeita descarte do nome e abre no mesmo sheet', (
+    tester,
+  ) async {
+    await openEditor(tester, (_) async {}, onChangePassword: (_, _) async {});
+    await tester.enterText(find.byType(TextFormField), 'Outro');
+    await tester.ensureVisible(find.text('Alterar senha'));
+    await tester.tap(find.text('Alterar senha'));
+    await tester.pumpAndSettle();
+    expect(find.text('Descartar alterações?'), findsOneWidget);
+    await tester.tap(find.text('Continuar editando'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextFormField), findsOneWidget);
+    await tester.tap(find.text('Alterar senha'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Descartar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextFormField), findsNWidgets(3));
+    expect(find.text('Senha atual'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tela estreita com teclado rola sem overflow', (tester) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    var requests = 0;
+    await openEditor(tester, (_) async {
+      requests++;
+    });
+    expect(find.byType(TextFormField), findsOneWidget);
+    expect(requests, 0);
+    await tester.tap(find.byType(TextFormField));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'Novo');
+    await tester.scrollUntilVisible(
+      find.text('Salvar alterações'),
+      100,
+      scrollable: find
+          .descendant(
+            of: find.byType(SingleChildScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.getBottomRight(find.text('Salvar alterações')).dy,
+      lessThanOrEqualTo(440),
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

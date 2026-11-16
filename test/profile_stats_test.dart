@@ -1,12 +1,11 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/profile_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -35,6 +34,7 @@ void main() {
           addTearDown(() => tester.binding.setSurfaceSize(null));
           await tester.pumpWidget(
             MaterialApp(
+              onGenerateRoute: AppRoutes.generate,
               theme: ThemeData.dark(),
               home: const Scaffold(body: ProfilePage()),
             ),

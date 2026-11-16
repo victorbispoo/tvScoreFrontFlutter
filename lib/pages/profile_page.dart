@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:tv_score_front_flutter/core/app_theme.dart';
@@ -10,8 +11,6 @@ import '../services/api_services.dart';
 import '../widgets/edit_profile_sheet.dart';
 import '../widgets/genre_preferences.dart';
 import '../widgets/tv_score_snackbar.dart';
-
-import 'my_reviews_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, this.isActive = true});
@@ -79,8 +78,7 @@ class _ProfilePageState extends State<ProfilePage>
   Future<void> _editPreferences() => showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) =>
-        const GenrePreferencesDialog(isEditing: true, onboarding: true),
+    builder: (_) => const GenrePreferencesDialog(isEditing: true),
   );
 
   bool _editingProfile = false;
@@ -88,12 +86,28 @@ class _ProfilePageState extends State<ProfilePage>
   Future<void> _editProfile() async {
     if (_editingProfile) return;
     _editingProfile = true;
+    var sessionEnded = false;
     try {
       final saved = await showEditProfileSheet(
         context,
         name: ApiService.userName,
         onSave: _api.updateName,
+        onChangePassword: (current, next) async {
+          try {
+            await _api.changePassword(current, next);
+            sessionEnded = true;
+          } on DioException catch (error) {
+            if (error.response?.statusCode != 401) rethrow;
+            sessionEnded = true;
+          }
+        },
       );
+      if (mounted && sessionEnded) {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
+        return;
+      }
       if (mounted && saved == true) {
         setState(() {});
       }
@@ -242,10 +256,7 @@ class _ProfilePageState extends State<ProfilePage>
                 title: const Text('Minhas avaliações'),
                 trailing: const Icon(HugeIconsStroke.arrowRight01),
                 onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const MyReviewsPage()),
-                  );
+                  await Navigator.pushNamed(context, AppRoutes.myReviews);
                   if (!mounted) return;
                   setState(() {
                     _reviewStats = _fetchReviewStats();

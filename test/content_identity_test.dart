@@ -1,10 +1,9 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -72,7 +71,8 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: SizedBox(
             width: 160,

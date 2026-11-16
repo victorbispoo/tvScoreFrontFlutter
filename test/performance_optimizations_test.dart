@@ -1,13 +1,12 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_poster.dart';
-
 import 'support/backend_http.dart';
 
 class _PerformanceBackend extends BackendHttp {
@@ -86,7 +85,10 @@ void main() {
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = null;
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: HomePage())),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: Scaffold(body: HomePage()),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.text('Em alta'), findsOneWidget);
@@ -99,7 +101,8 @@ void main() {
 
   testWidgets('pôster TMDB usa versão menor', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: SizedBox(
           width: 144,
           height: 216,

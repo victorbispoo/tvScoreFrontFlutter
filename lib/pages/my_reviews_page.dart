@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_haptics.dart';
+import '../core/app_routes.dart';
 import '../core/app_theme.dart';
 import '../core/rating_scale.dart';
 import '../models/review.dart';
@@ -12,7 +13,6 @@ import '../widgets/content_poster.dart';
 import '../widgets/tv_score_confirmation_dialog.dart';
 import '../widgets/tv_score_segmented_control.dart';
 import '../widgets/tv_score_snackbar.dart';
-import 'details_page.dart';
 
 class MyReviewsPage extends StatefulWidget {
   const MyReviewsPage({super.key});
@@ -59,10 +59,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
   }
 
   Future<void> _editReview(Review review) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => DetailsPage(content: review.content)),
-    );
+    await AppRoutes.openDetails(context, content: review.content);
 
     if (mounted) setState(() {});
   }

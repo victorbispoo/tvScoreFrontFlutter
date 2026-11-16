@@ -1,17 +1,16 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/details_page.dart';
 import 'package:tv_score_front_flutter/pages/favorites_page.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
 import 'package:tv_score_front_flutter/widgets/poster_hero_tag.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -47,7 +46,9 @@ void main() {
   testWidgets('Pesquisa mantém resultado e tag após abrir e voltar', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: SearchPage()));
+    await tester.pumpWidget(
+      MaterialApp(onGenerateRoute: AppRoutes.generate, home: SearchPage()),
+    );
     await tester.enterText(find.byType(TextField), 'avatar');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
@@ -82,7 +83,9 @@ void main() {
   ) async {
     final content = backend.catalog.first;
     await tester.runAsync(() => ApiService().toggleSaved(content));
-    await tester.pumpWidget(const MaterialApp(home: FavoritesPage()));
+    await tester.pumpWidget(
+      MaterialApp(onGenerateRoute: AppRoutes.generate, home: FavoritesPage()),
+    );
     await tester.pumpAndSettle();
     final tag = tester.widget<ContentCard>(find.byType(ContentCard)).heroTag;
     expect(tag, posterHeroTag('favorites', content));

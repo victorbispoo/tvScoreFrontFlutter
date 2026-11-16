@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_theme.dart';
+import 'change_password_form.dart';
 import 'user_avatar.dart';
 
 Future<bool?> showEditProfileSheet(
   BuildContext context, {
   required String name,
   required Future<void> Function(String) onSave,
+  Future<void> Function(String, String)? onChangePassword,
 }) => showModalBottomSheet<bool>(
   context: context,
   isScrollControlled: true,
@@ -22,13 +24,22 @@ Future<bool?> showEditProfileSheet(
   isDismissible: false,
   enableDrag: false,
   constraints: const BoxConstraints(maxWidth: double.infinity),
-  builder: (_) => _EditProfileSheet(name: name, onSave: onSave),
+  builder: (_) => _EditProfileSheet(
+    name: name,
+    onSave: onSave,
+    onChangePassword: onChangePassword,
+  ),
 );
 
 class _EditProfileSheet extends StatefulWidget {
-  const _EditProfileSheet({required this.name, required this.onSave});
+  const _EditProfileSheet({
+    required this.name,
+    required this.onSave,
+    this.onChangePassword,
+  });
   final String name;
   final Future<void> Function(String) onSave;
+  final Future<void> Function(String, String)? onChangePassword;
 
   @override
   State<_EditProfileSheet> createState() => _EditProfileSheetState();
@@ -38,6 +49,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final _name = TextEditingController(text: widget.name);
   final _form = GlobalKey<FormState>();
   bool _saving = false;
+  bool _changingPassword = false;
   bool _confirming = false;
   bool _allowClose = false;
   String? _error;
@@ -62,10 +74,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
   Future<void> _requestClose() async {
     if (_saving || _confirming || _allowClose) return;
-    if (!_dirty) {
-      _finish(false);
-      return;
-    }
+    if (await _confirmDiscard() && mounted) _finish(false);
+  }
+
+  Future<bool> _confirmDiscard() async {
+    if (!_dirty || _changingPassword) return true;
     _confirming = true;
     final discard = await showDialog<bool>(
       context: context,
@@ -85,7 +98,17 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       ),
     );
     _confirming = false;
-    if (mounted && discard == true) _finish(false);
+    return mounted && discard == true;
+  }
+
+  Future<void> _openPassword() async {
+    if (_saving || _confirming || _changingPassword) return;
+    if (await _confirmDiscard() && mounted) {
+      setState(() {
+        _name.text = widget.name;
+        _changingPassword = true;
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -205,9 +228,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                         ),
                                         Row(
                                           children: [
-                                            const Expanded(
+                                            Expanded(
                                               child: Text(
-                                                'Editar perfil',
+                                                _changingPassword
+                                                    ? 'Alterar senha'
+                                                    : 'Editar perfil',
                                                 style: TextStyle(
                                                   fontSize: 24,
                                                   fontWeight: FontWeight.w600,
@@ -239,217 +264,265 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                       20,
                                       24,
                                     ),
-                                    child: Form(
-                                      key: _form,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Informações da sua conta',
-                                            style: TextStyle(
-                                              color: Colors.white60,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Center(
-                                            child: UserAvatar(
-                                              name: _name.text,
-                                              size: 64,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 24),
-                                          const Text(
-                                            'Dados pessoais',
-                                            style: TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            children: [
-                                              const Expanded(
-                                                child: Text(
-                                                  'Nome',
+                                    child: _changingPassword
+                                        ? ChangePasswordForm(
+                                            onSubmit: widget.onChangePassword!,
+                                            onBusy: (busy) =>
+                                                setState(() => _saving = busy),
+                                            onSuccess: () => _finish(false),
+                                          )
+                                        : Form(
+                                            key: _form,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Informações da sua conta',
                                                   style: TextStyle(
-                                                    color: Colors.white70,
+                                                    color: Colors.white60,
                                                   ),
                                                 ),
-                                              ),
-                                              Text(
-                                                '${_name.text.characters.length}/60',
-                                                style: const TextStyle(
-                                                  color: Colors.white54,
-                                                  fontSize: 11,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextFormField(
-                                            controller: _name,
-                                            enabled: !_saving,
-                                            maxLength: 60,
-                                            textCapitalization:
-                                                TextCapitalization.words,
-                                            autovalidateMode: AutovalidateMode
-                                                .onUserInteraction,
-                                            validator: (value) =>
-                                                value == null ||
-                                                    value.trim().isEmpty
-                                                ? 'Informe seu nome.'
-                                                : value.trim().length > 60
-                                                ? 'Use até 60 caracteres.'
-                                                : null,
-                                            onChanged: (_) =>
-                                                setState(() => _error = null),
-                                            buildCounter:
-                                                (
-                                                  _, {
-                                                  required currentLength,
-                                                  required isFocused,
-                                                  required maxLength,
-                                                }) => null,
-                                            decoration: InputDecoration(
-                                              hintText:
-                                                  'Como você quer ser chamado?',
-                                              filled: true,
-                                              fillColor: Colors.white
-                                                  .withValues(alpha: .04),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                                borderSide: BorderSide(
-                                                  color: Colors.white
-                                                      .withValues(alpha: .1),
-                                                ),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                                borderSide: const BorderSide(
-                                                  color: AppTheme.primary,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 24),
-                                          const Text(
-                                            'Segurança',
-                                            style: TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Semantics(
-                                            enabled: false,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(16),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withValues(
-                                                  alpha: .03,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                                border: Border.all(
-                                                  color: Colors.white
-                                                      .withValues(alpha: .07),
-                                                ),
-                                              ),
-                                              child: const Row(
-                                                children: [
-                                                  Icon(
-                                                    HugeIconsStroke
-                                                        .lockPassword,
-                                                    color: Colors.white54,
-                                                    size: 22,
+                                                const SizedBox(height: 20),
+                                                Center(
+                                                  child: UserAvatar(
+                                                    name: _name.text,
+                                                    size: 64,
                                                   ),
-                                                  SizedBox(width: 12),
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          'Alterar senha',
-                                                          style: TextStyle(
-                                                            color:
-                                                                Colors.white60,
-                                                          ),
+                                                ),
+                                                const SizedBox(height: 24),
+                                                const Text(
+                                                  'Dados pessoais',
+                                                  style: TextStyle(
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Row(
+                                                  children: [
+                                                    const Expanded(
+                                                      child: Text(
+                                                        'Nome',
+                                                        style: TextStyle(
+                                                          color: Colors.white70,
                                                         ),
-                                                        SizedBox(height: 4),
-                                                        Text(
-                                                          'Disponível em breve',
-                                                          style: TextStyle(
-                                                            color:
-                                                                Colors.white54,
-                                                            fontSize: 12,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '${_name.text.characters.length}/60',
+                                                      style: const TextStyle(
+                                                        color: Colors.white54,
+                                                        fontSize: 11,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8),
+                                                TextFormField(
+                                                  controller: _name,
+                                                  enabled: !_saving,
+                                                  maxLength: 60,
+                                                  textCapitalization:
+                                                      TextCapitalization.words,
+                                                  autovalidateMode:
+                                                      AutovalidateMode
+                                                          .onUserInteraction,
+                                                  validator: (value) =>
+                                                      value == null ||
+                                                          value.trim().isEmpty
+                                                      ? 'Informe seu nome.'
+                                                      : value.trim().length > 60
+                                                      ? 'Use até 60 caracteres.'
+                                                      : null,
+                                                  onChanged: (_) => setState(
+                                                    () => _error = null,
+                                                  ),
+                                                  buildCounter:
+                                                      (
+                                                        _, {
+                                                        required currentLength,
+                                                        required isFocused,
+                                                        required maxLength,
+                                                      }) => null,
+                                                  decoration: InputDecoration(
+                                                    hintText:
+                                                        'Como você quer ser chamado?',
+                                                    filled: true,
+                                                    fillColor: Colors.white
+                                                        .withValues(alpha: .04),
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                14,
+                                                              ),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                color: Colors
+                                                                    .white
+                                                                    .withValues(
+                                                                      alpha: .1,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                    focusedBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                14,
+                                                              ),
+                                                          borderSide:
+                                                              const BorderSide(
+                                                                color: AppTheme
+                                                                    .primary,
+                                                              ),
+                                                        ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 24),
+                                                const Text(
+                                                  'Segurança',
+                                                  style: TextStyle(
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                InkWell(
+                                                  onTap:
+                                                      _saving ||
+                                                          widget.onChangePassword ==
+                                                              null
+                                                      ? null
+                                                      : _openPassword,
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          16,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: .03,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            14,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: Colors.white
+                                                            .withValues(
+                                                              alpha: .07,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    child: const Row(
+                                                      children: [
+                                                        Icon(
+                                                          HugeIconsStroke
+                                                              .lockPassword,
+                                                          color: Colors.white54,
+                                                          size: 22,
+                                                        ),
+                                                        SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                'Alterar senha',
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .white60,
+                                                                ),
+                                                              ),
+                                                              SizedBox(
+                                                                height: 4,
+                                                              ),
+                                                              Text(
+                                                                'Atualizar sua senha',
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .white54,
+                                                                  fontSize: 12,
+                                                                ),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ),
                                                       ],
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          if (_error != null) ...[
-                                            const SizedBox(height: 16),
-                                            Semantics(
-                                              liveRegion: true,
-                                              child: Text(
-                                                _error!,
-                                                style: TextStyle(
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.error,
                                                 ),
-                                              ),
-                                            ),
-                                          ],
-                                          const SizedBox(height: 24),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: FilledButton.icon(
-                                              onPressed:
-                                                  _saving || !_dirty || !_valid
-                                                  ? null
-                                                  : _save,
-                                              style: FilledButton.styleFrom(
-                                                backgroundColor:
-                                                    AppTheme.primary,
-                                                foregroundColor: Colors.white,
-                                                minimumSize: const Size(48, 48),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                              ),
-                                              icon: _saving
-                                                  ? const SizedBox.square(
-                                                      dimension: 16,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                          ),
-                                                    )
-                                                  : const Icon(
-                                                      HugeIconsStroke.tick02,
-                                                      size: 18,
+                                                if (_error != null) ...[
+                                                  const SizedBox(height: 16),
+                                                  Semantics(
+                                                    liveRegion: true,
+                                                    child: Text(
+                                                      _error!,
+                                                      style: TextStyle(
+                                                        color: Theme.of(
+                                                          context,
+                                                        ).colorScheme.error,
+                                                      ),
                                                     ),
-                                              label: Text(
-                                                _saving
-                                                    ? 'Salvando...'
-                                                    : 'Salvar alterações',
-                                              ),
+                                                  ),
+                                                ],
+                                                const SizedBox(height: 24),
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: FilledButton.icon(
+                                                    onPressed:
+                                                        _saving ||
+                                                            !_dirty ||
+                                                            !_valid
+                                                        ? null
+                                                        : _save,
+                                                    style: FilledButton.styleFrom(
+                                                      backgroundColor:
+                                                          AppTheme.primary,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      minimumSize: const Size(
+                                                        48,
+                                                        48,
+                                                      ),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              12,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    icon: _saving
+                                                        ? const SizedBox.square(
+                                                            dimension: 16,
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                ),
+                                                          )
+                                                        : const Icon(
+                                                            HugeIconsStroke
+                                                                .tick02,
+                                                            size: 18,
+                                                          ),
+                                                    label: Text(
+                                                      _saving
+                                                          ? 'Salvando...'
+                                                          : 'Salvar alterações',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
                                   ),
                                 ),
                               ],

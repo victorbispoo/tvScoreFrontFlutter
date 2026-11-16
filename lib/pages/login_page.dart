@@ -5,7 +5,6 @@ import '../controllers/login_controller.dart';
 import '../core/app_routes.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/tv_score_snackbar.dart';
-import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -118,7 +117,24 @@ class _LoginPageState extends State<LoginPage> {
                           isPassword: true,
                           textInputAction: TextInputAction.done,
                         ),
-                        const SizedBox(height: 38),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ListenableBuilder(
+                            listenable: _controller,
+                            builder: (context, _) => TextButton(
+                              onPressed: _controller.isLoading
+                                  ? null
+                                  : () => Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.recovery,
+                                      arguments:
+                                          _controller.emailController.text,
+                                    ),
+                              child: const Text('Esqueceu a senha?'),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
                         Center(
                           child: SizedBox(
                             width: 165,
@@ -174,11 +190,9 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () => Navigator.push(
+                              onPressed: () => Navigator.pushNamed(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (_) => const RegisterPage(),
-                                ),
+                                AppRoutes.register,
                               ),
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(

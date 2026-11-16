@@ -1,16 +1,15 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/details_page.dart';
 import 'package:tv_score_front_flutter/pages/my_reviews_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/floating_navigation_bar.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -40,6 +39,7 @@ void main() {
     var selected = 0;
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
@@ -79,6 +79,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         home: Scaffold(
           body: FloatingNavigationBar(index: 0, onSelected: (_) {}),
         ),
@@ -116,7 +117,10 @@ void main() {
       'genre': 'Drama',
     };
     await tester.pumpWidget(
-      const MaterialApp(home: DetailsPage(content: content)),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: DetailsPage(content: content),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Adicionar aos favoritos'));
@@ -179,7 +183,9 @@ void main() {
       'genre': 'Drama',
     };
     await tester.runAsync(() => ApiService().saveReview(content, 8, 'Bom'));
-    await tester.pumpWidget(const MaterialApp(home: MyReviewsPage()));
+    await tester.pumpWidget(
+      MaterialApp(onGenerateRoute: AppRoutes.generate, home: MyReviewsPage()),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Excluir'));
     await tester.pumpAndSettle();
@@ -212,7 +218,10 @@ void main() {
       'genre': 'Drama',
     };
     await tester.pumpWidget(
-      const MaterialApp(home: DetailsPage(content: content)),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        home: DetailsPage(content: content),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Adicionar aos favoritos'));

@@ -1,10 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/main.dart';
 import 'package:tv_score_front_flutter/pages/details_page.dart';
 import 'package:tv_score_front_flutter/pages/favorites_page.dart';
@@ -13,7 +13,6 @@ import 'package:tv_score_front_flutter/pages/my_reviews_page.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
-
 import 'support/backend_http.dart';
 
 void main() {
@@ -63,6 +62,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         theme: ThemeData.dark(),
         home: DetailsPage(
           content: {
@@ -88,6 +88,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         theme: ThemeData.dark(),
         home: const DetailsPage(content: content),
       ),
@@ -129,7 +130,11 @@ void main() {
       () => ApiService().saveReview(content, 9, 'Muito bom'),
     );
     await tester.pumpWidget(
-      MaterialApp(theme: ThemeData.dark(), home: const MyReviewsPage()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: ThemeData.dark(),
+        home: const MyReviewsPage(),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.text('Muito bom'), findsOneWidget);
@@ -176,6 +181,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         theme: ThemeData.dark(),
         home: const Scaffold(body: SearchPage()),
       ),
@@ -224,6 +230,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
         theme: ThemeData.dark(),
         home: const Scaffold(body: SafeArea(child: HomePage())),
       ),
@@ -249,7 +256,11 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.runAsync(() => ApiService().toggleSaved(content));
     await tester.pumpWidget(
-      MaterialApp(theme: ThemeData.dark(), home: const FavoritesPage()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: ThemeData.dark(),
+        home: const FavoritesPage(),
+      ),
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
@@ -274,7 +285,11 @@ void main() {
   ) async {
     await tester.runAsync(() => ApiService().toggleSaved(content));
     await tester.pumpWidget(
-      MaterialApp(theme: ThemeData.dark(), home: const FavoritesPage()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: ThemeData.dark(),
+        home: const FavoritesPage(),
+      ),
     );
     await tester.pumpAndSettle();
     final button = find.byTooltip('Remover dos favoritos');
@@ -289,7 +304,11 @@ void main() {
 
   testWidgets('perfil atualiza suas contagens ao mudar de aba', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(theme: ThemeData.dark(), home: const AppShell()),
+      MaterialApp(
+        onGenerateRoute: AppRoutes.generate,
+        theme: ThemeData.dark(),
+        home: const AppShell(),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Perfil'));

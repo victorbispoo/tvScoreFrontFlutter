@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:tv_score_front_flutter/pages/search_page.dart';
+import '../core/app_routes.dart';
 
 import '../core/app_theme.dart';
 import '../services/api_services.dart';
@@ -225,10 +225,7 @@ class _HomePageState extends State<HomePage>
                   IconButton(
                     tooltip: 'Pesquisar',
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SearchPage()),
-                      );
+                      Navigator.pushNamed(context, AppRoutes.search);
                     },
                     icon: Icon(
                       HugeIconsSolid.search01,
