@@ -68,121 +68,110 @@ class _FavoritesPageState extends State<FavoritesPage>
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Favoritos',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${contents.length} ${contents.length == 1 ? 'título salvo' : 'títulos salvos'}',
-                      style: const TextStyle(color: Colors.white60),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_loading && contents.isEmpty)
-              SliverLayoutBuilder(
-                builder: (context, constraints) {
-                  const spacing = 14.0;
-                  final available = constraints.crossAxisExtent - 40;
-                  final columns = ((available + spacing) / (130 + spacing))
-                      .floor()
-                      .clamp(1, 6);
-                  final width = (available - spacing * (columns - 1)) / columns;
-                  return SliverToBoxAdapter(
-                    child: SkeletonGrid(
-                      columns: columns,
-                      mainAxisExtent: width * 1.5 + 65,
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
-                    ),
-                  );
-                },
-              )
-            else if (_error != null)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_error!),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: _loadFavorites,
-                        child: const Text('Tentar novamente'),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else if (contents.isEmpty)
-              SliverFillRemaining(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const spacing = 14.0;
+            final available = constraints.maxWidth - 40;
+            final columns = ((available + spacing) / (130 + spacing))
+                .floor()
+                .clamp(1, 6);
+            final width = (available - spacing * (columns - 1)) / columns;
+            final mainAxisExtent = width * 1.5 + 65;
+            return CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  sliver: SliverToBoxAdapter(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          HugeIconsStroke.favourite,
-                          size: 40,
-                          color: Colors.white54,
-                        ),
-                        const SizedBox(height: 16),
                         const Text(
-                          'Sua lista está vazia',
+                          'Favoritos',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 28,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Explore filmes e séries e salve os que você gosta.',
-                          textAlign: TextAlign.center,
+                        const SizedBox(height: 4),
+                        Text(
+                          '${contents.length} ${contents.length == 1 ? 'título salvo' : 'títulos salvos'}',
+                          style: const TextStyle(color: Colors.white60),
                         ),
-                        if (widget.onExplore != null) ...[
-                          const SizedBox(height: 20),
-                          FilledButton(
-                            onPressed: widget.onExplore,
-                            child: const Text('Explorar títulos'),
-                          ),
-                        ],
                       ],
                     ),
                   ),
                 ),
-              )
-            else
-              SliverLayoutBuilder(
-                builder: (context, constraints) {
-                  const horizontalPadding = 20.0;
-                  const spacing = 14.0;
-                  final available =
-                      constraints.crossAxisExtent - horizontalPadding * 2;
-                  final columns = ((available + spacing) / (130 + spacing))
-                      .floor()
-                      .clamp(1, 6);
-                  final width = (available - spacing * (columns - 1)) / columns;
-                  return SliverPadding(
+                if (_loading && contents.isEmpty)
+                  SliverToBoxAdapter(
+                    child: SkeletonGrid(
+                      columns: columns,
+                      mainAxisExtent: mainAxisExtent,
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                    ),
+                  )
+                else if (_error != null)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_error!),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: _loadFavorites,
+                            child: const Text('Tentar novamente'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (contents.isEmpty)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              HugeIconsStroke.favourite,
+                              size: 40,
+                              color: Colors.white54,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Sua lista está vazia',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Explore filmes e séries e salve os que você gosta.',
+                              textAlign: TextAlign.center,
+                            ),
+                            if (widget.onExplore != null) ...[
+                              const SizedBox(height: 20),
+                              FilledButton(
+                                onPressed: widget.onExplore,
+                                child: const Text('Explorar títulos'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
                     sliver: SliverGrid.builder(
                       itemCount: contents.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: columns,
-                        mainAxisExtent: width * 1.5 + 7 + 40 + 18,
+                        mainAxisExtent: mainAxisExtent,
                         crossAxisSpacing: spacing,
                         mainAxisSpacing: 20,
                       ),
@@ -222,10 +211,10 @@ class _FavoritesPageState extends State<FavoritesPage>
                         );
                       },
                     ),
-                  );
-                },
-              ),
-          ],
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -76,10 +76,11 @@ class _ProfilePageState extends State<ProfilePage>
     ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
   }
 
-  Future<void> _editGenres() => showDialog<void>(
+  Future<void> _editPreferences() => showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const GenrePreferencesDialog(isEditing: true),
+    builder: (_) =>
+        const GenrePreferencesDialog(isEditing: true, onboarding: true),
   );
 
   bool _editingProfile = false;
@@ -219,9 +220,12 @@ class _ProfilePageState extends State<ProfilePage>
                   HugeIconsStroke.preferenceHorizontal,
                   color: Colors.lightBlueAccent,
                 ),
-                title: const Text('Gêneros favoritos'),
+                title: const Text('Preferências'),
+                subtitle: const Text(
+                  'Edite seus gêneros, filmes e séries preferidos',
+                ),
                 trailing: const Icon(HugeIconsStroke.arrowRight01),
-                onTap: _editGenres,
+                onTap: _editPreferences,
               ),
             ),
           ),
