@@ -7,6 +7,7 @@ environment:
   sdk: ^3.12.2
 
 dependencies:
+  crop_your_image: ^2.0.1
   dio: ^5.11.1
   flutter:
     sdk: flutter
@@ -15,6 +16,7 @@ dependencies:
   google_fonts: ^8.2.1
   hugeicons: ^1.0.0
   hugeicons_pro: ^0.0.3
+  image: ^4.13.1
   image_picker: ^1.2.4
   shared_preferences: ^2.5.6
 

@@ -6,10 +6,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/community_review_card.dart';
 import 'package:tv_score_front_flutter/widgets/edit_profile_sheet.dart';
+import 'package:tv_score_front_flutter/widgets/profile_photo_crop_page.dart';
 import 'package:tv_score_front_flutter/widgets/profile_photo_editor.dart';
 import 'package:tv_score_front_flutter/widgets/user_avatar.dart';
 
@@ -30,6 +32,36 @@ class Gallery extends ImagePickerPlatform {
 
   @override
   Future<LostDataResponse> getLostData() async => LostDataResponse.empty();
+}
+
+Future<void> waitForCrop(WidgetTester tester) async {
+  for (var i = 0; i < 150; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
+    await tester.pump(const Duration(milliseconds: 20));
+    final button = find.widgetWithText(FilledButton, 'Salvar foto');
+    if (button.evaluate().isNotEmpty &&
+        tester.widget<FilledButton>(button).onPressed != null) {
+      await tester.pump(const Duration(milliseconds: 400));
+      return;
+    }
+  }
+  fail('Crop did not become ready');
+}
+
+Future<void> finishCrop(WidgetTester tester) async {
+  for (var i = 0; i < 150; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
+    await tester.pump(const Duration(milliseconds: 20));
+    if (find.byType(ProfilePhotoCropPage).evaluate().isEmpty) {
+      await tester.pumpAndSettle();
+      return;
+    }
+  }
+  fail('Crop did not finish');
 }
 
 void main() {
@@ -166,7 +198,11 @@ void main() {
   Future<Gallery> gallery() async {
     final previous = ImagePickerPlatform.instance;
     final fake = Gallery()
-      ..file = XFile.fromData(png, name: 'photo.png', mimeType: 'image/png');
+      ..file = XFile.fromData(
+        img.encodePng(img.Image(width: 80, height: 120)),
+        name: 'photo.png',
+        mimeType: 'image/png',
+      );
     ImagePickerPlatform.instance = fake;
     addTearDown(() => ImagePickerPlatform.instance = previous);
     return fake;
@@ -192,7 +228,10 @@ void main() {
               onPendingChanged: (value) => pending = value,
               onUpload: (bytes, progress) async {
                 uploads++;
-                expect(bytes, png);
+                expect(ApiService.profilePhotoMimeType(bytes), 'image/jpeg');
+                final output = img.decodeJpg(bytes)!;
+                expect(output.width, output.height);
+                expect(output.width, lessThanOrEqualTo(80));
                 if (uploads == 1) throw const FormatException('Falha simulada');
                 progress(1, 2);
                 await release.future;
@@ -208,20 +247,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Escolher foto'));
-      await tester.pumpAndSettle();
-      expect(
-        tester.widget<UserAvatar>(find.byType(UserAvatar)).imageBytes,
-        png,
-      );
-      expect(pending, isTrue);
+      await waitForCrop(tester);
       expect(uploads, 0);
-      await tester.tap(find.text('Cancelar foto'));
+      await tester.tap(find.text('Cancelar'));
       await tester.pumpAndSettle();
       expect(pending, isFalse);
       await tester.tap(find.text('Escolher foto'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Confirmar foto'));
-      await tester.pumpAndSettle();
+      await waitForCrop(tester);
+      await tester.tap(find.text('Salvar foto'));
+      await finishCrop(tester);
       expect(find.text('Falha simulada'), findsOneWidget);
       expect(pending, isTrue);
       expect(photo.value, isNull);
@@ -265,59 +299,57 @@ void main() {
     },
   );
 
-  testWidgets(
-    'pending photo participates in editor discard without losing name',
-    (tester) async {
-      await gallery();
-      final photo = ValueNotifier<String?>(null);
-      addTearDown(photo.dispose);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () => showEditProfileSheet(
-                  context,
-                  name: 'Ana',
-                  onSave: (_) async {},
-                  photoUrl: photo,
-                  onUploadPhoto: (_, _) async {},
-                  onRemovePhoto: () async {},
-                ),
-                child: const Text('Abrir'),
+  testWidgets('cancelled crop preserves name and editor discard', (
+    tester,
+  ) async {
+    await gallery();
+    final photo = ValueNotifier<String?>(null);
+    addTearDown(photo.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showEditProfileSheet(
+                context,
+                name: 'Ana',
+                onSave: (_) async {},
+                photoUrl: photo,
+                onUploadPhoto: (_, _) async {},
+                onRemovePhoto: () async {},
               ),
+              child: const Text('Abrir'),
             ),
           ),
         ),
-      );
-      await tester.tap(find.text('Abrir'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField), 'Outro nome');
-      await tester.ensureVisible(find.text('Escolher foto'));
-      await tester.tap(find.text('Escolher foto'));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byTooltip('Fechar edição de perfil'));
-      await tester.tap(find.byTooltip('Fechar edição de perfil'));
-      await tester.pumpAndSettle();
-      expect(find.text('Descartar alterações?'), findsOneWidget);
-      await tester.tap(find.text('Continuar editando'));
-      await tester.pumpAndSettle();
-      expect(
-        tester
-            .widget<TextFormField>(find.byType(TextFormField))
-            .controller!
-            .text,
-        'Outro nome',
-      );
-      expect(find.text('Confirmar foto'), findsOneWidget);
-      await tester.tap(find.byTooltip('Fechar edição de perfil'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Descartar'));
-      await tester.pumpAndSettle();
-      expect(find.byType(ProfilePhotoEditor), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
+      ),
+    );
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'Outro nome');
+    await tester.ensureVisible(find.text('Escolher foto'));
+    await tester.tap(find.text('Escolher foto'));
+    await waitForCrop(tester);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('Fechar edição de perfil'));
+    await tester.tap(find.byTooltip('Fechar edição de perfil'));
+    await tester.pumpAndSettle();
+    expect(find.text('Descartar alterações?'), findsOneWidget);
+    await tester.tap(find.text('Continuar editando'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextFormField>(find.byType(TextFormField)).controller!.text,
+      'Outro nome',
+    );
+    expect(find.text('Escolher foto'), findsOneWidget);
+    await tester.tap(find.byTooltip('Fechar edição de perfil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Descartar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfilePhotoEditor), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('community DTO passes optional photo without user requests', (
     tester,

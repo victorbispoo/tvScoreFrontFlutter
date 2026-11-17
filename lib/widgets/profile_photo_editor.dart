@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../services/api_services.dart';
+import 'profile_photo_crop_page.dart';
 import 'user_avatar.dart';
 
 class ProfilePhotoEditor extends StatefulWidget {
@@ -61,12 +62,18 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
     }
     final bytes = await file.readAsBytes();
     ApiService.profilePhotoMimeType(bytes);
+    final prepared = await compute(prepareProfilePhoto, bytes);
     if (!mounted) return;
+    final cropped = await Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(builder: (_) => ProfilePhotoCropPage(bytes: prepared)),
+    );
+    if (!mounted || cropped == null) return;
     setState(() {
-      _selected = bytes;
+      _selected = cropped;
       _error = null;
     });
     widget.onPendingChanged(true);
+    await _uploadSelected();
   }
 
   Future<void> _pick() async {
@@ -115,14 +122,16 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
 
   Future<void> _upload() async {
     if (_busy || !widget.enabled || _selected == null) return;
-    await _run(() async {
-      await widget.onUpload(_selected!, (sent, total) {
-        if (mounted) {
-          setState(() => _progress = total > 0 ? sent / total : null);
-        }
-      });
-      if (mounted) _cancel();
+    await _run(_uploadSelected);
+  }
+
+  Future<void> _uploadSelected() async {
+    await widget.onUpload(_selected!, (sent, total) {
+      if (mounted) {
+        setState(() => _progress = total > 0 ? sent / total : null);
+      }
     });
+    if (mounted) _cancel();
   }
 
   Future<void> _remove() async {
@@ -160,7 +169,7 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
         UserAvatar(
           name: widget.name,
           imageUrl: url,
-          imageBytes: _selected,
+          imageBytes: _error == null ? _selected : null,
           size: 64,
         ),
         if (_selected == null)
