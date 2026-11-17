@@ -238,7 +238,7 @@ class _Request implements HttpClientRequest {
       await Future<void>.delayed(backend.responseDelay);
     }
     return _Response(
-      backend.respond(method, uri, utf8.decode(_bytes)),
+      backend.respond(method, uri, utf8.decode(_bytes, allowMalformed: true)),
       backend.responseStatus(method, uri),
     );
   }

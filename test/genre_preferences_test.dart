@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:tv_score_front_flutter/core/app_routes.dart';
@@ -20,6 +21,7 @@ import 'package:tv_score_front_flutter/widgets/genre_preferences.dart';
 import 'package:tv_score_front_flutter/widgets/preferred_content_picker.dart';
 
 import 'support/backend_http.dart';
+import 'support/gallery.dart';
 
 class PreferencesBackend extends BackendHttp {
   final genres = <Map<String, String>>[
@@ -113,6 +115,9 @@ void main() {
   late PreferencesBackend backend;
 
   setUp(() {
+    final previousGallery = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = TestGallery();
+    addTearDown(() => ImagePickerPlatform.instance = previousGallery);
     FlutterSecureStorage.setMockInitialValues({});
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();

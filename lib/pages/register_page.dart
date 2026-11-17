@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
@@ -6,6 +7,7 @@ import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/genre_preferences.dart';
+import '../widgets/profile_photo_editor.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -20,6 +22,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _photoUrl = ValueNotifier<String?>(null);
+  Uint8List? _photoBytes;
+  bool _photoBusy = false;
 
   static bool _isValidEmail(String value) {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
@@ -43,11 +48,12 @@ class _RegisterPageState extends State<RegisterPage> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _photoUrl.dispose();
     super.dispose();
   }
 
   Future<void> _register() async {
-    if (_busy) return;
+    if (_busy || _photoBusy) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -56,6 +62,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final photo = _photoBytes;
 
     var accountCreated = false;
 
@@ -71,6 +78,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       await api.loginApi(email, password);
 
+      if (photo != null && mounted) await _uploadPhoto(api, photo);
       if (!mounted) return;
       setState(() => _busy = false);
 
@@ -105,6 +113,43 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  Future<void> _uploadPhoto(ApiService api, Uint8List photo) async {
+    while (mounted) {
+      try {
+        await api.uploadProfilePhoto(photo);
+        return;
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _busy = false);
+        final retry = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => PopScope(
+            canPop: false,
+            child: AlertDialog(
+              title: const Text('Conta criada'),
+              content: const Text(
+                'Não foi possível enviar sua foto. Você pode tentar novamente ou adicioná-la depois pelo Perfil.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Continuar sem foto'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          ),
+        );
+        if (retry != true || !mounted) return;
+        setState(() => _busy = true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
@@ -135,7 +180,20 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const _RegistrationAvatar(),
+                        ProfilePhotoEditor(
+                          name: _nameController.text,
+                          photoUrl: _photoUrl,
+                          photoBytes: _photoBytes,
+                          enabled: !_busy,
+                          onBusy: (busy) => setState(() => _photoBusy = busy),
+                          onPendingChanged: (_) {},
+                          onUpload: (bytes, _) async {
+                            setState(() => _photoBytes = bytes);
+                          },
+                          onRemove: () async {
+                            setState(() => _photoBytes = null);
+                          },
+                        ),
                         const SizedBox(height: 24),
                         AuthTextField(
                           label: 'Nome',
@@ -188,7 +246,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           width: double.infinity,
                           height: 52,
                           child: FilledButton(
-                            onPressed: _busy ? null : _register,
+                            onPressed: _busy || _photoBusy ? null : _register,
                             child: _busy
                                 ? const SizedBox(
                                     width: 20,
@@ -223,61 +281,6 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
         ),
-      ),
-    ),
-  );
-}
-
-class _RegistrationAvatar extends StatelessWidget {
-  const _RegistrationAvatar();
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: 'Foto de perfil indispon\u00edvel no cadastro',
-    child: SizedBox.square(
-      dimension: 88,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppTheme.surfaceHighlight.withValues(alpha: .55),
-              border: Border.all(
-                color: AppTheme.primary.withValues(alpha: .22),
-              ),
-            ),
-            child: const Center(
-              child: Icon(
-                HugeIconsStroke.user,
-                size: 38,
-                color: Color(0xFFB6D0FF),
-              ),
-            ),
-          ),
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.surface,
-                border: Border.all(
-                  color: AppTheme.scaffoldBackground,
-                  width: 2,
-                ),
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(7),
-                child: Icon(
-                  HugeIconsStroke.camera01,
-                  size: 16,
-                  color: Colors.white38,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     ),
   );

@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/core/app_theme.dart';
 import 'package:tv_score_front_flutter/pages/login_page.dart';
 import 'package:tv_score_front_flutter/pages/register_page.dart';
 import 'package:tv_score_front_flutter/widgets/auth_text_field.dart';
 
+import 'support/gallery.dart';
+
 void main() {
+  setUp(() {
+    final previous = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = TestGallery();
+    addTearDown(() => ImagePickerPlatform.instance = previous);
+  });
   for (final login in [true, false]) {
     testWidgets(
       '${login ? 'login' : 'cadastro'} mantém digitação, foco e senha',

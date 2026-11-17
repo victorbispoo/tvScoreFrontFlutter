@@ -18,6 +18,7 @@ class ProfilePhotoEditor extends StatefulWidget {
     required this.onBusy,
     required this.onPendingChanged,
     this.enabled = true,
+    this.photoBytes,
   });
 
   final String name;
@@ -27,6 +28,7 @@ class ProfilePhotoEditor extends StatefulWidget {
   final ValueChanged<bool> onBusy;
   final ValueChanged<bool> onPendingChanged;
   final bool enabled;
+  final Uint8List? photoBytes;
 
   @override
   State<ProfilePhotoEditor> createState() => _ProfilePhotoEditorState();
@@ -167,7 +169,9 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
   Widget build(BuildContext context) => ValueListenableBuilder<String?>(
     valueListenable: widget.photoUrl,
     builder: (context, url, _) {
-      final bytes = _error == null ? _selected : null;
+      final bytes = _error == null
+          ? _selected ?? widget.photoBytes
+          : widget.photoBytes;
       final hasPhoto = url?.trim().isNotEmpty == true || bytes != null;
       return Column(
         children: [
@@ -222,7 +226,7 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
               ),
             ],
           ),
-          if (_selected == null && url?.trim().isNotEmpty == true)
+          if (_selected == null && hasPhoto)
             TextButton(
               onPressed: _busy || !widget.enabled ? null : _remove,
               style: TextButton.styleFrom(
