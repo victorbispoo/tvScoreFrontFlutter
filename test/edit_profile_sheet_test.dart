@@ -2,13 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:tv_score_front_flutter/widgets/edit_profile_sheet.dart';
+
+import 'support/gallery.dart';
 
 Future<void> openEditor(
   WidgetTester tester,
   Future<void> Function(String) onSave, {
   Future<void> Function(String, String)? onChangePassword,
+  bool photoEditor = false,
 }) async {
+  final photo = ValueNotifier<String?>(null);
+  addTearDown(photo.dispose);
   await tester.pumpWidget(
     MaterialApp(
       theme: ThemeData.dark(),
@@ -20,6 +26,9 @@ Future<void> openEditor(
               name: 'Victor',
               onSave: onSave,
               onChangePassword: onChangePassword,
+              photoUrl: photoEditor ? photo : null,
+              onUploadPhoto: (_, _) async {},
+              onRemovePhoto: () async {},
             ),
             child: const Text('Abrir'),
           ),
@@ -32,6 +41,11 @@ Future<void> openEditor(
 }
 
 void main() {
+  setUp(() {
+    final previous = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = TestGallery();
+    addTearDown(() => ImagePickerPlatform.instance = previous);
+  });
   testWidgets('valida nome, bloqueia envio repetido e fecha após salvar', (
     tester,
   ) async {
@@ -174,7 +188,7 @@ void main() {
     var requests = 0;
     await openEditor(tester, (_) async {
       requests++;
-    });
+    }, photoEditor: true);
     expect(find.byType(TextFormField), findsOneWidget);
     expect(requests, 0);
     await tester.tap(find.byType(TextFormField));
@@ -182,7 +196,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'Novo');
     await tester.scrollUntilVisible(
-      find.text('Salvar alterações'),
+      find.widgetWithText(FilledButton, 'Salvar alterações'),
       100,
       scrollable: find
           .descendant(
@@ -192,8 +206,16 @@ void main() {
           .first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.widgetWithText(FilledButton, 'Salvar alterações'),
+    );
+    await tester.pumpAndSettle();
     expect(
-      tester.getBottomRight(find.text('Salvar alterações')).dy,
+      tester
+          .getBottomRight(
+            find.widgetWithText(FilledButton, 'Salvar alterações'),
+          )
+          .dy,
       lessThanOrEqualTo(440),
     );
     expect(tester.takeException(), isNull);

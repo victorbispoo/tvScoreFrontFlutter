@@ -286,7 +286,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                   child: SingleChildScrollView(
                                     padding: const EdgeInsets.fromLTRB(
                                       20,
-                                      0,
+                                      8,
                                       20,
                                       24,
                                     ),
@@ -342,7 +342,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                         )
                                                       : UserAvatar(
                                                           name: _name.text,
-                                                          size: 64,
+                                                          size: 120,
                                                         ),
                                                 ),
                                                 const SizedBox(height: 24),
@@ -453,24 +453,23 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                       : _openPassword,
                                                   borderRadius:
                                                       BorderRadius.circular(14),
-                                                  child: Container(
+                                                  child: Ink(
                                                     padding:
                                                         const EdgeInsets.all(
                                                           16,
                                                         ),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.white
-                                                          .withValues(
-                                                            alpha: .03,
-                                                          ),
+                                                      color: const Color(
+                                                        0xFF1A304F,
+                                                      ),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                             14,
                                                           ),
                                                       border: Border.all(
-                                                        color: Colors.white
+                                                        color: AppTheme.primary
                                                             .withValues(
-                                                              alpha: .07,
+                                                              alpha: .18,
                                                             ),
                                                       ),
                                                     ),
@@ -479,7 +478,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                         Icon(
                                                           HugeIconsStroke
                                                               .lockPassword,
-                                                          color: Colors.white54,
+                                                          color:
+                                                              AppTheme.primary,
                                                           size: 22,
                                                         ),
                                                         SizedBox(width: 12),
@@ -493,22 +493,32 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                                 'Alterar senha',
                                                                 style: TextStyle(
                                                                   color: Colors
-                                                                      .white60,
+                                                                      .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
                                                                 ),
                                                               ),
                                                               SizedBox(
                                                                 height: 4,
                                                               ),
                                                               Text(
-                                                                'Atualizar sua senha',
+                                                                'Atualize sua senha com segurança',
                                                                 style: TextStyle(
                                                                   color: Colors
-                                                                      .white54,
+                                                                      .white70,
                                                                   fontSize: 12,
                                                                 ),
                                                               ),
                                                             ],
                                                           ),
+                                                        ),
+                                                        SizedBox(width: 12),
+                                                        Icon(
+                                                          HugeIconsStroke
+                                                              .arrowRight01,
+                                                          color: Colors.white70,
+                                                          size: 20,
                                                         ),
                                                       ],
                                                     ),

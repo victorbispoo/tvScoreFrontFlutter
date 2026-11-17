@@ -21,11 +21,13 @@ final png = base64Decode(
 
 class Gallery extends ImagePickerPlatform {
   XFile? file;
+  int picks = 0;
   @override
   Future<XFile?> getImageFromSource({
     required ImageSource source,
     ImagePickerOptions options = const ImagePickerOptions(),
   }) async {
+    picks++;
     expect(source, ImageSource.gallery);
     return file;
   }
@@ -246,13 +248,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Escolher foto'));
+      await tester.tap(find.byTooltip('Escolher foto'));
       await waitForCrop(tester);
       expect(uploads, 0);
       await tester.tap(find.text('Cancelar'));
       await tester.pumpAndSettle();
       expect(pending, isFalse);
-      await tester.tap(find.text('Escolher foto'));
+      await tester.tap(find.byTooltip('Escolher foto'));
       await waitForCrop(tester);
       await tester.tap(find.text('Salvar foto'));
       await finishCrop(tester);
@@ -327,8 +329,8 @@ void main() {
     await tester.tap(find.text('Abrir'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'Outro nome');
-    await tester.ensureVisible(find.text('Escolher foto'));
-    await tester.tap(find.text('Escolher foto'));
+    await tester.ensureVisible(find.byTooltip('Escolher foto'));
+    await tester.tap(find.byTooltip('Escolher foto'));
     await waitForCrop(tester);
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
@@ -342,7 +344,7 @@ void main() {
       tester.widget<TextFormField>(find.byType(TextFormField)).controller!.text,
       'Outro nome',
     );
-    expect(find.text('Escolher foto'), findsOneWidget);
+    expect(find.byTooltip('Escolher foto'), findsOneWidget);
     await tester.tap(find.byTooltip('Fechar edição de perfil'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Descartar'));
@@ -350,6 +352,66 @@ void main() {
     expect(find.byType(ProfilePhotoEditor), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  for (final hasPhoto in [false, true]) {
+    testWidgets('avatar viewer and camera are separate, photo=$hasPhoto', (
+      tester,
+    ) async {
+      final fake = await gallery();
+      fake.file = null;
+      final photo = ValueNotifier<String?>(
+        hasPhoto ? 'https://example.com/current.png' : null,
+      );
+      addTearDown(photo.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ProfilePhotoEditor(
+              name: 'Ana',
+              photoUrl: photo,
+              onBusy: (_) {},
+              onPendingChanged: (_) {},
+              onUpload: (_, _) async => fail('Unexpected upload'),
+              onRemove: () async {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byType(UserAvatar)), const Size(120, 120));
+      expect(find.text('Escolher foto'), findsNothing);
+      expect(
+        find.text('Remover foto'),
+        hasPhoto ? findsOneWidget : findsNothing,
+      );
+      final camera = find.byTooltip('Escolher foto');
+      expect(tester.getSize(camera).shortestSide, greaterThanOrEqualTo(48));
+      for (final closeWithBack in [false, true]) {
+        await tester.tap(find.byType(UserAvatar));
+        await tester.pumpAndSettle();
+        expect(fake.picks, 0);
+        expect(
+          find.byTooltip('Fechar foto'),
+          hasPhoto ? findsOneWidget : findsNothing,
+        );
+        if (hasPhoto) {
+          if (closeWithBack) {
+            await tester.binding.handlePopRoute();
+          } else {
+            await tester.tap(find.byTooltip('Fechar foto'));
+          }
+          await tester.pumpAndSettle();
+        }
+      }
+      await tester.tap(camera);
+      await tester.pumpAndSettle();
+      expect(fake.picks, 1);
+      expect(find.byTooltip('Fechar foto'), findsNothing);
+      expect(find.byType(ProfilePhotoCropPage), findsNothing);
+      expect(photo.value, hasPhoto ? 'https://example.com/current.png' : null);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('community DTO passes optional photo without user requests', (
     tester,
@@ -366,6 +428,18 @@ void main() {
         ),
       );
       expect(tester.widget<UserAvatar>(find.byType(UserAvatar)).imageUrl, url);
+      await tester.tap(find.byType(UserAvatar));
+      await tester.pumpAndSettle();
+      expect(
+        find.byTooltip('Fechar foto'),
+        url == null ? findsNothing : findsOneWidget,
+      );
+      if (url != null) {
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(find.byType(CommunityReviewCard), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
     }
   });
 }

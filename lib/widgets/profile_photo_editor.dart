@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import 'profile_photo_crop_page.dart';
 import 'user_avatar.dart';
@@ -164,57 +166,100 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<String?>(
     valueListenable: widget.photoUrl,
-    builder: (context, url, _) => Column(
-      children: [
-        UserAvatar(
-          name: widget.name,
-          imageUrl: url,
-          imageBytes: _error == null ? _selected : null,
-          size: 64,
-        ),
-        if (_selected == null)
-          Wrap(
-            alignment: WrapAlignment.center,
+    builder: (context, url, _) {
+      final bytes = _error == null ? _selected : null;
+      final hasPhoto = url?.trim().isNotEmpty == true || bytes != null;
+      return Column(
+        children: [
+          Stack(
             children: [
-              TextButton(
-                onPressed: _busy || !widget.enabled ? null : _pick,
-                child: const Text('Escolher foto'),
-              ),
-              if (url != null)
-                TextButton(
-                  onPressed: _busy || !widget.enabled ? null : _remove,
-                  child: const Text('Remover foto'),
+              Semantics(
+                button: hasPhoto,
+                label: hasPhoto
+                    ? 'Visualizar foto de perfil'
+                    : 'Avatar de ${widget.name}',
+                child: Material(
+                  color: Colors.transparent,
+                  shape: const CircleBorder(),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: !_busy && widget.enabled && hasPhoto
+                        ? () =>
+                              showProfilePhoto(context, url: url, bytes: bytes)
+                        : null,
+                    child: Ink(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: UserAvatar(
+                        enableViewer: false,
+                        name: widget.name,
+                        imageUrl: url,
+                        imageBytes: bytes,
+                        size: 120,
+                      ),
+                    ),
+                  ),
                 ),
-            ],
-          )
-        else
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: [
-              TextButton(
-                onPressed: _busy || !widget.enabled ? null : _upload,
-                child: const Text('Confirmar foto'),
               ),
-              TextButton(
-                onPressed: _busy || !widget.enabled ? null : _cancel,
-                child: const Text('Cancelar foto'),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: IconButton.filled(
+                  tooltip: 'Escolher foto',
+                  onPressed: _busy || !widget.enabled ? null : _pick,
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: AppTheme.surface, width: 3),
+                  ),
+                  icon: const Icon(HugeIconsStroke.camera01, size: 22),
+                ),
               ),
             ],
           ),
-        if (_busy && !_confirmingRemoval)
-          SizedBox(
-            width: 120,
-            child: LinearProgressIndicator(value: _progress),
-          ),
-        if (_error != null)
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+          if (_selected == null && url?.trim().isNotEmpty == true)
+            TextButton(
+              onPressed: _busy || !widget.enabled ? null : _remove,
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white70,
+                minimumSize: const Size(48, 48),
+              ),
+              child: const Text('Remover foto'),
+            )
+          else if (_selected != null)
+            Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: _busy || !widget.enabled ? null : _upload,
+                  child: const Text('Confirmar foto'),
+                ),
+                TextButton(
+                  onPressed: _busy || !widget.enabled ? null : _cancel,
+                  child: const Text('Cancelar foto'),
+                ),
+              ],
             ),
-          ),
-      ],
-    ),
+          if (_busy && !_confirmingRemoval)
+            SizedBox(
+              width: 120,
+              child: LinearProgressIndicator(value: _progress),
+            ),
+          if (_error != null)
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      );
+    },
   );
 }
