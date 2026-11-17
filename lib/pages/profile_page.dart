@@ -78,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage>
   Future<void> _editPreferences() => showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const GenrePreferencesDialog(isEditing: true),
+    builder: (_) => const ContentPreferencesDialog(isEditing: true),
   );
 
   bool _editingProfile = false;
@@ -245,7 +245,7 @@ class _ProfilePageState extends State<ProfilePage>
                   HugeIconsStroke.preferenceHorizontal,
                   color: Colors.lightBlueAccent,
                 ),
-                title: const Text('Preferências'),
+                title: const Text('Preferências de conteúdo'),
                 subtitle: const Text(
                   'Edite seus gêneros, filmes e séries preferidos',
                 ),

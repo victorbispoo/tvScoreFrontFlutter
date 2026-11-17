@@ -32,6 +32,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with AutomaticKeepAliveClientMixin {
   late Future<List<HomeSection>> _sections;
+  late Future<List<Map<String, dynamic>>> _availableGenres;
   late Future<List<Map<String, String>>> _trending;
   late Future<List<Map<String, String>>> _topRated;
   String _topRatedType = 'ALL';
@@ -39,9 +40,23 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+    _availableGenres = ApiService().getAvailableGenres();
     _sections = _loadSections();
     _trending = ApiService().getHighlights();
     _topRated = ApiService().getTopRatedContents(_topRatedType);
+    ApiService.contentPreferencesRevision.addListener(_reloadPreferences);
+  }
+
+  void _reloadPreferences() {
+    setState(() {
+      _sections = _loadSections();
+    });
+  }
+
+  @override
+  void dispose() {
+    ApiService.contentPreferencesRevision.removeListener(_reloadPreferences);
+    super.dispose();
   }
 
   @override
@@ -51,7 +66,7 @@ class _HomePageState extends State<HomePage>
     final api = ApiService();
 
     final (available, preferred) = await (
-      api.getAvailableGenres(),
+      _availableGenres,
       ApiService.token == null
           ? Future.value(<Map<String, dynamic>>[])
           : api.getPreferredGenres(),
@@ -137,6 +152,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _refresh() async {
+    _availableGenres = ApiService().getAvailableGenres();
     final sections = _loadSections();
     final trending = ApiService().getHighlights();
     final topRated = ApiService().getTopRatedContents(_topRatedType);
@@ -160,48 +176,52 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  Widget _genreSections({
-    required bool personalized,
-  }) => FutureBuilder<List<HomeSection>>(
-    future: _sections,
-    builder: (context, snapshot) {
-      if (snapshot.hasError) {
-        return personalized
-            ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TextButton(
-                  onPressed: () => setState(() => _sections = _loadSections()),
-                  child: const Text(
-                    'Não foi possível carregar os gêneros. Tentar novamente',
+  Widget _genreSections({required bool personalized}) => _KeepAliveSection(
+    child: FutureBuilder<List<HomeSection>>(
+      future: _sections,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return personalized
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _availableGenres = ApiService().getAvailableGenres();
+                      _sections = _loadSections();
+                    }),
+                    child: const Text(
+                      'Não foi possível carregar os gêneros. Tentar novamente',
+                    ),
                   ),
+                )
+              : const SizedBox.shrink();
+        }
+        if (!snapshot.hasData) {
+          return personalized
+              ? const SkeletonCarousel(featured: true)
+              : const SizedBox.shrink();
+        }
+        return Column(
+          children: [
+            for (final section in snapshot.data!)
+              if ((section.type == HomeSectionType.personalized) ==
+                  personalized)
+                ContentCarousel(
+                  onChanged: () => setState(() {}),
+                  heroSection: section.heroSection,
+                  icon: Icon(
+                    section.icon,
+                    size: personalized ? 18 : 16,
+                    color: AppTheme.primary,
+                  ),
+                  title: section.title,
+                  contents: section.contents,
+                  featured: personalized,
                 ),
-              )
-            : const SizedBox.shrink();
-      }
-      if (!snapshot.hasData) {
-        return personalized
-            ? const SkeletonCarousel(featured: true)
-            : const SizedBox.shrink();
-      }
-      return Column(
-        children: [
-          for (final section in snapshot.data!)
-            if ((section.type == HomeSectionType.personalized) == personalized)
-              ContentCarousel(
-                onChanged: () => setState(() {}),
-                heroSection: section.heroSection,
-                icon: Icon(
-                  section.icon,
-                  size: personalized ? 18 : 16,
-                  color: AppTheme.primary,
-                ),
-                title: section.title,
-                contents: section.contents,
-                featured: personalized,
-              ),
-        ],
-      );
-    },
+          ],
+        );
+      },
+    ),
   );
 
   @override
@@ -238,44 +258,70 @@ class _HomePageState extends State<HomePage>
           ),
           const SizedBox(height: 22),
           _genreSections(personalized: true),
-          FutureBuilder<List<Map<String, String>>>(
-            future: _trending,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return TextButton(
-                  onPressed: () =>
-                      setState(() => _trending = ApiService().getHighlights()),
-                  child: const Text(
-                    'Não foi possível carregar Em alta. Tentar novamente',
-                  ),
+          _KeepAliveSection(
+            child: FutureBuilder<List<Map<String, String>>>(
+              future: _trending,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return TextButton(
+                    onPressed: () => setState(
+                      () => _trending = ApiService().getHighlights(),
+                    ),
+                    child: const Text(
+                      'Não foi possível carregar Em alta. Tentar novamente',
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const SkeletonCarousel(showFilters: true);
+                }
+                return TrendingCarousel(
+                  contents: snapshot.data!,
+                  onChanged: () => setState(() {}),
+                  heroSection: 'trending',
                 );
-              }
-              if (!snapshot.hasData) {
-                return const SkeletonCarousel(showFilters: true);
-              }
-              return TrendingCarousel(
-                contents: snapshot.data!,
-                onChanged: () => setState(() {}),
-                heroSection: 'trending',
-              );
-            },
+              },
+            ),
           ),
-          TopRatedCarousel(
-            heroSection: 'top-rated',
-            selectedType: _topRatedType,
-            onTypeSelected: (type) => setState(() {
-              _topRatedType = type;
-              _topRated = ApiService().getTopRatedContents(type);
-            }),
-            onRetry: () => setState(() {
-              _topRated = ApiService().getTopRatedContents(_topRatedType);
-            }),
-            contents: _topRated,
-            onChanged: () => setState(() {}),
+          _KeepAliveSection(
+            child: TopRatedCarousel(
+              heroSection: 'top-rated',
+              selectedType: _topRatedType,
+              onTypeSelected: (type) => setState(() {
+                _topRatedType = type;
+                _topRated = ApiService().getTopRatedContents(type);
+              }),
+              onRetry: () => setState(() {
+                _topRated = ApiService().getTopRatedContents(_topRatedType);
+              }),
+              contents: _topRated,
+              onChanged: () => setState(() {}),
+            ),
           ),
           _genreSections(personalized: false),
         ],
       ),
     );
+  }
+}
+
+// Keep completed futures and carousel filters when ListView recycles sections.
+class _KeepAliveSection extends StatefulWidget {
+  const _KeepAliveSection({required this.child});
+  final Widget child;
+
+  @override
+  State<_KeepAliveSection> createState() => _KeepAliveSectionState();
+}
+
+class _KeepAliveSectionState extends State<_KeepAliveSection>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

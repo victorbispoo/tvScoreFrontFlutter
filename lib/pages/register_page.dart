@@ -72,11 +72,12 @@ class _RegisterPageState extends State<RegisterPage> {
       await api.loginApi(email, password);
 
       if (!mounted) return;
+      setState(() => _busy = false);
 
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const GenrePreferencesDialog(),
+        builder: (_) => const ContentPreferencesDialog(),
       );
 
       if (!mounted) return;

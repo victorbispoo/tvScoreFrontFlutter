@@ -1,12 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:tv_score_front_flutter/core/app_routes.dart';
+import 'package:tv_score_front_flutter/core/app_shell.dart';
+import 'package:tv_score_front_flutter/pages/favorites_page.dart';
+import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/pages/profile_page.dart';
+import 'package:tv_score_front_flutter/pages/register_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
+import 'package:tv_score_front_flutter/widgets/content_card.dart';
+import 'package:tv_score_front_flutter/widgets/floating_navigation_bar.dart';
 import 'package:tv_score_front_flutter/widgets/genre_preferences.dart';
+import 'package:tv_score_front_flutter/widgets/preferred_content_picker.dart';
+
 import 'support/backend_http.dart';
 
 class PreferencesBackend extends BackendHttp {
@@ -16,16 +28,73 @@ class PreferencesBackend extends BackendHttp {
     {'codigo': 'drama', 'nome': 'Drama'},
   ];
   List<String> selected = ['comedia'];
+  List<Map<String, dynamic>> selectedContents = [];
+  int genreStatus = 200;
+  int contentStatus = 200;
+  int preferredStatus = 200;
+  String secondTitle = 'Escolha 1';
+
+  @override
+  int responseStatus(String method, Uri uri) {
+    if (method == 'GET' && uri.path.endsWith('/conteudos-preferidos')) {
+      return preferredStatus;
+    }
+    if (method == 'PUT' && uri.path.endsWith('/generos')) return genreStatus;
+    if (method == 'PUT' && uri.path.endsWith('/conteudos-preferidos')) {
+      return contentStatus;
+    }
+    return super.responseStatus(method, uri);
+  }
 
   @override
   Object? respond(String method, Uri uri, String body) {
+    if (uri.path.endsWith('/auth/cadastrar') ||
+        uri.path.endsWith('/auth/login')) {
+      requests.add('$method ${uri.path}');
+      return {
+        'token': 'test-token',
+        'nome': 'Ana',
+        'email': 'ana@teste.com',
+        'fotoUrl': null,
+      };
+    }
+    if (uri.path.endsWith('/conteudos-preferidos/opcoes')) {
+      requests.add('$method /usuarios/eu/conteudos-preferidos/opcoes');
+      return {
+        'page': 1,
+        'total_pages': 1,
+        'results': [
+          for (var i = 0; i < 6; i++)
+            {
+              'id': i == 1 ? 550 : 550 + i,
+              'tipoConteudo': i == 1 ? 'TV' : 'MOVIE',
+              'title': i == 1 ? secondTitle : 'Escolha $i',
+              'poster_path': '',
+            },
+        ],
+      };
+    }
+    if (uri.path.endsWith('/conteudos-preferidos')) {
+      requests.add('$method /usuarios/eu/conteudos-preferidos');
+      if (method == 'PUT' && contentStatus == 200) {
+        selectedContents = List<Map<String, dynamic>>.from(
+          (jsonDecode(body) as Map)['conteudos'] as List,
+        );
+      }
+      return {
+        'conteudos': [
+          for (final item in selectedContents)
+            {...item, 'titulo': 'Anterior', 'posterPath': ''},
+        ],
+      };
+    }
     if (uri.path == '/api/conteudos/generos') {
       requests.add('$method /conteudos/generos');
       return genres;
     }
     if (uri.path == '/api/usuarios/eu/generos') {
       requests.add('$method /usuarios/eu/generos');
-      if (method == 'PUT') {
+      if (method == 'PUT' && genreStatus == 200) {
         selected = List<String>.from(
           (jsonDecode(body) as Map)['generos'] as List,
         );
@@ -44,6 +113,9 @@ void main() {
   late PreferencesBackend backend;
 
   setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
     final previous = HttpOverrides.current;
     backend = PreferencesBackend();
     HttpOverrides.global = backend;
@@ -53,6 +125,460 @@ void main() {
       ApiService.token = null;
     });
   });
+
+  Future<void> openFlow(WidgetTester tester, {bool editing = false}) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => ContentPreferencesDialog(isEditing: editing),
+              ),
+              child: const Text('Abrir'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> choose(WidgetTester tester, int index) async {
+    final item = find.descendant(
+      of: find.byType(PreferredContentPicker),
+      matching: find.text('Escolha $index'),
+    );
+    final card = find
+        .ancestor(of: item, matching: find.byType(AnimatedContainer))
+        .first;
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('cantos e margem interna do card selecionam e desmarcam', (
+    tester,
+  ) async {
+    await openFlow(tester);
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    final card = find
+        .ancestor(
+          of: find.text('Escolha 0'),
+          matching: find.byType(AnimatedContainer),
+        )
+        .first;
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
+    await tester.tapAt(tester.getRect(card).topLeft + const Offset(2, 2));
+    await tester.pumpAndSettle();
+    expect(find.text('1 de 5 selecionados'), findsOneWidget);
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
+    await tester.tapAt(tester.getRect(card).topRight + const Offset(-2, 2));
+    await tester.pumpAndSettle();
+    expect(find.text('0 de 5 selecionados'), findsOneWidget);
+    expect(backend.requests.where((item) => item.startsWith('PUT')), isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'cards da segunda etapa alinham títulos e animam seleção sem mudar altura',
+    (tester) async {
+      backend.secondTitle = 'Um título bastante comprido que ocupa duas linhas';
+      await openFlow(tester);
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      final picker = find.byType(PreferredContentPicker);
+      final cards = find.descendant(
+        of: picker,
+        matching: find.byType(ContentCard),
+      );
+      expect(cards, findsNWidgets(6));
+      final first = tester.getRect(cards.at(0));
+      final second = tester.getRect(cards.at(1));
+      expect(second.top, first.top);
+      expect(second.height, first.height);
+      final firstCard = find
+          .ancestor(
+            of: find.text('Escolha 0'),
+            matching: find.byType(AnimatedContainer),
+          )
+          .first;
+      await tester.ensureVisible(firstCard);
+      await tester.pumpAndSettle();
+      final height = tester.getSize(cards.first).height;
+      await tester.tap(firstCard);
+      await tester.pump();
+      final containers = find.descendant(
+        of: picker,
+        matching: find.byType(AnimatedContainer),
+      );
+      expect(
+        tester.widget<AnimatedContainer>(containers.first).duration,
+        const Duration(milliseconds: 180),
+      );
+      final checks = find.descendant(
+        of: picker,
+        matching: find.byType(AnimatedOpacity),
+      );
+      expect(tester.widget<AnimatedOpacity>(checks.first).opacity, 1);
+      await tester.pump(const Duration(milliseconds: 90));
+      expect(tester.getSize(cards.first).height, height);
+      await tester.pumpAndSettle();
+      expect(find.text('1 de 5 selecionados'), findsOneWidget);
+      expect(backend.requests.where((item) => item.startsWith('PUT')), isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('duas etapas cabem em tela estreita com teclado aberto', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    await openFlow(tester);
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(TextField));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextField));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getBottomRight(find.widgetWithText(FilledButton, 'Concluir')).dy,
+      lessThanOrEqualTo(440),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'falha ao carregar seleção existente bloqueia conclusão e permite tentar novamente',
+    (tester) async {
+      backend.preferredStatus = 503;
+      await openFlow(tester, editing: true);
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
+      );
+      expect(
+        find.text('Não foi possível carregar as preferências.'),
+        findsOneWidget,
+      );
+      backend.preferredStatus = 200;
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+      expect(find.text('1 de 5 selecionados'), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNotNull,
+      );
+      expect(backend.requests.where((item) => item.startsWith('PUT')), isEmpty);
+    },
+  );
+
+  testWidgets(
+    'fechar após gravação parcial informa o que foi salvo e não executa rollback',
+    (tester) async {
+      await openFlow(tester, editing: true);
+      await tester.tap(find.text('Drama'));
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      backend.contentStatus = 503;
+      await tester.tap(find.text('Concluir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Gravação incompleta'), findsOneWidget);
+      await tester.tap(find.text('Fechar'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ContentPreferencesDialog), findsNothing);
+      expect(backend.selected, contains('drama'));
+      expect(
+        backend.requests.where((item) => item.startsWith('PUT')),
+        hasLength(2),
+      );
+    },
+  );
+
+  testWidgets(
+    'avançar, voltar, pesquisar e cancelar mantém escolhas somente locais',
+    (tester) async {
+      await openFlow(tester);
+      await tester.tap(find.text('Drama'));
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      await choose(tester, 0);
+      await choose(tester, 1);
+      expect(find.text('2 de 5 selecionados'), findsOneWidget);
+      await tester.ensureVisible(find.text('Séries'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Séries'));
+      await tester.pumpAndSettle();
+      expect(find.text('2 de 5 selecionados'), findsOneWidget);
+      await tester.ensureVisible(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Avatar');
+      await tester.pump(const Duration(milliseconds: 450));
+      await tester.pumpAndSettle();
+      expect(find.text('2 de 5 selecionados'), findsOneWidget);
+      await tester.tap(find.byTooltip('Voltar aos gêneros'));
+      await tester.pumpAndSettle();
+      expect(find.text('1 de 5 selecionados'), findsOneWidget);
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      expect(find.text('2 de 5 selecionados'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Avatar',
+      );
+      await tester.tap(find.text('Escolher depois'));
+      await tester.pumpAndSettle();
+      expect(backend.selected, ['comedia']);
+      expect(backend.selectedContents, isEmpty);
+      expect(backend.requests.where((item) => item.startsWith('PUT')), isEmpty);
+    },
+  );
+
+  testWidgets(
+    'limita cinco conteúdos, preserva ID com tipos diferentes e evita envio duplicado',
+    (tester) async {
+      await openFlow(tester);
+      await tester.tap(find.text('Drama'));
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 6; i++) {
+        await choose(tester, i);
+      }
+      expect(find.text('5 de 5 selecionados'), findsOneWidget);
+      expect(
+        backend.requests.where((item) => item.endsWith('/opcoes')),
+        hasLength(1),
+      );
+      backend.responseDelay = const Duration(seconds: 1);
+      backend.delayedPaths.add('/usuarios/eu/conteudos-preferidos');
+      await tester.tap(find.text('Concluir'));
+      await tester.tap(find.text('Concluir'));
+      await tester.pump();
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(backend.selected, ['drama']);
+      expect(backend.selectedContents, hasLength(5));
+      expect(
+        backend.selectedContents,
+        containsAll([
+          {'id': 550, 'tipoConteudo': 'MOVIE'},
+          {'id': 550, 'tipoConteudo': 'TV'},
+        ]),
+      );
+      expect(backend.requests.where((item) => item.startsWith('PUT')), [
+        'PUT /usuarios/eu/generos',
+        'PUT /usuarios/eu/conteudos-preferidos',
+      ]);
+    },
+  );
+
+  for (final failure in ['genres', 'contents']) {
+    testWidgets(
+      'falha em $failure não informa sucesso e permite concluir novamente',
+      (tester) async {
+        await openFlow(tester);
+        await tester.tap(find.text('Drama'));
+        await tester.tap(find.text('Continuar'));
+        await tester.pumpAndSettle();
+        await choose(tester, 0);
+        final revision = ApiService.contentPreferencesRevision.value;
+        if (failure == 'genres') {
+          backend.genreStatus = 503;
+        } else {
+          backend.contentStatus = 503;
+        }
+        await tester.tap(find.text('Concluir'));
+        await tester.pumpAndSettle();
+        expect(find.byType(ContentPreferencesDialog), findsOneWidget);
+        expect(ApiService.contentPreferencesRevision.value, revision);
+        if (failure == 'genres') {
+          expect(
+            backend.requests.where(
+              (item) => item == 'PUT /usuarios/eu/conteudos-preferidos',
+            ),
+            isEmpty,
+          );
+          expect(
+            find.textContaining('Não foi possível confirmar os gêneros.'),
+            findsOneWidget,
+          );
+        } else {
+          expect(
+            find.textContaining('Os gêneros foram salvos.'),
+            findsOneWidget,
+          );
+          expect(backend.selected, ['drama']);
+          expect(backend.selectedContents, isEmpty);
+        }
+        backend.genreStatus = 200;
+        backend.contentStatus = 200;
+        await tester.tap(find.text('Concluir'));
+        await tester.pumpAndSettle();
+        expect(find.byType(ContentPreferencesDialog), findsNothing);
+        expect(ApiService.contentPreferencesRevision.value, revision + 1);
+        if (failure == 'contents') {
+          expect(
+            backend.requests.where(
+              (item) => item == 'PUT /usuarios/eu/generos',
+            ),
+            hasLength(1),
+          );
+        }
+      },
+    );
+  }
+
+  testWidgets(
+    'edição carrega conteúdos existentes e cancelamento da etapa dois não grava',
+    (tester) async {
+      backend.selectedContents = [
+        {'id': 550, 'tipoConteudo': 'TV'},
+      ];
+      await openFlow(tester, editing: true);
+      expect(find.text('1 de 5 selecionados'), findsOneWidget);
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Anterior (Série)'), findsOneWidget);
+      expect(find.text('1 de 5 selecionados'), findsOneWidget);
+      await choose(tester, 0);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(backend.selectedContents, [
+        {'id': 550, 'tipoConteudo': 'TV'},
+      ]);
+      expect(backend.requests.where((item) => item.startsWith('PUT')), isEmpty);
+    },
+  );
+
+  for (final skip in [false, true]) {
+    testWidgets(
+      'cadastro apresenta duas etapas ou permite pular todo o fluxo, skip=$skip',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            onGenerateRoute: AppRoutes.generate,
+            theme: ThemeData.dark(),
+            home: const RegisterPage(),
+          ),
+        );
+        final fields = find.byType(TextFormField);
+        await tester.enterText(fields.at(0), 'Ana');
+        await tester.enterText(fields.at(1), 'ana@teste.com');
+        await tester.enterText(fields.at(2), 'senha123');
+        await tester.ensureVisible(find.text('Cadastrar'));
+        await tester.tap(find.text('Cadastrar'));
+        await tester.pumpAndSettle();
+        expect(find.text('Etapa 1 de 2'), findsOneWidget);
+        if (skip) {
+          await tester.tap(find.text('Escolher depois'));
+        } else {
+          await tester.tap(find.text('Drama'));
+          await tester.tap(find.text('Continuar'));
+          await tester.pumpAndSettle();
+          expect(find.text('Etapa 2 de 2'), findsOneWidget);
+          expect(find.byType(HomePage), findsNothing);
+          expect(
+            backend.requests.where((item) => item.startsWith('PUT')),
+            isEmpty,
+          );
+          await choose(tester, 1);
+          await tester.tap(find.text('Concluir'));
+        }
+        await tester.pumpAndSettle();
+        expect(find.byType(AppShell), findsOneWidget);
+        expect(find.byType(HomePage), findsOneWidget);
+        expect(
+          backend.requests.where((item) => item.startsWith('PUT')),
+          hasLength(skip ? 0 : 2),
+        );
+        if (!skip) expect(backend.selected, ['drama']);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'Perfil atualiza Home preservada sem reconstruir navegação e dados independentes',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(theme: ThemeData.dark(), home: const AppShell()),
+      );
+      await tester.pumpAndSettle();
+      final home = tester.state(find.byType(HomePage));
+      final shell = tester.state(find.byType(AppShell));
+      final genreRequests = backend.requests
+          .where((item) => item == 'GET /usuarios/eu/generos')
+          .length;
+      final independent = backend.requests
+          .where(
+            (item) =>
+                item.contains('em-alta') ||
+                item.contains('por-nota') ||
+                item == 'GET /conteudos/generos',
+          )
+          .toList();
+      await tester.tap(find.text('Favoritos'));
+      await tester.pumpAndSettle();
+      final favorites = tester.state(find.byType(FavoritesPage));
+      await tester.tap(find.text('Perfil'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Preferências de conteúdo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Drama'));
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Concluir'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FloatingNavigationBar>(find.byType(FloatingNavigationBar))
+            .index,
+        2,
+      );
+      await tester.tap(find.text('Início'));
+      await tester.pumpAndSettle();
+      expect(tester.state(find.byType(HomePage)), same(home));
+      expect(tester.state(find.byType(AppShell)), same(shell));
+      expect(
+        backend.requests
+            .where((item) => item == 'GET /usuarios/eu/generos')
+            .length,
+        genreRequests + 2,
+      );
+      expect(
+        backend.requests.where(
+          (item) =>
+              item.contains('em-alta') ||
+              item.contains('por-nota') ||
+              item == 'GET /conteudos/generos',
+        ),
+        [...independent, 'GET /conteudos/generos'],
+      );
+      expect(backend.selected, contains('drama'));
+      await tester.tap(find.text('Favoritos'));
+      await tester.pumpAndSettle();
+      expect(tester.state(find.byType(FavoritesPage)), same(favorites));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'Perfil reabre escolhas salvas, atualiza e permite cancelar alterações',
@@ -65,20 +591,26 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Gêneros favoritos'));
+      await tester.tap(find.text('Preferências de conteúdo'));
       await tester.pumpAndSettle();
       expect(find.text('1 de 5 selecionados'), findsOneWidget);
-      expect(find.text('Salvar preferências'), findsOneWidget);
+      expect(find.text('Continuar'), findsOneWidget);
 
       await tester.tap(find.text('Animação'));
       await tester.pumpAndSettle();
       expect(find.text('2 de 5 selecionados'), findsOneWidget);
-      await tester.tap(find.text('Salvar preferências'));
+      await tester.tap(find.text('Continuar'));
       await tester.pumpAndSettle();
-      expect(find.byType(GenrePreferencesDialog), findsNothing);
+      expect(
+        backend.requests.where((request) => request.startsWith('PUT')),
+        isEmpty,
+      );
+      await tester.tap(find.text('Concluir'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ContentPreferencesDialog), findsNothing);
       expect(backend.selected, unorderedEquals(['comedia', 'animacao']));
 
-      await tester.tap(find.text('Gêneros favoritos'));
+      await tester.tap(find.text('Preferências de conteúdo'));
       await tester.pumpAndSettle();
       expect(find.text('2 de 5 selecionados'), findsOneWidget);
       await tester.tap(find.text('Animação'));
@@ -88,7 +620,7 @@ void main() {
       expect(backend.selected, unorderedEquals(['comedia', 'animacao']));
       expect(
         backend.requests.where((request) => request.startsWith('PUT')),
-        hasLength(1),
+        hasLength(2),
       );
       expect(tester.takeException(), isNull);
     },
@@ -106,7 +638,7 @@ void main() {
               body: TextButton(
                 onPressed: () => showDialog<void>(
                   context: context,
-                  builder: (_) => const GenrePreferencesDialog(),
+                  builder: (_) => const ContentPreferencesDialog(),
                 ),
                 child: const Text('Abrir'),
               ),
@@ -119,7 +651,7 @@ void main() {
       expect(find.text('0 de 5 selecionados'), findsOneWidget);
       await tester.tap(find.text('Escolher depois'));
       await tester.pumpAndSettle();
-      expect(find.byType(GenrePreferencesDialog), findsNothing);
+      expect(find.byType(ContentPreferencesDialog), findsNothing);
       expect(backend.requests, ['GET /conteudos/generos']);
       expect(tester.takeException(), isNull);
     },
@@ -157,7 +689,7 @@ void main() {
             body: TextButton(
               onPressed: () => showDialog<void>(
                 context: context,
-                builder: (_) => const GenrePreferencesDialog(),
+                builder: (_) => const ContentPreferencesDialog(),
               ),
               child: const Text('Abrir'),
             ),

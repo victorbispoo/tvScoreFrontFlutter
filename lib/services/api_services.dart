@@ -40,6 +40,7 @@ class ApiService {
 
   static String userName = '';
   static final userPhotoUrl = ValueNotifier<String?>(null);
+  static final contentPreferencesRevision = ValueNotifier<int>(0);
   static String userEmail = '';
   static List<Map<String, String>> savedContents = [];
   static List<Review> reviews = [];
