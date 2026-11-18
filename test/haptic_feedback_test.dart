@@ -133,7 +133,7 @@ void main() {
       'HapticFeedbackType.lightImpact',
     ]);
     await tester.scrollUntilVisible(
-      find.byTooltip('Aumentar nota'),
+      find.byTooltip('Aumentar nota').hitTestable(),
       200,
       scrollable: find.byType(Scrollable).first,
     );
@@ -150,7 +150,7 @@ void main() {
       hasLength(4),
     );
     await tester.scrollUntilVisible(
-      find.text('Publicar avaliação'),
+      find.text('Publicar avaliação').hitTestable(),
       200,
       scrollable: find.byType(Scrollable).first,
     );

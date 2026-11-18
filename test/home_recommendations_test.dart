@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
@@ -14,8 +15,11 @@ import 'support/backend_http.dart';
 class _HomeBackend extends BackendHttp {
   _HomeBackend({
     this.preferred = true,
-    this.failSeries = false,
+    this.movieStatus = 200,
+    this.seriesStatus = 200,
     this.empty = false,
+    this.invalidResponse = false,
+    this.networkFailure = false,
   }) {
     catalog
       ..clear()
@@ -39,15 +43,21 @@ class _HomeBackend extends BackendHttp {
   }
 
   final bool preferred;
-  final bool failSeries;
+  final int movieStatus;
+  final int seriesStatus;
   final bool empty;
+  final bool invalidResponse;
+  bool networkFailure;
 
   int get recommendationReads =>
       requests.where((request) => request.contains('/recomendacoes/')).length;
 
   @override
-  int responseStatus(String method, Uri uri) =>
-      failSeries && uri.path.endsWith('/recomendacoes/series') ? 503 : 200;
+  int responseStatus(String method, Uri uri) => switch (uri.path) {
+    '/api/recomendacoes/filmes' => movieStatus,
+    '/api/recomendacoes/series' => seriesStatus,
+    _ => 200,
+  };
 
   @override
   Object? respond(String method, Uri uri, String body) {
@@ -60,6 +70,8 @@ class _HomeBackend extends BackendHttp {
     }
     if (uri.path.contains('/recomendacoes/')) {
       requests.add('$method ${uri.path}');
+      if (networkFailure) throw const SocketException('Falha simulada');
+      if (invalidResponse) return {'recomendacoes': 'inválido'};
       return {
         'recomendacoes': [
           if (!empty && uri.path.endsWith('/filmes')) ...[
@@ -83,6 +95,7 @@ class _HomeBackend extends BackendHttp {
 
 void main() {
   Future<void> mount(WidgetTester tester, _HomeBackend backend) async {
+    FlutterSecureStorage.setMockInitialValues({});
     final previous = HttpOverrides.current;
     HttpOverrides.global = backend;
     ApiService.token = 'home-recommendations';
@@ -188,10 +201,103 @@ void main() {
   );
 
   testWidgets('mantém filmes quando séries falham', (tester) async {
-    await mount(tester, _HomeBackend(failSeries: true));
+    await mount(tester, _HomeBackend(seriesStatus: 503));
     await tester.pumpAndSettle();
     expect(titles(section(tester, 'personalized')), ['MOVIE 2', 'MOVIE 3']);
   });
+
+  testWidgets('mantém séries quando filmes falham', (tester) async {
+    await mount(tester, _HomeBackend(movieStatus: 504));
+    await tester.pumpAndSettle();
+    expect(titles(section(tester, 'personalized')), ['TV 2']);
+  });
+
+  testWidgets('preserva scroll e reaproveita recomendações ao voltar', (
+    tester,
+  ) async {
+    final backend = _HomeBackend();
+    await mount(tester, backend);
+    tester.view.physicalSize = const Size(390, 750);
+    await tester.pumpAndSettle();
+    final horizontal = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) =>
+            widget is ContentCarousel && widget.heroSection == 'personalized',
+      ),
+      matching: find.byType(Scrollable),
+    );
+    final horizontalPosition = tester
+        .state<ScrollableState>(horizontal)
+        .position;
+    final verticalPosition = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    await tester.drag(horizontal, const Offset(-130, 0));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(RefreshIndicator), const Offset(0, -230));
+    await tester.pumpAndSettle();
+    final horizontalOffset = horizontalPosition.pixels;
+    final verticalOffset = verticalPosition.pixels;
+    expect(horizontalOffset, greaterThan(0));
+    expect(verticalOffset, greaterThan(0));
+
+    final navigator = Navigator.of(tester.element(find.byType(HomePage)));
+    navigator.push<void>(
+      MaterialPageRoute(
+        builder: (_) => const Scaffold(body: Text('Outra tela')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    navigator.pop();
+    await tester.pumpAndSettle();
+    expect(horizontalPosition.pixels, horizontalOffset);
+    expect(verticalPosition.pixels, verticalOffset);
+    expect(backend.recommendationReads, 2);
+  });
+
+  testWidgets('descarta filme recebido antes de expirar a sessão', (
+    tester,
+  ) async {
+    final backend = _HomeBackend(seriesStatus: 401)
+      ..responseDelay = const Duration(seconds: 1)
+      ..delayedPaths.add('/recomendacoes/series');
+    await mount(tester, backend);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(backend.recommendationReads, 1);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    expect(ApiService.token, isNull);
+    expect(titles(section(tester, 'personalized')).first, 'MOVIE 1');
+    expect(find.byType(TrendingCarousel), findsOneWidget);
+    expect(find.byType(RankedContentCarousel), findsOneWidget);
+  });
+
+  for (final (label, backend) in [
+    ('offline', _HomeBackend(movieStatus: 503, seriesStatus: 503)),
+    ('timeout', _HomeBackend(movieStatus: 504, seriesStatus: 504)),
+    ('inválida', _HomeBackend(invalidResponse: true)),
+    ('falha de rede', _HomeBackend(networkFailure: true)),
+  ]) {
+    testWidgets('Home segue utilizável com recomendação $label', (
+      tester,
+    ) async {
+      await mount(tester, backend);
+      await tester.pumpAndSettle();
+      expect(titles(section(tester, 'personalized')).first, 'MOVIE 1');
+      expect(find.byType(TrendingCarousel), findsOneWidget);
+      expect(find.byType(RankedContentCarousel), findsOneWidget);
+      if (backend.networkFailure) {
+        backend.networkFailure = false;
+        final refresh = tester
+            .state<RefreshIndicatorState>(find.byType(RefreshIndicator))
+            .show();
+        await tester.pumpAndSettle();
+        await refresh;
+        expect(titles(section(tester, 'personalized')).first, 'MOVIE 2');
+        expect(backend.recommendationReads, 4);
+      }
+    });
+  }
 
   for (final preferred in [true, false]) {
     testWidgets('usa fallback se a IA vier vazia, preferências: $preferred', (

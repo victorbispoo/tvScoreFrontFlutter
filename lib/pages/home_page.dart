@@ -61,7 +61,13 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _loadRecommendations({bool refresh = false}) {
-    if (ApiService.token == null) return Future.value();
+    final token = ApiService.token;
+    if (token == null) {
+      _recommendationLoad = null;
+      _recommended = const {};
+      _forYouRecommendations = const [];
+      return Future.value();
+    }
     final api = ApiService();
     Future<List<Recommendation>> read(Future<Recommendations> request) async {
       try {
@@ -78,6 +84,13 @@ class _HomePageState extends State<HomePage>
           read(api.getSeriesRecommendations(refresh: refresh)),
         ]).then((results) {
           if (!mounted || !identical(_recommendationLoad, load)) return;
+          if (ApiService.token != token) {
+            setState(() {
+              _recommended = const {};
+              _forYouRecommendations = const [];
+            });
+            return;
+          }
           final (movies, series) = (results[0], results[1]);
           final seen = <(String?, String?)>{};
           final contents = [

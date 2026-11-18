@@ -63,7 +63,11 @@ void main() {
       of: find.byType(TopRatedCarousel),
       matching: find.byType(TvScoreSegmentedControl<String>),
     );
-    await tester.ensureVisible(control);
+    await tester.scrollUntilVisible(
+      control,
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     final requests = [...backend.requests];
     final origin = tester.getTopLeft(control) + const Offset(40, 24);
