@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../core/app_theme.dart';
 import '../models/search_filters.dart';
 
 Future<SearchFilters?> showSearchFilters(
@@ -108,9 +107,11 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
       filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: const Color(0xF214253D),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-          border: Border.all(color: AppTheme.primary.withValues(alpha: .14)),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: .14),
+          ),
         ),
         child: Column(
           children: [
@@ -119,7 +120,7 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -169,9 +170,12 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
                     ),
                     const SizedBox(height: 20),
                     const _FilterTitle('Gêneros'),
-                    const Text(
+                    Text(
                       'Mostra títulos com qualquer gênero selecionado.',
-                      style: TextStyle(color: Colors.white60, fontSize: 12),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     FutureBuilder<List<Map<String, dynamic>>>(
@@ -263,7 +267,7 @@ class _SearchFilterSheetState extends State<SearchFilterSheet> {
                 child: FilledButton(
                   onPressed: _apply,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
                   child: const Text('Aplicar filtros'),
                 ),

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../core/app_theme.dart';
 import '../models/content_metadata.dart';
 import '../services/api_services.dart';
 import 'content_card.dart';
@@ -157,11 +156,14 @@ class _PreferredContentPickerState extends State<PreferredContentPicker> {
           ],
           const SizedBox(height: 16),
           if (_query.text.trim().isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 16),
               child: Text(
                 'Sugestões baseadas nas preferências já salvas. As novas escolhas serão aplicadas ao concluir.',
-                style: TextStyle(color: Colors.white60, fontSize: 12),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
             ),
           if (results.isNotEmpty)
@@ -235,20 +237,26 @@ class _PreferredContentPickerState extends State<PreferredContentPicker> {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppTheme.surface,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: .08),
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? Theme.of(context).colorScheme.outlineVariant
+                        : Colors.white.withValues(alpha: .08),
                     width: 1.5,
                   ),
                 ),
                 foregroundDecoration: BoxDecoration(
                   color: selected
-                      ? AppTheme.primary.withValues(alpha: .16)
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: .16)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: selected ? AppTheme.primary : Colors.transparent,
+                    color: selected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.transparent,
                     width: 1.5,
                   ),
                 ),
@@ -265,10 +273,10 @@ class _PreferredContentPickerState extends State<PreferredContentPicker> {
                       child: AnimatedOpacity(
                         opacity: selected ? 1 : 0,
                         duration: const Duration(milliseconds: 180),
-                        child: const Icon(
+                        child: Icon(
                           Icons.check_circle,
                           size: 20,
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),

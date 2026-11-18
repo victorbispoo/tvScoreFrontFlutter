@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_theme.dart';
 import 'skeleton_loading.dart';
 
 class ContentPoster extends StatelessWidget {
@@ -22,10 +21,14 @@ class ContentPoster extends StatelessWidget {
         fit: BoxFit.cover,
         loadingBuilder: (context, child, progress) =>
             progress == null ? child : const SkeletonBlock(),
-        errorBuilder: (_, error, stack) => const ColoredBox(
-          color: AppTheme.surfaceHighlight,
+        errorBuilder: (_, error, stack) => ColoredBox(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Center(
-            child: Icon(Icons.movie_outlined, size: 42, color: Colors.white54),
+            child: Icon(
+              Icons.movie_outlined,
+              size: 42,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),

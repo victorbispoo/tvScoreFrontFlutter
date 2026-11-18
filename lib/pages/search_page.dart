@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:tv_score_front_flutter/core/app_theme.dart';
 
 import '../models/content_metadata.dart';
 import '../models/search_filters.dart';
@@ -200,7 +199,7 @@ class _SearchPageState extends State<SearchPage>
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppTheme.scaffoldBackground,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         toolbarHeight: 64,
@@ -251,23 +250,27 @@ class _SearchPageState extends State<SearchPage>
                                     ),
                                   ),
                             filled: true,
-                            fillColor: const Color(0xEB14253D),
+                            fillColor: Theme.of(context).colorScheme.surface,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
                               borderSide: BorderSide(
-                                color: AppTheme.primary.withValues(alpha: .16),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: .16),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
                               borderSide: BorderSide(
-                                color: AppTheme.primary.withValues(alpha: .16),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: .16),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
-                              borderSide: const BorderSide(
-                                color: AppTheme.primary,
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.primary,
                                 width: 1.4,
                               ),
                             ),
@@ -293,14 +296,17 @@ class _SearchPageState extends State<SearchPage>
                         ),
                         style: IconButton.styleFrom(
                           minimumSize: const Size(52, 52),
-                          backgroundColor: AppTheme.surface,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surface,
                           foregroundColor: _filters.isActive
-                              ? AppTheme.primary
-                              : Colors.white70,
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                           side: BorderSide(
-                            color: AppTheme.primary.withValues(
-                              alpha: _filters.isActive ? .55 : .16,
-                            ),
+                            color: Theme.of(context).colorScheme.primary
+                                .withValues(
+                                  alpha: _filters.isActive ? .55 : .16,
+                                ),
                           ),
                         ),
                       ),
@@ -311,8 +317,8 @@ class _SearchPageState extends State<SearchPage>
                           child: Container(
                             width: 7,
                             height: 7,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primary,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -323,16 +329,22 @@ class _SearchPageState extends State<SearchPage>
               ),
               const SizedBox(height: 12),
               if (_query.text.trim().isEmpty)
-                const Text(
+                Text(
                   'Encontre filmes e séries do catálogo.',
-                  style: TextStyle(color: Colors.white60, fontSize: 13),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
                 )
               else
                 Text(
                   'Resultados para “${_query.text.trim()}”',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white60, fontSize: 13),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
                 ),
               const SizedBox(height: 16),
               Expanded(

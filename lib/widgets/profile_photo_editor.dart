@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import 'profile_photo_crop_page.dart';
 import 'user_avatar.dart';
@@ -196,7 +195,9 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white24),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       child: UserAvatar(
                         enableViewer: false,
@@ -217,9 +218,12 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
                   onPressed: _busy || !widget.enabled ? null : _pick,
                   style: IconButton.styleFrom(
                     minimumSize: const Size(48, 48),
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
-                    side: const BorderSide(color: AppTheme.surface, width: 3),
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.surface,
+                      width: 3,
+                    ),
                   ),
                   icon: const Icon(HugeIconsStroke.camera01, size: 22),
                 ),
@@ -230,7 +234,7 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
             TextButton(
               onPressed: _busy || !widget.enabled ? null : _remove,
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white70,
+                foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                 minimumSize: const Size(48, 48),
               ),
               child: const Text('Remover foto'),

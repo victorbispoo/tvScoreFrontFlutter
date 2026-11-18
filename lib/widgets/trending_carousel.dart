@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../core/app_theme.dart';
 import 'content_carousel.dart';
 import 'tv_score_segmented_control.dart';
 
@@ -37,11 +36,15 @@ class _TrendingCarouselState extends State<TrendingCarousel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                Icon(HugeIconsSolid.fire, color: AppTheme.primary, size: 16),
+                Icon(
+                  HugeIconsSolid.fire,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 16,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'Em alta',

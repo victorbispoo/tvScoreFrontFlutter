@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../core/app_theme.dart';
-
 import 'ranked_content_carousel.dart';
 import 'skeleton_loading.dart';
 import 'tv_score_segmented_control.dart';
@@ -29,15 +27,21 @@ class TopRatedCarousel extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Padding(
+      Padding(
         padding: EdgeInsets.symmetric(horizontal: 20),
         child: Row(
           children: [
-            Icon(HugeIconsSolid.star, color: AppTheme.primary, size: 18),
+            Icon(
+              HugeIconsSolid.star,
+              color: Theme.of(context).colorScheme.primary,
+              size: 18,
+            ),
             SizedBox(width: 8),
-            Text(
-              'Mais bem avaliados',
-              style: TextStyle(fontSize: 23, fontWeight: FontWeight.w600),
+            const Flexible(
+              child: Text(
+                'Mais bem avaliados',
+                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),

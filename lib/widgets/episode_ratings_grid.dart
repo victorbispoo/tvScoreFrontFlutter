@@ -51,13 +51,16 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
               children: [
                 Text(
                   'E$episodeNumber',
-                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 11,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   rating?.toStringAsFixed(1) ?? '—',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
@@ -141,7 +144,10 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
         const SizedBox(height: 12),
         Text(
           '${episodes.length} ${episodes.length == 1 ? 'episódio' : 'episódios'} • Notas TMDB',
-          style: const TextStyle(color: Colors.white60, fontSize: 12),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 16),
         if (episodes.isEmpty)

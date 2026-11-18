@@ -95,7 +95,11 @@ class _FavoritesPageState extends State<FavoritesPage>
                         const SizedBox(height: 4),
                         Text(
                           '${contents.length} ${contents.length == 1 ? 'título salvo' : 'títulos salvos'}',
-                          style: const TextStyle(color: Colors.white60),
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -134,10 +138,12 @@ class _FavoritesPageState extends State<FavoritesPage>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               HugeIconsStroke.favourite,
                               size: 40,
-                              color: Colors.white54,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(height: 16),
                             const Text(
@@ -194,10 +200,16 @@ class _FavoritesPageState extends State<FavoritesPage>
                                 tooltip: 'Remover dos favoritos',
                                 onPressed: () => _removeContent(content),
                                 style: IconButton.styleFrom(
-                                  backgroundColor: Colors.black.withValues(
-                                    alpha: .65,
-                                  ),
-                                  foregroundColor: Colors.redAccent,
+                                  backgroundColor:
+                                      Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? Theme.of(context).colorScheme.surface
+                                      : Colors.black.withValues(alpha: .65),
+                                  foregroundColor:
+                                      Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? Theme.of(context).colorScheme.error
+                                      : Colors.redAccent,
                                   padding: const EdgeInsets.all(12),
                                   shape: const CircleBorder(),
                                 ),

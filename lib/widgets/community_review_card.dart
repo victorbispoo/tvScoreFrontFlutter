@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import '../core/app_theme.dart';
 import '../core/rating_scale.dart';
 import 'user_avatar.dart';
 
@@ -65,7 +64,7 @@ class _CommunityReviewCardState extends State<CommunityReviewCard> {
     final author = widget.author?.trim();
     final color = RatingScale.color(widget.rating);
     return Card(
-      color: AppTheme.surface,
+      color: Theme.of(context).colorScheme.surface,
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -91,9 +90,11 @@ class _CommunityReviewCardState extends State<CommunityReviewCard> {
                         const SizedBox(height: 4),
                         Text(
                           _dateLabel(widget.date!),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white60,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -123,9 +124,10 @@ class _CommunityReviewCardState extends State<CommunityReviewCard> {
               const SizedBox(height: 14),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final style = DefaultTextStyle.of(
-                    context,
-                  ).style.copyWith(color: Colors.white70, height: 1.5);
+                  final style = DefaultTextStyle.of(context).style.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  );
                   final painter = TextPainter(
                     text: TextSpan(text: widget.comment, style: style),
                     maxLines: 4,

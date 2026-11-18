@@ -9,10 +9,12 @@ import '../services/api_services.dart';
 import '../widgets/community_review_card.dart';
 import '../widgets/community_reviews_sheet.dart';
 import '../widgets/content_header.dart';
+import '../widgets/details_system_ui.dart';
 import '../widgets/episode_panel.dart';
 import '../widgets/review_form.dart';
 import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
+import '../widgets/where_to_watch.dart';
 
 class DetailsPage extends StatefulWidget {
   const DetailsPage({
@@ -33,6 +35,7 @@ class DetailsPage extends StatefulWidget {
 class _DetailsPageState extends State<DetailsPage> {
   final _api = ApiService();
   late final TextEditingController _comment;
+  late Widget _whereToWatch;
   late double _rating;
   bool _busy = false;
   Map<String, dynamic>? _reviewSummary;
@@ -45,10 +48,40 @@ class _DetailsPageState extends State<DetailsPage> {
   @override
   void initState() {
     super.initState();
+    _whereToWatch = _buildWhereToWatch();
     _rating = 8.0;
     _comment = TextEditingController();
     _loadMyReview();
     _checkCommunityReviews();
+  }
+
+  @override
+  void didUpdateWidget(covariant DetailsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.content.contentKey != widget.content.contentKey ||
+        oldWidget.content['ondeAssistir'] != widget.content['ondeAssistir']) {
+      _whereToWatch = _buildWhereToWatch();
+    }
+  }
+
+  Widget _buildWhereToWatch() {
+    final availability = widget.content['ondeAssistir'];
+    if (availability != null) return WhereToWatch(availability);
+    return FutureBuilder<String?>(
+      future: _loadWatchAvailability(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const SkeletonBlock(height: 48);
+        }
+        return WhereToWatch(snapshot.data);
+      },
+    );
+  }
+
+  Future<String?> _loadWatchAvailability() async {
+    final reference = widget.content.apiReference;
+    final details = await _api.getContent(reference.id, reference.type);
+    return details['ondeAssistir'];
   }
 
   Future<void> _checkCommunityReviews() async {
@@ -239,144 +272,196 @@ class _DetailsPageState extends State<DetailsPage> {
         (_reviewSummary?['totalAvaliacoes'] as num?)?.toInt() ?? 0;
     final communityAverage = _reviewSummary?['media'] as num?;
     final canEditReview = !_busy && !_loadingMyReview && _myReviewError == null;
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        scrolledUnderElevation: 0,
-      ),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            ContentHeader(
-              content: content,
-              heroTag: widget.heroTag,
-              isSaved: saved,
-              onFavoritePressed: _busy ? null : _toggleSaved,
-            ),
-
-            Padding(
-              padding: EdgeInsets.only(left: 20, right: 20),
-              child: Column(
-                crossAxisAlignment: .start,
-                children: [
-                  Text(
-                    content['title'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        '${content['year']}  •  ${content['genre']?.trim().isNotEmpty == true ? content['genre'] : 'não informado'}',
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                      Text(
-                        ' • ',
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-
-                      const Icon(
-                        HugeIconsSolid.star,
-                        color: Colors.amber,
-                        size: 14,
-                      ),
-                      Text(
-                        'TMDB: ${content['score']}/10',
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                      if (_loadingCommunity)
-                        const SkeletonBlock(width: 110, height: 15)
-                      else if (_communityError != null)
-                        Column(
-                          crossAxisAlignment: .start,
-                          children: [
-                            Text(_communityError!),
-                            TextButton(
-                              onPressed: _checkCommunityReviews,
-                              child: const Text('Tentar novamente'),
-                            ),
-                          ],
-                        )
-                      else
-                        Row(
-                          children: [
-                            SvgPicture.asset(
-                              'lib/assets/logoSemTexto.svg',
-                              height: 15,
-                            ),
-                            Text(
-                              totalReviews == 0
-                                  ? 'TVScore: ainda sem avaliações'
-                                  : 'TVScore: ${communityAverage?.toStringAsFixed(1) ?? '—'}/10',
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                  if (content['overview'] != null) ...[
-                    const SizedBox(height: 20),
-                    Text(
-                      content['overview']!,
-                      style: const TextStyle(height: 1.6),
-                    ),
-                  ],
-
-                  if (content['type'] == 'TV') ...[
-                    const SizedBox(height: 24),
-                    EpisodePanel(seriesId: int.parse(content['id']!)),
-                  ],
-                  const SizedBox(height: 24),
-                  if (_loadingMyReview)
-                    const LinearProgressIndicator()
-                  else if (_myReviewError != null)
-                    Column(
-                      crossAxisAlignment: .start,
-                      children: [
-                        Text(_myReviewError!),
-                        TextButton(
-                          onPressed: _loadMyReview,
-                          child: const Text('Tentar Novamente'),
-                        ),
-                      ],
-                    ),
-                  ReviewForm(
-                    isEditing: review != null,
-                    rating: _rating,
-                    commentController: _comment,
-                    enabled: canEditReview,
-                    isSaving: _busy,
-                    onRatingChanged: (value) {
-                      if (value == _rating) return;
-                      AppHaptics.selection();
-                      setState(() => _rating = value);
-                    },
-                    onSave: _saveReview,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Avaliações da comunidade',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildCommunitySection(),
-                  const SizedBox(height: 24),
-                ],
+    return DetailsSystemUi(
+      backdrop: content['backdrop_path'],
+      builder: (context, systemUi) => Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          systemOverlayStyle: systemUi,
+          // A mixed backdrop needs a scrim so both ends of the status bar stay legible.
+          flexibleSpace: Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: double.infinity,
+              height: MediaQuery.paddingOf(context).top,
+              child: ColoredBox(
+                color: systemUi.statusBarIconBrightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: .62)
+                    : Colors.black.withValues(alpha: .55),
               ),
             ),
-          ],
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          foregroundColor: Theme.of(context).brightness == Brightness.light
+              ? Colors.white
+              : Theme.of(context).colorScheme.onSurface,
+          leading: Theme.of(context).brightness == Brightness.light
+              ? Center(
+                  child: BackButton(
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black.withValues(alpha: .68),
+                    ),
+                  ),
+                )
+              : null,
+          scrolledUnderElevation: 0,
+        ),
+        body: SafeArea(
+          top: false,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              ContentHeader(
+                content: content,
+                heroTag: widget.heroTag,
+                isSaved: saved,
+                onFavoritePressed: _busy ? null : _toggleSaved,
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(left: 20, right: 20),
+                child: Column(
+                  crossAxisAlignment: .start,
+                  children: [
+                    Text(
+                      content['title'] ?? '',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '${content['year']}  •  ${content['genre']?.trim().isNotEmpty == true ? content['genre'] : 'não informado'}',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (Theme.of(context).brightness == Brightness.dark)
+                          Text(
+                            ' • ',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+
+                        const Icon(
+                          HugeIconsSolid.star,
+                          color: Colors.amber,
+                          size: 14,
+                        ),
+                        Text(
+                          'TMDB: ${content['score']}/10',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (_loadingCommunity)
+                          const SkeletonBlock(width: 110, height: 15)
+                        else if (_communityError != null)
+                          Column(
+                            crossAxisAlignment: .start,
+                            children: [
+                              Text(_communityError!),
+                              TextButton(
+                                onPressed: _checkCommunityReviews,
+                                child: const Text('Tentar novamente'),
+                              ),
+                            ],
+                          )
+                        else
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            children: [
+                              SvgPicture.asset(
+                                'lib/assets/logoSemTexto.svg',
+                                height: 15,
+                              ),
+                              Text(
+                                totalReviews == 0
+                                    ? 'TVScore: ainda sem avaliações'
+                                    : 'TVScore: ${communityAverage?.toStringAsFixed(1) ?? '—'}/10',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _whereToWatch,
+                    if (content['overview'] != null) ...[
+                      const SizedBox(height: 20),
+                      Text(
+                        content['overview']!,
+                        style: const TextStyle(height: 1.6),
+                      ),
+                    ],
+
+                    if (content['type'] == 'TV') ...[
+                      const SizedBox(height: 24),
+                      EpisodePanel(seriesId: int.parse(content['id']!)),
+                    ],
+                    const SizedBox(height: 24),
+                    if (_loadingMyReview)
+                      const LinearProgressIndicator()
+                    else if (_myReviewError != null)
+                      Column(
+                        crossAxisAlignment: .start,
+                        children: [
+                          Text(_myReviewError!),
+                          TextButton(
+                            onPressed: _loadMyReview,
+                            child: const Text('Tentar Novamente'),
+                          ),
+                        ],
+                      ),
+                    ReviewForm(
+                      isEditing: review != null,
+                      rating: _rating,
+                      commentController: _comment,
+                      enabled: canEditReview,
+                      isSaving: _busy,
+                      onRatingChanged: (value) {
+                        if (value == _rating) return;
+                        AppHaptics.selection();
+                        setState(() => _rating = value);
+                      },
+                      onSave: _saveReview,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Avaliações da comunidade',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildCommunitySection(),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

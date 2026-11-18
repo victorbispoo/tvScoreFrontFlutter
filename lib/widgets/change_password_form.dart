@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../core/app_theme.dart';
 import 'auth_text_field.dart';
 
 class ChangePasswordForm extends StatefulWidget {
@@ -69,9 +68,11 @@ class _ChangePasswordFormState extends State<ChangePasswordForm> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Após alterar a senha, entre novamente na sua conta.',
-          style: TextStyle(color: Colors.white60),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 20),
         AuthTextField(
@@ -125,7 +126,7 @@ class _ChangePasswordFormState extends State<ChangePasswordForm> {
         FilledButton(
           onPressed: _busy ? null : _submit,
           style: FilledButton.styleFrom(
-            backgroundColor: AppTheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Colors.white,
             minimumSize: const Size(48, 48),
             shape: RoundedRectangleBorder(

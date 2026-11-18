@@ -3,13 +3,14 @@ import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:tv_score_front_flutter/core/app_theme.dart';
 import 'package:tv_score_front_flutter/widgets/user_avatar.dart';
 
 import '../core/app_routes.dart';
+import '../core/theme_controller.dart';
 import '../services/api_services.dart';
 import '../widgets/edit_profile_sheet.dart';
 import '../widgets/genre_preferences.dart';
+import '../widgets/tv_score_segmented_control.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -78,6 +79,7 @@ class _ProfilePageState extends State<ProfilePage>
   Future<void> _editPreferences() => showDialog<void>(
     context: context,
     barrierDismissible: false,
+    useSafeArea: Theme.of(context).brightness == Brightness.dark,
     builder: (_) => const ContentPreferencesDialog(isEditing: true),
   );
 
@@ -157,8 +159,8 @@ class _ProfilePageState extends State<ProfilePage>
                     ),
                     Text(
                       ApiService.userEmail,
-                      style: const TextStyle(
-                        color: Colors.white60,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -166,7 +168,7 @@ class _ProfilePageState extends State<ProfilePage>
                     TextButton(
                       onPressed: _editProfile,
                       style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(48, 48),
                         alignment: Alignment.centerLeft,
@@ -187,7 +189,10 @@ class _ProfilePageState extends State<ProfilePage>
             'Suas estatísticas',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
-          const Divider(color: Colors.white12, height: 1),
+          Divider(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1,
+          ),
           const SizedBox(height: 20),
 
           Row(
@@ -276,11 +281,56 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ),
           ),
+          const SizedBox(height: 20),
+          const Text(
+            'Personalização',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          _ProfileGlassSurface(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Aparência',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: ThemeController.instance,
+                    builder: (context, mode, _) =>
+                        TvScoreSegmentedControl<ThemeMode>(
+                          options: const {
+                            ThemeMode.light: 'Claro',
+                            ThemeMode.dark: 'Escuro',
+                            ThemeMode.system: 'Sistema',
+                          },
+                          selectedValue: mode,
+                          onChanged: (next) async {
+                            try {
+                              await ThemeController.instance.select(next);
+                            } catch (_) {
+                              if (context.mounted) {
+                                TvScoreSnackbar.error(
+                                  context,
+                                  'Não foi possível salvar a aparência. Tente novamente.',
+                                );
+                              }
+                            }
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           TextButton.icon(
             onPressed: _logout,
             icon: Icon(HugeIconsStroke.logout01),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white60,
+              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
               minimumSize: const Size(48, 48),
             ),
             label: const Text('Sair da conta'),
@@ -315,7 +365,10 @@ class _ProfileStat extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.white60),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -335,10 +388,12 @@ class _ProfileGlassSurface extends StatelessWidget {
     child: BackdropFilter.grouped(
       filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
       child: Material(
-        color: const Color(0xFF14253D).withValues(alpha: .96),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: .96),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(color: AppTheme.primary.withValues(alpha: .14)),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: .14),
+          ),
         ),
         child: child,
       ),

@@ -3,8 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../core/app_theme.dart';
-
 Future<bool?> showTvScoreConfirmation(
   BuildContext context, {
   required String title,
@@ -57,7 +55,7 @@ class _TvScoreConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = destructive ? _coral : AppTheme.primary;
+    final accent = destructive ? _coral : Theme.of(context).colorScheme.primary;
     final emphasisAt = emphasis?.isNotEmpty == true
         ? description.indexOf(emphasis!)
         : -1;
@@ -77,7 +75,7 @@ class _TvScoreConfirmationDialog extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xF0112136),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(_radius),
                 border: Border.all(color: Colors.white.withValues(alpha: .08)),
               ),
@@ -94,7 +92,9 @@ class _TvScoreConfirmationDialog extends StatelessWidget {
                             title,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
-                                  color: Colors.white,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
@@ -120,8 +120,10 @@ class _TvScoreConfirmationDialog extends StatelessWidget {
                                 ),
                                 TextSpan(
                                   text: emphasis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -132,8 +134,8 @@ class _TvScoreConfirmationDialog extends StatelessWidget {
                                 ),
                               ],
                             ),
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.35,
                       ),
                     ),
@@ -153,7 +155,9 @@ class _TvScoreConfirmationDialog extends StatelessWidget {
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
                             style: TextButton.styleFrom(
-                              foregroundColor: Colors.white70,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               minimumSize: const Size(0, 44),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,

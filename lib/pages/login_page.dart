@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../controllers/login_controller.dart';
 import '../core/app_routes.dart';
+import '../core/light_logo_color_mapper.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/tv_score_snackbar.dart';
 
@@ -56,15 +57,20 @@ class _LoginPageState extends State<LoginPage> {
                               height: 170,
                               child: SvgPicture.asset(
                                 'lib/assets/tvScoreLogin.svg',
+                                colorMapper:
+                                    Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? const LightLogoColorMapper()
+                                    : null,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           'Email',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             height: 1.33,
@@ -91,10 +97,10 @@ class _LoginPageState extends State<LoginPage> {
                           textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 18),
-                        const Text(
+                        Text(
                           'Senha',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             height: 1.33,
@@ -182,10 +188,12 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: WrapAlignment.center,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Ainda não tem uma conta?',
                               style: TextStyle(
-                                color: Color(0xFF8B9BB8),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 fontSize: 14,
                               ),
                             ),
@@ -201,10 +209,12 @@ class _LoginPageState extends State<LoginPage> {
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Cadastre-se',
                                 style: TextStyle(
-                                  color: Color(0xFFB6D0FF),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),

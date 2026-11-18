@@ -84,8 +84,8 @@ class _SeasonSelectorState extends State<SeasonSelector> {
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(72, 48),
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            backgroundColor: const Color(0xE6172B46),
-            foregroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             side: const BorderSide(color: Color(0x3375ADFF)),
             shape: const StadiumBorder(),
           ),
@@ -185,7 +185,7 @@ class _SeasonMenuState extends State<_SeasonMenu> {
             filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xE6172B46),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: const Color(0x3375ADFF)),
               ),
@@ -211,7 +211,9 @@ class _SeasonMenuState extends State<_SeasonMenu> {
                               minimumSize: const Size(double.infinity, 48),
                               foregroundColor: season == _selected
                                   ? Colors.white
-                                  : const Color(0xFFA0ADC0),
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 12,

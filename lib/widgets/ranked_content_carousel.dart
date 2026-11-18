@@ -59,10 +59,10 @@ class RankedContentCarousel extends StatelessWidget {
                       width: 30,
                       child: Text(
                         (index + 1).toString().padLeft(2, '0'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white54,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -91,9 +91,11 @@ class RankedContentCarousel extends StatelessWidget {
                             "${content['year'] ?? ''} · ${content.primaryGenre}",
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: Colors.white60,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           if ((double.tryParse(content['score'] ?? '') ?? 0) >
@@ -104,7 +106,8 @@ class RankedContentCarousel extends StatelessWidget {
                                 Icon(
                                   HugeIconsSolid.star,
                                   size: 20,
-                                  color: RatingScale.color(
+                                  color: RatingScale.badgeColor(
+                                    context,
                                     double.tryParse(content['score'] ?? ''),
                                   ),
                                 ),
@@ -113,7 +116,8 @@ class RankedContentCarousel extends StatelessWidget {
                                   '${content['score']}',
                                   style: TextStyle(
                                     fontSize: 20,
-                                    color: RatingScale.color(
+                                    color: RatingScale.badgeColor(
+                                      context,
                                       double.tryParse(content['score'] ?? ''),
                                     ),
                                   ),
@@ -121,11 +125,13 @@ class RankedContentCarousel extends StatelessWidget {
                               ],
                             ),
                           ] else
-                            const Text(
+                            Text(
                               'Sem avaliações',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white60,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                             ),
                         ],

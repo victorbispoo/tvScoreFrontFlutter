@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
-import '../core/app_theme.dart';
-
 Uint8List prepareProfilePhoto(Uint8List bytes) {
   final image = img.decodeImage(bytes);
   if (image == null) throw const FormatException('A imagem é inválida.');
@@ -61,10 +59,10 @@ class _ProfilePhotoCropPageState extends State<ProfilePhotoCropPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppTheme.scaffoldBackground,
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     appBar: AppBar(
       automaticallyImplyLeading: false,
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       title: const Text('Ajustar foto'),
     ),
     body: SafeArea(
@@ -92,7 +90,7 @@ class _ProfilePhotoCropPageState extends State<ProfilePhotoCropPage> {
                         size: .8,
                         aspectRatio: 1,
                       ),
-                      baseColor: AppTheme.scaffoldBackground,
+                      baseColor: Theme.of(context).scaffoldBackgroundColor,
                       maskColor: Colors.black.withValues(alpha: .65),
                       cornerDotBuilder: (_, _) => const SizedBox.shrink(),
                       overlayBuilder: (_, rect) => IgnorePointer(

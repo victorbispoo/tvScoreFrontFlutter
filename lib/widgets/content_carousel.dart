@@ -31,7 +31,9 @@ class ContentCarousel extends StatelessWidget {
     final subtitle = this.subtitle;
     if (contents.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 26),
+      padding: EdgeInsets.only(
+        bottom: Theme.of(context).brightness == Brightness.light ? 18 : 26,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -59,7 +61,9 @@ class ContentCarousel extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: Colors.white60),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ],

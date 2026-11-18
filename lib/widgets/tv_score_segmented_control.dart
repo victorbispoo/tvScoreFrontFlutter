@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/app_haptics.dart';
-import '../core/app_theme.dart';
 
 class TvScoreSegmentedControl<T> extends StatefulWidget {
   const TvScoreSegmentedControl({
@@ -77,9 +76,13 @@ class _TvScoreSegmentedControlState<T>
       width: values.length * _segmentWidth,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: .1)),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant.withValues(
+              alpha: Theme.of(context).brightness == Brightness.light ? 1 : .5,
+            ),
+          ),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -115,9 +118,14 @@ class _TvScoreSegmentedControlState<T>
                               width: slotWidth - _inset * 2,
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(
-                                    alpha: .28,
-                                  ),
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer
+                                      : Theme.of(context).colorScheme.primary
+                                            .withValues(alpha: .28),
                                   borderRadius: BorderRadius.circular(21),
                                 ),
                               ),
@@ -150,8 +158,12 @@ class _TvScoreSegmentedControlState<T>
                                           vertical: 8,
                                         ),
                                         foregroundColor: Color.lerp(
-                                          const Color(0xFFA0ADC0),
-                                          Colors.white,
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
                                           emphasis,
                                         ),
                                         textStyle: Theme.of(context)

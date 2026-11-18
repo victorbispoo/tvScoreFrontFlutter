@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import 'package:tv_score_front_flutter/core/app_theme.dart';
 
 import '../core/app_routes.dart';
 import '../core/rating_scale.dart';
@@ -54,12 +53,16 @@ class ContentCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.scaffoldBackground.withValues(
-                          alpha: .75,
-                        ),
+                        color: Theme.of(context).brightness == Brightness.light
+                            ? Theme.of(context).colorScheme.surface
+                            : Theme.of(
+                                context,
+                              ).scaffoldBackgroundColor.withValues(alpha: .75),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppTheme.surfaceHighlight,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           width: 0.5,
                         ),
                       ),
@@ -68,7 +71,8 @@ class ContentCard extends StatelessWidget {
                         children: [
                           Icon(
                             HugeIconsSolid.star,
-                            color: RatingScale.color(
+                            color: RatingScale.badgeColor(
+                              context,
                               double.tryParse(content['score'] ?? ''),
                             ),
                             size: 13,
@@ -77,7 +81,8 @@ class ContentCard extends StatelessWidget {
                           Text(
                             content['score'] ?? '—',
                             style: TextStyle(
-                              color: RatingScale.color(
+                              color: RatingScale.badgeColor(
+                                context,
                                 double.tryParse(content['score'] ?? ''),
                               ),
                             ),
@@ -103,7 +108,10 @@ class ContentCard extends StatelessWidget {
             '${content['year']} • ${content.primaryGenre}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, color: Colors.white60),
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

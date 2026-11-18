@@ -14,6 +14,13 @@ abstract final class RatingScale {
 
   static String label(double rating) =>
       bands.firstWhere((band) => rating >= band.$1).$2;
+  static Color badgeColor(BuildContext context, double? rating) {
+    final tone = color(rating);
+    if (Theme.of(context).brightness == Brightness.dark) return tone;
+    final hsl = HSLColor.fromColor(tone);
+    return hsl.withLightness(hsl.lightness.clamp(0.0, .32)).toColor();
+  }
+
   static Color color(double? rating) {
     if (rating == null) {
       return const Color(0xFF64748B);

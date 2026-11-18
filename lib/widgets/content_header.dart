@@ -18,6 +18,39 @@ class ContentHeader extends StatelessWidget {
   final bool isSaved;
   final Object? heroTag;
 
+  static List<Gradient> backdropGradients(Color backgroundColor) => [
+    if (ThemeData.estimateBrightnessForColor(backgroundColor) ==
+        Brightness.dark)
+      LinearGradient(
+        begin: Alignment.centerRight,
+        end: Alignment.centerLeft,
+        colors: [
+          backgroundColor.withValues(alpha: 0.05),
+          backgroundColor.withValues(alpha: 0.15),
+          backgroundColor.withValues(alpha: 0.45),
+          backgroundColor.withValues(alpha: 0.8),
+          backgroundColor.withValues(alpha: 0.9),
+          backgroundColor,
+        ],
+        stops: const [0, 0.5, 0.65, 0.85, 0.90, 0.95],
+      ),
+    LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        backgroundColor.withValues(alpha: 0),
+        backgroundColor.withValues(alpha: 0.15),
+        backgroundColor.withValues(alpha: 0.65),
+        backgroundColor,
+      ],
+      stops:
+          ThemeData.estimateBrightnessForColor(backgroundColor) ==
+              Brightness.light
+          ? const [0, .82, .94, 1]
+          : const [0, .75, .90, 1],
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final backdrop = content['backdrop_path'];
@@ -34,51 +67,21 @@ class ContentHeader extends StatelessWidget {
               alignment: const Alignment(0.3, 0),
               loadingBuilder: (_, child, progress) =>
                   progress == null ? child : const SkeletonBlock(radius: 0),
-              errorBuilder: (_, error, stackTrace) => const Center(
+              errorBuilder: (_, error, stackTrace) => Center(
                 child: Icon(
                   HugeIconsStroke.film01,
                   size: 48,
-                  color: Colors.white54,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
           ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                  colors: [
-                    backgroundColor.withValues(alpha: 0.05),
-                    backgroundColor.withValues(alpha: 0.15),
-                    backgroundColor.withValues(alpha: 0.45),
-                    backgroundColor.withValues(alpha: 0.8),
-                    backgroundColor.withValues(alpha: 0.9),
-                    backgroundColor,
-                  ],
-                  stops: const [0, 0.5, 0.65, 0.85, 0.90, 0.95],
-                ),
+          for (final gradient in backdropGradients(backgroundColor))
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(gradient: gradient),
               ),
             ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    backgroundColor.withValues(alpha: 0),
-                    backgroundColor.withValues(alpha: 0.15),
-                    backgroundColor.withValues(alpha: 0.65),
-                    backgroundColor,
-                  ],
-                  stops: const [0, 0.75, 0.90, 1],
-                ),
-              ),
-            ),
-          ),
           Positioned(
             left: 20,
             bottom: 20,
@@ -94,8 +97,16 @@ class ContentHeader extends StatelessWidget {
                   ? 'Remover dos favoritos'
                   : 'Adicionar aos favoritos',
               style: IconButton.styleFrom(
-                backgroundColor: Colors.black.withValues(alpha: .70),
-                foregroundColor: isSaved ? Colors.redAccent : Colors.white70,
+                backgroundColor:
+                    Theme.of(context).brightness == Brightness.light
+                    ? Theme.of(context).colorScheme.surface
+                    : Colors.black.withValues(alpha: .70),
+                foregroundColor:
+                    Theme.of(context).brightness == Brightness.light
+                    ? (isSaved
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.onSurface)
+                    : (isSaved ? Colors.redAccent : Colors.white70),
                 minimumSize: const Size(48, 48),
               ),
               icon: isSaved

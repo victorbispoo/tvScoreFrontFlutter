@@ -15,6 +15,18 @@ import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
 import 'support/backend_http.dart';
 
+class _WatchBackend extends BackendHttp {
+  @override
+  Map<String, dynamic> details(Map<String, String> content) => {
+    ...super.details(content),
+    'ondeAssistir': {
+      'assinatura': [
+        {'provider_id': 1, 'provider_name': 'Streaming Teste'},
+      ],
+    },
+  };
+}
+
 void main() {
   late BackendHttp backend;
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +47,7 @@ void main() {
 
   setUp(() async {
     final previous = HttpOverrides.current;
-    backend = BackendHttp();
+    backend = _WatchBackend();
     HttpOverrides.global = backend;
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = 'test-token';
@@ -93,7 +105,9 @@ void main() {
         home: const DetailsPage(content: content),
       ),
     );
-    final saveTitle = find.text('Adicionar aos favoritos');
+    await tester.pumpAndSettle();
+    expect(find.text('Streaming Teste'), findsOneWidget);
+    final saveTitle = find.byTooltip('Adicionar aos favoritos');
     await tester.scrollUntilVisible(
       saveTitle,
       200,
@@ -108,6 +122,11 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.enterText(find.byType(TextField), 'Gostei da história!');
+    await tester.pumpAndSettle();
+    expect(
+      backend.requests.where((request) => request == 'GET /filmes/123'),
+      hasLength(1),
+    );
     await tester.scrollUntilVisible(
       find.text('Publicar avaliação'),
       200,
@@ -268,11 +287,11 @@ void main() {
     await tester.tap(find.byType(ContentCard));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Remover dos favoritos'),
+      find.byTooltip('Remover dos favoritos'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Remover dos favoritos'));
+    await tester.tap(find.byTooltip('Remover dos favoritos'));
     await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -313,7 +332,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
-    expect(find.text('0 títulos salvos'), findsOneWidget);
+    expect(find.text('0'), findsNWidgets(2));
     expect(
       backend.requests.where((path) => path == 'GET /avaliacoes/minhas'),
       hasLength(1),
@@ -330,10 +349,7 @@ void main() {
     });
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
-    expect(find.text('1 títulos salvos'), findsOneWidget);
-    expect(
-      find.text('1 avaliação • Veja suas notas e comentários'),
-      findsOneWidget,
-    );
+    expect(find.text('1'), findsNWidgets(2));
+    expect(find.text('9.0'), findsOneWidget);
   });
 }

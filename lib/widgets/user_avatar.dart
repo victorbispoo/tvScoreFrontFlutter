@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import '../core/app_theme.dart';
 
 class UserAvatar extends StatelessWidget {
   const UserAvatar({
@@ -23,12 +22,12 @@ class UserAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final trimmed = name?.trim() ?? '';
     final fallback = ColoredBox(
-      color: AppTheme.surfaceHighlight,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Center(
         child: Text(
           trimmed.isEmpty ? '?' : trimmed.characters.first.toUpperCase(),
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 17,
             fontWeight: FontWeight.w600,
           ),
@@ -87,7 +86,7 @@ Future<void> showProfilePhoto(
   return showDialog<void>(
     context: context,
     builder: (context) => Dialog.fullscreen(
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           children: [
@@ -120,9 +119,13 @@ Future<void> showProfilePhoto(
                               url!,
                               fit: BoxFit.contain,
                               semanticLabel: 'Foto de perfil',
-                              errorBuilder: (_, _, _) => const Text(
+                              errorBuilder: (_, _, _) => Text(
                                 'Não foi possível carregar a foto.',
-                                style: TextStyle(color: Colors.white70),
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
                     ),

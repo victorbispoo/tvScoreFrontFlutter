@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import '../core/app_haptics.dart';
-import '../core/app_theme.dart';
 
 class FloatingNavigationBar extends StatefulWidget {
   const FloatingNavigationBar({
@@ -87,88 +86,111 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(36),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          height: 68,
-          decoration: BoxDecoration(
-            color: const Color(0xE614253D),
-            borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: Colors.white.withValues(alpha: .1)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: .22),
-                blurRadius: 16,
-                offset: const Offset(0, 5),
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(36),
+        boxShadow: [
+          if (Theme.of(context).brightness == Brightness.light)
+            BoxShadow(
+              color: Theme.of(
+                context,
+              ).colorScheme.onPrimaryContainer.withValues(alpha: .13),
+              blurRadius: 16,
+              offset: const Offset(0, 5),
+            ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(36),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            height: 68,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant.withValues(
+                  alpha: Theme.of(context).brightness == Brightness.light
+                      ? 1
+                      : .5,
+                ),
               ),
-            ],
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width =
-                  constraints.maxWidth / FloatingNavigationBar._labels.length;
-              return AnimatedBuilder(
-                animation:
-                    widget.pageController ?? const AlwaysStoppedAnimation(0),
-                builder: (context, _) {
-                  final position = (_dragPosition ?? _pagePosition).clamp(
-                    0.0,
-                    (FloatingNavigationBar._labels.length - 1).toDouble(),
-                  );
-                  return Stack(
-                    children: [
-                      Positioned(
-                        key: const ValueKey('navigation-indicator'),
-                        left: position * width + _indicatorInset,
-                        top: 5,
-                        bottom: 5,
-                        width: width - _indicatorInset * 2,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: .2),
-                            borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: .22),
+                  blurRadius: 16,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width =
+                    constraints.maxWidth / FloatingNavigationBar._labels.length;
+                return AnimatedBuilder(
+                  animation:
+                      widget.pageController ?? const AlwaysStoppedAnimation(0),
+                  builder: (context, _) {
+                    final position = (_dragPosition ?? _pagePosition).clamp(
+                      0.0,
+                      (FloatingNavigationBar._labels.length - 1).toDouble(),
+                    );
+                    return Stack(
+                      children: [
+                        Positioned(
+                          key: const ValueKey('navigation-indicator'),
+                          left: position * width + _indicatorInset,
+                          top: 5,
+                          bottom: 5,
+                          width: width - _indicatorInset * 2,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: .2),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
                         ),
-                      ),
-                      Row(
-                        children: List.generate(
-                          FloatingNavigationBar._labels.length,
-                          (i) {
-                            final selected =
-                                i == (_dragStartIndex ?? widget.index);
-                            return Expanded(
-                              child: _NavigationItem(
-                                icon: FloatingNavigationBar._icons[i],
-                                label: FloatingNavigationBar._labels[i],
-                                selection: (1 - (position - i).abs()).clamp(
-                                  0.0,
-                                  1.0,
+                        Row(
+                          children: List.generate(
+                            FloatingNavigationBar._labels.length,
+                            (i) {
+                              final selected =
+                                  i == (_dragStartIndex ?? widget.index);
+                              return Expanded(
+                                child: _NavigationItem(
+                                  icon: FloatingNavigationBar._icons[i],
+                                  label: FloatingNavigationBar._labels[i],
+                                  selection: (1 - (position - i).abs()).clamp(
+                                    0.0,
+                                    1.0,
+                                  ),
+                                  onTap: () => widget.onSelected(i),
+                                  onHorizontalDragStart: selected
+                                      ? _startDrag
+                                      : null,
+                                  onHorizontalDragUpdate: selected
+                                      ? (details) => _updateDrag(details, width)
+                                      : null,
+                                  onHorizontalDragEnd: selected
+                                      ? (_) => _finishDrag()
+                                      : null,
+                                  onHorizontalDragCancel: selected
+                                      ? () => _finishDrag(canceled: true)
+                                      : null,
                                 ),
-                                onTap: () => widget.onSelected(i),
-                                onHorizontalDragStart: selected
-                                    ? _startDrag
-                                    : null,
-                                onHorizontalDragUpdate: selected
-                                    ? (details) => _updateDrag(details, width)
-                                    : null,
-                                onHorizontalDragEnd: selected
-                                    ? (_) => _finishDrag()
-                                    : null,
-                                onHorizontalDragCancel: selected
-                                    ? () => _finishDrag(canceled: true)
-                                    : null,
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -229,8 +251,8 @@ class _NavigationItemState extends State<_NavigationItem> {
                 icon: widget.icon,
                 size: 23,
                 color: Color.lerp(
-                  const Color(0xFFA0ADC0),
-                  const Color(0xFF75ADFF),
+                  Theme.of(context).colorScheme.onSurfaceVariant,
+                  Theme.of(context).colorScheme.primary,
                   widget.selection,
                 ),
               ),
@@ -245,8 +267,8 @@ class _NavigationItemState extends State<_NavigationItem> {
                   widget.selection,
                 ),
                 color: Color.lerp(
-                  const Color(0xFFA0ADC0),
-                  Colors.white,
+                  Theme.of(context).colorScheme.onSurfaceVariant,
+                  Theme.of(context).colorScheme.onSurface,
                   widget.selection,
                 ),
               ),

@@ -3,8 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../core/app_theme.dart';
-
 class AuthTextField extends StatefulWidget {
   const AuthTextField({
     super.key,
@@ -64,7 +62,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
 
   @override
   Widget build(BuildContext context) {
-    const error = Color(0xFFE5A0AC);
+    final error = Theme.of(context).colorScheme.error;
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: BackdropFilter.grouped(
@@ -81,9 +79,11 @@ class _AuthTextFieldState extends State<AuthTextField> {
           keyboardType: widget.keyboardType,
           onChanged: widget.onChanged,
           style: TextStyle(
-            color: widget.enabled ? Colors.white : Colors.white60,
+            color: widget.enabled
+                ? Theme.of(context).colorScheme.onSurface
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-          cursorColor: AppTheme.primary,
+          cursorColor: Theme.of(context).colorScheme.primary,
           decoration: InputDecoration(
             suffixIcon: widget.isPassword
                 ? IconButton(
@@ -101,36 +101,44 @@ class _AuthTextFieldState extends State<AuthTextField> {
                     ),
                   )
                 : widget.suffixIcon,
-            suffixIconColor: widget.enabled ? Colors.white70 : Colors.white38,
+            suffixIconColor: widget.enabled
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             labelText: widget.label,
             hintText: widget.hintText,
-            labelStyle: const TextStyle(color: Colors.white60),
-            hintStyle: const TextStyle(color: Colors.white60),
+            labelStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             floatingLabelBehavior: FloatingLabelBehavior.never,
             prefixIcon: widget.prefixIcon,
-            prefixIconColor: widget.enabled ? Colors.white70 : Colors.white38,
+            prefixIconColor: widget.enabled
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             filled: true,
-            fillColor: const Color(0xFF14253D).withValues(
+            fillColor: Theme.of(context).colorScheme.surface.withValues(
               alpha: widget.enabled ? (_focusNode.hasFocus ? .96 : .92) : .7,
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
               vertical: 16,
             ),
-            border: _border(AppTheme.primary.withValues(alpha: .18)),
-            enabledBorder: _border(AppTheme.primary.withValues(alpha: .18)),
+            border: _border(
+              Theme.of(context).colorScheme.primary.withValues(alpha: .18),
+            ),
+            enabledBorder: _border(
+              Theme.of(context).colorScheme.primary.withValues(alpha: .18),
+            ),
             focusedBorder: _border(
-              AppTheme.primary.withValues(alpha: .8),
+              Theme.of(context).colorScheme.primary.withValues(alpha: .8),
               width: 1.5,
             ),
             disabledBorder: _border(Colors.white.withValues(alpha: .06)),
             errorBorder: _border(error.withValues(alpha: .65)),
             focusedErrorBorder: _border(error, width: 1.5),
-            errorStyle: const TextStyle(
-              color: error,
-              fontSize: 12,
-              height: 1.4,
-            ),
+            errorStyle: TextStyle(color: error, fontSize: 12, height: 1.4),
             errorMaxLines: 3,
           ),
         ),

@@ -41,7 +41,7 @@ extension ContentService on ApiService {
 
     final data = Map<String, dynamic>.from(response.data as Map);
 
-    return _mapContent(data, type);
+    return _mapContent(data, type)..putIfAbsent('ondeAssistir', () => '{}');
   }
 
   Future<List<Map<String, String>>> getContentsByGenre(String code) async {
@@ -151,6 +151,8 @@ extension ContentService on ApiService {
           : 'https://image.tmdb.org/t/p/w780$backdrop',
       'genre_ids': genres.ids,
       'genre': genres.labels,
+      if (data['ondeAssistir'] case final Map availability)
+        'ondeAssistir': jsonEncode(availability),
     };
   }
 

@@ -206,7 +206,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Material(
-                          color: const Color(0xFF14253D).withValues(alpha: .95),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: .95),
                           shape: RoundedRectangleBorder(
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(28),
@@ -246,7 +248,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                           width: 36,
                                           height: 4,
                                           decoration: BoxDecoration(
-                                            color: Colors.white38,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                             borderRadius: BorderRadius.circular(
                                               4,
                                             ),
@@ -303,10 +307,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                const Text(
+                                                Text(
                                                   'Informações da sua conta',
                                                   style: TextStyle(
-                                                    color: Colors.white60,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 20),
@@ -356,18 +362,22 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                 const SizedBox(height: 12),
                                                 Row(
                                                   children: [
-                                                    const Expanded(
+                                                    Expanded(
                                                       child: Text(
                                                         'Nome',
                                                         style: TextStyle(
-                                                          color: Colors.white70,
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
                                                         ),
                                                       ),
                                                     ),
                                                     Text(
                                                       '${_name.text.characters.length}/60',
-                                                      style: const TextStyle(
-                                                        color: Colors.white54,
+                                                      style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurfaceVariant,
                                                         fontSize: 11,
                                                       ),
                                                     ),
@@ -467,19 +477,22 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                             14,
                                                           ),
                                                       border: Border.all(
-                                                        color: AppTheme.primary
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .primary
                                                             .withValues(
                                                               alpha: .18,
                                                             ),
                                                       ),
                                                     ),
-                                                    child: const Row(
+                                                    child: Row(
                                                       children: [
                                                         Icon(
                                                           HugeIconsStroke
                                                               .lockPassword,
-                                                          color:
-                                                              AppTheme.primary,
+                                                          color: Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary,
                                                           size: 22,
                                                         ),
                                                         SizedBox(width: 12),
@@ -517,7 +530,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                         Icon(
                                                           HugeIconsStroke
                                                               .arrowRight01,
-                                                          color: Colors.white70,
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
                                                           size: 20,
                                                         ),
                                                       ],
@@ -550,8 +565,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                                         ? null
                                                         : _save,
                                                     style: FilledButton.styleFrom(
-                                                      backgroundColor:
-                                                          AppTheme.primary,
+                                                      backgroundColor: Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary,
                                                       foregroundColor:
                                                           Colors.white,
                                                       minimumSize: const Size(

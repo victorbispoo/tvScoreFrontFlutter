@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../core/app_theme.dart';
 import '../core/rating_scale.dart';
 import '../models/review.dart';
 
@@ -35,7 +34,11 @@ class ReviewForm extends StatelessWidget {
       const SizedBox(height: 20),
       Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 280),
+          constraints: BoxConstraints(
+            maxWidth: Theme.of(context).brightness == Brightness.light
+                ? 252
+                : 280,
+          ),
           child: Row(
             children: [
               IconButton.outlined(
@@ -80,10 +83,12 @@ class ReviewForm extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 '/10',
                                 style: TextStyle(
-                                  color: Colors.white60,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   fontSize: 16,
                                 ),
                               ),
@@ -128,16 +133,22 @@ class ReviewForm extends StatelessWidget {
         valueListenable: commentController,
         builder: (context, value, _) => Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Comentário (opcional)',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
               ),
             ),
             const SizedBox(width: 8),
             Text(
               '${value.text.characters.length}/500',
-              style: const TextStyle(color: Colors.white54, fontSize: 11),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 11,
+              ),
             ),
           ],
         ),
@@ -156,7 +167,10 @@ class ReviewForm extends StatelessWidget {
               required isFocused,
               required maxLength,
             }) => null,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
+          fillColor: Theme.of(context).brightness == Brightness.light
+              ? Theme.of(context).colorScheme.surface
+              : null,
           hintText: 'O que você achou desse título?',
         ),
       ),
@@ -165,7 +179,7 @@ class ReviewForm extends StatelessWidget {
         width: double.infinity,
         child: FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: AppTheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Colors.white,
             minimumSize: const Size(0, 48),
             shape: RoundedRectangleBorder(

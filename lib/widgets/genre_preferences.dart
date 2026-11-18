@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
-import '../core/app_theme.dart';
 import '../models/content_metadata.dart';
 import '../services/api_services.dart';
 import 'preferred_content_picker.dart';
@@ -177,12 +176,21 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
       children: [
         Text(
           'Etapa ${_step + 1} de 2',
-          style: const TextStyle(color: Colors.white60, fontSize: 12),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: Theme.of(context).brightness == Brightness.light
+                ? FontWeight.w600
+                : null,
+          ),
         ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
           value: (_step + 1) / 2,
-          color: AppTheme.primary,
+          backgroundColor: Theme.of(context).brightness == Brightness.light
+              ? Theme.of(context).colorScheme.primaryContainer
+              : null,
+          color: Theme.of(context).colorScheme.primary,
         ),
         const SizedBox(height: 20),
         Text(
@@ -203,8 +211,8 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
           _step == 0
               ? 'Escolha até 5 gêneros que você gosta de assistir.'
               : 'Escolha até 5 filmes e séries no total.',
-          style: const TextStyle(
-            color: Colors.white60,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 14,
             height: 1.5,
           ),
@@ -217,7 +225,7 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
   Widget build(BuildContext context) {
     final count = _step == 0 ? _selected.length : _contents.length;
     return Dialog.fullscreen(
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, _) {
@@ -230,7 +238,7 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
           }
         },
         child: Scaffold(
-          backgroundColor: AppTheme.scaffoldBackground,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -257,8 +265,10 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                             onPressed: _saving ? null : _cancel,
                             child: Text(
                               widget.isEditing ? 'Cancelar' : 'Escolher depois',
-                              style: const TextStyle(
-                                color: Colors.white60,
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 fontSize: 12,
                               ),
                             ),
@@ -295,7 +305,10 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                       decoration: BoxDecoration(
                         border: Border(
                           top: BorderSide(
-                            color: Colors.white.withValues(alpha: .06),
+                            color:
+                                Theme.of(context).brightness == Brightness.light
+                                ? Theme.of(context).colorScheme.outlineVariant
+                                : Colors.white.withValues(alpha: .06),
                           ),
                         ),
                       ),
@@ -315,8 +328,12 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: index < count
-                                          ? AppTheme.primary
-                                          : AppTheme.surfaceHighlight,
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
+                                          : Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHighest,
                                     ),
                                   ),
                               ],
@@ -325,8 +342,10 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                           const SizedBox(height: 8),
                           Text(
                             '$count de 5 selecionados',
-                            style: const TextStyle(
-                              color: Colors.white60,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -350,7 +369,9 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                             width: double.infinity,
                             child: FilledButton(
                               style: FilledButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
                                 foregroundColor: Colors.white,
                                 minimumSize: const Size.fromHeight(52),
                                 shape: RoundedRectangleBorder(
@@ -366,11 +387,13 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                                       _visitedContents = true;
                                     }),
                               child: _saving
-                                  ? const SizedBox.square(
+                                  ? SizedBox.square(
                                       dimension: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: Colors.white,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
                                       ),
                                     )
                                   : Text(_step == 0 ? 'Continuar' : 'Concluir'),
@@ -409,12 +432,16 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
               duration: const Duration(milliseconds: 180),
               decoration: BoxDecoration(
                 color: selected
-                    ? AppTheme.primary.withValues(alpha: 0.16)
-                    : AppTheme.surface,
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.16)
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: selected
-                      ? AppTheme.primary
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).brightness == Brightness.light
+                      ? Theme.of(context).colorScheme.outlineVariant
                       : Colors.white.withValues(alpha: 0.08),
                   width: selected ? 1.5 : 1,
                 ),
@@ -450,8 +477,10 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                                 genreIcon(code),
                                 size: 30,
                                 color: selected
-                                    ? AppTheme.primary
-                                    : Colors.white60,
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -461,8 +490,10 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: selected
-                                      ? Colors.white
-                                      : Colors.white70,
+                                      ? Theme.of(context).colorScheme.onSurface
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -475,10 +506,10 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
                         child: AnimatedOpacity(
                           opacity: selected ? 1 : 0,
                           duration: const Duration(milliseconds: 180),
-                          child: const Icon(
+                          child: Icon(
                             Icons.check_circle,
                             size: 20,
-                            color: AppTheme.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),

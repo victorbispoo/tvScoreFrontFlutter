@@ -5,7 +5,6 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_haptics.dart';
 import '../core/app_routes.dart';
-import '../core/app_theme.dart';
 import '../core/rating_scale.dart';
 import '../models/review.dart';
 import '../services/api_services.dart';
@@ -133,7 +132,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                 ),
               )
             : reviews.isEmpty
-            ? const Center(
+            ? Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),
                   child: Column(
@@ -153,7 +152,9 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                       Text(
                         'Abra um filme ou série, escolha sua nota e conte o que achou. Suas avaliações aparecerão aqui.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -184,9 +185,11 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                             children: [
                               Text(
                                 average.toStringAsFixed(1),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 28,
-                                  color: Colors.white,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -248,9 +251,13 @@ class _MyReviewCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xF514253D),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.primary.withValues(alpha: .16)),
+            border: Border.all(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: .16),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: .12),
@@ -303,8 +310,8 @@ class _MyReviewCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${review.date.day.toString().padLeft(2, '0')}/${review.date.month.toString().padLeft(2, '0')}/${review.date.year}',
-                      style: const TextStyle(
-                        color: Colors.white60,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -314,8 +321,8 @@ class _MyReviewCard extends StatelessWidget {
                         review.comment,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 13,
                           height: 1.3,
                         ),
@@ -328,7 +335,9 @@ class _MyReviewCard extends StatelessWidget {
                         TextButton.icon(
                           onPressed: deleting ? null : onEdit,
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFFB6D0FF),
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             minimumSize: const Size(48, 40),
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import 'community_review_card.dart';
 
@@ -73,7 +72,7 @@ class _CommunityReviewsSheetState extends State<CommunityReviewsSheet> {
     builder: (context, controller) => ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: ColoredBox(
-        color: AppTheme.scaffoldBackground,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: SafeArea(
           top: false,
           child: NotificationListener<ScrollNotification>(
@@ -103,7 +102,9 @@ class _CommunityReviewsSheetState extends State<CommunityReviewsSheet> {
                           width: 36,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.white38,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -121,7 +122,9 @@ class _CommunityReviewsSheetState extends State<CommunityReviewsSheet> {
                         _nextPage == 0
                             ? 'Carregando avaliações…'
                             : '$_total ${_total == 1 ? 'avaliação' : 'avaliações'}',
-                        style: const TextStyle(color: Colors.white60),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 20),
                     ],

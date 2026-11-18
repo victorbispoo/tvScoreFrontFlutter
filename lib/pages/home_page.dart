@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import '../core/app_routes.dart';
 
-import '../core/app_theme.dart';
+import '../core/app_routes.dart';
+import '../core/light_logo_color_mapper.dart';
 import '../services/api_services.dart';
 import '../widgets/content_carousel.dart';
 import '../widgets/genre_preferences.dart';
@@ -212,7 +212,7 @@ class _HomePageState extends State<HomePage>
                   icon: Icon(
                     section.icon,
                     size: personalized ? 18 : 16,
-                    color: AppTheme.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   title: section.title,
                   contents: section.contents,
@@ -240,7 +240,14 @@ class _HomePageState extends State<HomePage>
               height: 64,
               child: Row(
                 children: [
-                  SvgPicture.asset('lib/assets/logoTvScore.svg', height: 44),
+                  SvgPicture.asset(
+                    'lib/assets/logoTvScore.svg',
+                    height: 44,
+                    colorMapper:
+                        Theme.of(context).brightness == Brightness.light
+                        ? const LightLogoColorMapper()
+                        : null,
+                  ),
                   const Spacer(),
                   IconButton(
                     tooltip: 'Pesquisar',
@@ -249,7 +256,7 @@ class _HomePageState extends State<HomePage>
                     },
                     icon: Icon(
                       HugeIconsSolid.search01,
-                      color: AppTheme.primary,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],

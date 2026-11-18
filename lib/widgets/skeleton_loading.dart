@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_theme.dart';
-
 class SkeletonShimmer extends StatefulWidget {
   const SkeletonShimmer({super.key, required this.child});
 
@@ -50,10 +48,10 @@ class _SkeletonShimmerState extends State<SkeletonShimmer>
                   shaderCallback: (bounds) => LinearGradient(
                     begin: Alignment(-2 + _animation.value * 4, 0),
                     end: Alignment(-1 + _animation.value * 4, 0),
-                    colors: const [
-                      AppTheme.surface,
-                      AppTheme.surfaceHighlight,
-                      AppTheme.surface,
+                    colors: [
+                      Theme.of(context).colorScheme.surface,
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                      Theme.of(context).colorScheme.surface,
                     ],
                   ).createShader(bounds),
                   child: child,
@@ -76,7 +74,9 @@ class SkeletonBlock extends StatelessWidget {
     width: width,
     height: height,
     decoration: BoxDecoration(
-      color: AppTheme.surfaceHighlight.withValues(alpha: .55),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: .55),
       borderRadius: BorderRadius.circular(radius),
     ),
   );

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_routes.dart';
-import '../core/app_theme.dart';
 import '../services/api_services.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/genre_preferences.dart';
@@ -85,6 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
+        useSafeArea: Theme.of(context).brightness == Brightness.dark,
         builder: (_) => const ContentPreferencesDialog(),
       );
 
@@ -153,7 +153,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      backgroundColor: AppTheme.scaffoldBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         tooltip: 'Voltar',
@@ -263,9 +263,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           alignment: WrapAlignment.center,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'J\u00e1 tem uma conta?',
-                              style: TextStyle(color: Color(0xFF8B9BB8)),
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                             ),
                             TextButton(
                               onPressed: () => Navigator.maybePop(context),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
-import '../core/app_theme.dart';
 
 class EpisodeDetailsSheet extends StatelessWidget {
   const EpisodeDetailsSheet({
@@ -31,7 +30,9 @@ class EpisodeDetailsSheet extends StatelessWidget {
       return ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: DecoratedBox(
-          decoration: const BoxDecoration(color: AppTheme.scaffoldBackground),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
           child: ListView(
             controller: scrollController,
             padding: EdgeInsets.zero,
@@ -52,14 +53,14 @@ class EpisodeDetailsSheet extends StatelessWidget {
                         )
                       else
                         const _EpisodeImagePlaceholder(),
-                      const DecoratedBox(
+                      DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              AppTheme.scaffoldBackground,
+                              Theme.of(context).scaffoldBackgroundColor,
                             ],
                             stops: [.48, 1],
                           ),
@@ -74,7 +75,9 @@ class EpisodeDetailsSheet extends StatelessWidget {
                             width: 36,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: Colors.white54,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -91,8 +94,8 @@ class EpisodeDetailsSheet extends StatelessWidget {
                   children: [
                     Text(
                       'TEMPORADA $seasonNumber · EPISÓDIO $episodeNumber',
-                      style: const TextStyle(
-                        color: Colors.white60,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 11,
                         letterSpacing: 1.1,
                         fontWeight: FontWeight.w600,
@@ -147,8 +150,8 @@ class EpisodeDetailsSheet extends StatelessWidget {
                       overview == null || overview.trim().isEmpty
                           ? 'Sinopse indisponível'
                           : overview,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.55,
                       ),
                     ),
@@ -167,10 +170,14 @@ class _EpisodeImagePlaceholder extends StatelessWidget {
   const _EpisodeImagePlaceholder();
 
   @override
-  Widget build(BuildContext context) => const ColoredBox(
-    color: AppTheme.surface,
+  Widget build(BuildContext context) => ColoredBox(
+    color: Theme.of(context).colorScheme.surface,
     child: Center(
-      child: Icon(Icons.movie_outlined, size: 42, color: Colors.white54),
+      child: Icon(
+        Icons.movie_outlined,
+        size: 42,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     ),
   );
 }
@@ -185,9 +192,19 @@ class _EpisodeMeta extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 15, color: Colors.white60),
+      Icon(
+        icon,
+        size: 15,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       const SizedBox(width: 5),
-      Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      Text(
+        label,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontSize: 12,
+        ),
+      ),
     ],
   );
 }
