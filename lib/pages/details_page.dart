@@ -293,6 +293,11 @@ class _DetailsPageState extends State<DetailsPage> {
         (_reviewSummary?['totalAvaliacoes'] as num?)?.toInt() ?? 0;
     final communityAverage = _reviewSummary?['media'] as num?;
     final canEditReview = !_busy && !_loadingMyReview && _myReviewError == null;
+    final metadataStyle = TextStyle(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+    final year = content['year']?.trim() ?? '';
+    final genres = content['genre']?.trim() ?? '';
     return DetailsSystemUi(
       backdrop: content['backdrop_path'],
       builder: (context, systemUi) => Scaffold(
@@ -354,41 +359,36 @@ class _DetailsPageState extends State<DetailsPage> {
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      [
+                        if (year.isNotEmpty) year,
+                        genres.isEmpty ? 'Gêneros não informados' : genres,
+                      ].join(' • '),
+                      style: metadataStyle,
+                    ),
+                    const SizedBox(height: 8),
                     Wrap(
-                      spacing: 6,
+                      spacing: 14,
                       runSpacing: 6,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Text(
-                          '${content['year']}  •  ${content['genre']?.trim().isNotEmpty == true ? content['genre'] : 'não informado'}',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        if (Theme.of(context).brightness == Brightness.dark)
-                          Text(
-                            ' • ',
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              HugeIconsSolid.star,
+                              color: Colors.amber,
+                              size: 14,
                             ),
-                          ),
-
-                        const Icon(
-                          HugeIconsSolid.star,
-                          color: Colors.amber,
-                          size: 14,
-                        ),
-                        Text(
-                          'TMDB: ${content['score']}/10',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'TMDB:\u00a0${content['score']}/10',
+                                style: metadataStyle,
+                              ),
+                            ),
+                          ],
                         ),
                         if (_loadingCommunity)
                           const SkeletonBlock(width: 110, height: 15)
@@ -404,32 +404,30 @@ class _DetailsPageState extends State<DetailsPage> {
                             ],
                           )
                         else
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 4,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               SvgPicture.asset(
                                 'lib/assets/logoSemTexto.svg',
                                 height: 15,
                               ),
-                              Text(
-                                totalReviews == 0
-                                    ? 'TVScore: ainda sem avaliações'
-                                    : 'TVScore: ${communityAverage?.toStringAsFixed(1) ?? '—'}/10',
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  totalReviews == 0
+                                      ? 'TVScore: sem avaliações'
+                                      : 'TVScore:\u00a0${communityAverage?.toStringAsFixed(1) ?? '—'}/10',
+                                  style: metadataStyle,
                                 ),
                               ),
                             ],
                           ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     _whereToWatch,
                     if (content['overview'] != null) ...[
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       Text(
                         content['overview']!,
                         style: const TextStyle(height: 1.6),

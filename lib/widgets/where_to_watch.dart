@@ -5,157 +5,214 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'tv_score_snackbar.dart';
 
+typedef _Provider = ({String name, String? logo});
+
 class WhereToWatch extends StatelessWidget {
-  WhereToWatch(String? availability, {super.key})
-    : _data = availability == null
-          ? const {}
-          : jsonDecode(availability) as Map<String, dynamic>;
+  factory WhereToWatch(String? availability, {Key? key}) {
+    Object? decoded;
+    try {
+      decoded = availability == null ? null : jsonDecode(availability);
+    } on FormatException {
+      decoded = null;
+    }
+    final data = decoded is Map<String, dynamic> ? decoded : const {};
+    final groups = <String, List<_Provider>>{};
+    final summary = <Object, _Provider>{};
+    for (final category in _categories.keys) {
+      if (data[category] case final List entries) {
+        final providers = <Object, _Provider>{};
+        for (final entry in entries.whereType<Map<String, dynamic>>()) {
+          final name = entry['provider_name'];
+          if (name is! String || name.trim().isEmpty) continue;
+          final id = entry['provider_id'];
+          final logo = entry['logo_path'];
+          final provider = (
+            name: name.trim(),
+            logo: logo is String && _logoPath.hasMatch(logo) ? logo : null,
+          );
+          final identity = id is int ? id : provider.name.toLowerCase();
+          providers.putIfAbsent(identity, () => provider);
+          summary.putIfAbsent(identity, () => provider);
+        }
+        if (providers.isNotEmpty) groups[category] = providers.values.toList();
+      }
+    }
+    final rawLink = data['link'];
+    final uri = rawLink is String ? Uri.tryParse(rawLink.trim()) : null;
+    final link =
+        uri != null &&
+            uri.host.isNotEmpty &&
+            (uri.scheme == 'https' || uri.scheme == 'http')
+        ? uri
+        : null;
+    return WhereToWatch._(groups, summary.values.toList(), link, key: key);
+  }
 
-  final Map<String, dynamic> _data;
+  const WhereToWatch._(this._groups, this._providers, this._link, {super.key});
 
-  static const _links = {
-    'netflix': 'https://www.netflix.com/br/',
-    'netflix standard with ads': 'https://www.netflix.com/br/',
-    'amazon prime video': 'https://www.primevideo.com/',
-    'amazon prime video with ads': 'https://www.primevideo.com/',
-    'amazon video': 'https://www.primevideo.com/',
-    'disney plus': 'https://www.disneyplus.com/pt-br',
-    'hbo max': 'https://www.hbomax.com/br/pt',
-    'max': 'https://www.hbomax.com/br/pt',
-    'globoplay': 'https://globoplay.globo.com/',
-    'paramount plus': 'https://www.paramountplus.com/br/',
-    'apple tv': 'https://tv.apple.com/br',
-    'apple tv plus': 'https://tv.apple.com/br',
-    'crunchyroll': 'https://www.crunchyroll.com/pt-br',
+  static const _categories = {
+    'assinatura': ('Assinatura', 'Disponível por assinatura'),
+    'gratis': ('Grátis', 'Disponível grátis'),
+    'comAnuncios': ('Com anúncios', 'Disponível com anúncios'),
+    'aluguel': ('Aluguel', 'Disponível para aluguel'),
+    'compra': ('Compra', 'Disponível para compra'),
   };
+  static final _logoPath = RegExp(
+    r'^/[\w.-]+\.(png|jpe?g|webp)$',
+    caseSensitive: false,
+  );
 
-  static String _normalize(String name) =>
-      name.trim().toLowerCase().replaceAll('+', ' plus').replaceAll('  ', ' ');
+  final Map<String, List<_Provider>> _groups;
+  final List<_Provider> _providers;
+  final Uri? _link;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final providers = <String, Map<String, dynamic>>{};
-    for (final category in const [
-      'assinatura',
-      'gratis',
-      'comAnuncios',
-      'aluguel',
-      'compra',
-    ]) {
-      if (_data[category] case final List entries) {
-        for (final entry in entries.whereType<Map<String, dynamic>>()) {
-          if (entry['provider_name'] case final String name
-              when name.trim().isNotEmpty) {
-            final key = _normalize(name);
-            providers.putIfAbsent(_links[key] ?? key, () => entry);
-          }
-        }
-      }
-    }
-
+    final secondary = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Onde assistir',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Disponibilidade no Brasil',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
-        ),
-        if (providers.isEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Disponibilidade não informada para o Brasil',
-            style: TextStyle(color: colors.onSurfaceVariant),
-          ),
-        ],
-        if (providers.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final provider in providers.values)
-                  _provider(context, provider),
-              ],
+        Wrap(
+          spacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Text(
+              'Onde assistir',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
             ),
+            Text('Brasil', style: secondary),
+          ],
+        ),
+        if (_providers.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Disponibilidade não informada para o Brasil',
+              style: secondary,
+            ),
+          )
+        else ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final provider in _providers.take(3))
+                Tooltip(
+                  message: provider.name,
+                  child: _logo(context, provider, 48),
+                ),
+              if (_providers.length > 3)
+                Text('+${_providers.length - 3}', style: secondary),
+            ],
           ),
         ],
+        if (_providers.isNotEmpty || _link != null)
+          Wrap(
+            spacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (_groups.isNotEmpty)
+                Text(_categories[_groups.keys.first]!.$2, style: secondary),
+              TextButton(
+                onPressed: () => _showOptions(context),
+                child: const Text('Ver opções'),
+              ),
+            ],
+          ),
       ],
     );
   }
 
-  Widget _provider(BuildContext context, Map<String, dynamic> provider) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final name = provider['provider_name'] as String;
-    final url = _links[_normalize(name)];
-    final logo = provider['logo_path'];
+  Future<void> _showOptions(BuildContext context) => showModalBottomSheet<void>(
+    context: context,
+    useSafeArea: true,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      top: false,
+      child: DraggableScrollableSheet(
+        expand: false,
+        builder: (context, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          children: [
+            Text(
+              'Onde assistir no Brasil',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            for (final entry in _groups.entries) ...[
+              const SizedBox(height: 16),
+              Text(
+                _categories[entry.key]!.$1,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              for (final provider in entry.value)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: _logo(context, provider, 44),
+                  title: Text(provider.name),
+                ),
+            ],
+            if (_link case final link?)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () async {
+                    try {
+                      if (await launchUrl(
+                        link,
+                        mode: LaunchMode.externalApplication,
+                      )) {
+                        return;
+                      }
+                    } catch (_) {
+                      // An external handler may not be available.
+                    }
+                    if (context.mounted) {
+                      TvScoreSnackbar.error(
+                        context,
+                        'Não foi possível abrir o link.',
+                      );
+                    }
+                  },
+                  child: const Text('Ver disponibilidade no TMDB'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget _logo(BuildContext context, _Provider provider, double size) {
+    final colors = Theme.of(context).colorScheme;
+    final logo = provider.logo;
     final fallback = Icon(
       Icons.live_tv_outlined,
       color: colors.onSurfaceVariant,
     );
-    return Tooltip(
-      message: name,
-      excludeFromSemantics: true,
-      child: InkWell(
+    return Container(
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(10),
-        onTap: url == null
-            ? null
-            : () async {
-                try {
-                  if (await launchUrl(Uri.parse(url))) return;
-                } catch (_) {
-                }
-                if (context.mounted) {
-                  TvScoreSnackbar.error(
-                    context,
-                    'Não foi possível abrir $name.',
-                  );
-                }
-              },
-        child: SizedBox(
-          width: 76,
-          child: Column(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  border: Border.all(),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: logo is String && RegExp(r'^/[\w.-]+$').hasMatch(logo)
-                    ? Image.network(
-                        'https://image.tmdb.org/t/p/w92$logo',
-                        fit: BoxFit.cover,
-                        excludeFromSemantics: true,
-                        errorBuilder: (_, _, _) => fallback,
-                      )
-                    : fallback,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall,
-              ),
-            ],
-          ),
-        ),
       ),
+      child: logo != null
+          ? Image.network(
+              'https://image.tmdb.org/t/p/w92$logo',
+              fit: BoxFit.cover,
+              excludeFromSemantics: true,
+              errorBuilder: (_, _, _) => fallback,
+            )
+          : fallback,
     );
   }
 }
