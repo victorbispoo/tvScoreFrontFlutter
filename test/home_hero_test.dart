@@ -54,6 +54,70 @@ void main() {
       backend.requests.where((item) => item == 'GET /filmes/42'),
       hasLength(1),
     );
+    expect(find.text('Recomendado para você'), findsNothing);
+  });
+
+  testWidgets('expande e recolhe a justificativa recebida em Para você', (
+    tester,
+  ) async {
+    const reason =
+        'Você gosta de histórias de suspense com personagens que investigam '
+        'mistérios e descobrem segredos ao longo da trama.';
+    final backend = BackendHttp();
+    final previous = HttpOverrides.current;
+    HttpOverrides.global = backend;
+    addTearDown(() => HttpOverrides.global = previous);
+    await tester.binding.setSurfaceSize(const Size(280, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    ApiService.token = null;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        onGenerateRoute: AppRoutes.generate,
+        home: Scaffold(
+          body: ContentCarousel(
+            title: 'Para você',
+            heroSection: 'personalized',
+            contents: const [
+              {...movie, 'recommendation_reason': reason},
+            ],
+            onChanged: () {},
+          ),
+        ),
+      ),
+    );
+    expect(find.text(reason), findsNothing);
+    final heroTag = tester
+        .widget<ContentCard>(find.byType(ContentCard))
+        .heroTag;
+    await tester.tap(find.text(movie['title']!));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<DetailsPage>(find.byType(DetailsPage)).heroTag,
+      heroTag,
+    );
+    final toggle = find.text('Recomendado para você');
+    await Scrollable.ensureVisible(tester.element(toggle), alignment: .35);
+    await tester.pumpAndSettle();
+    expect(find.text(reason), findsNothing);
+    expect(
+      tester.getTopLeft(toggle).dy,
+      lessThan(tester.getTopLeft(find.text('Onde assistir')).dy),
+    );
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(find.text(reason), findsOneWidget);
+    expect(tester.widget<Text>(find.text(reason)).maxLines, isNull);
+    await Scrollable.ensureVisible(tester.element(toggle), alignment: .35);
+    await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(find.text(reason), findsNothing);
+    expect(
+      backend.requests.where((request) => request.contains('/recomendacoes/')),
+      isEmpty,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('mesmo conteúdo em seções diferentes recebe tags únicas', (
@@ -219,9 +283,13 @@ void main() {
     );
     await tester.pumpAndSettle();
     final trending = find.byType(TrendingCarousel);
-    await tester.tap(
-      find.descendant(of: trending, matching: find.text('Séries')),
+    final seriesFilter = find.descendant(
+      of: trending,
+      matching: find.text('Séries'),
     );
+    await tester.ensureVisible(seriesFilter);
+    await tester.pumpAndSettle();
+    await tester.tap(seriesFilter);
     await tester.pumpAndSettle();
     final card = find
         .descendant(of: trending, matching: find.byType(ContentCard))

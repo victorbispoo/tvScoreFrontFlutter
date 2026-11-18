@@ -12,6 +12,7 @@ import '../widgets/genre_preferences.dart';
 import '../widgets/skeleton_loading.dart';
 import '../widgets/top_rated_carousel.dart';
 import '../widgets/trending_carousel.dart';
+import '../widgets/tv_score_segmented_control.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 enum HomeSectionType { personalized, trending, genre, discover }
@@ -41,6 +42,8 @@ class _HomePageState extends State<HomePage>
   List<Map<String, String>> _forYouRecommendations = const [];
   Set<(String?, String?)> _recommended = const {};
   String _topRatedType = 'ALL';
+  String _personalizedType = 'ALL';
+  static const _personalizedPosterScale = 1.1;
 
   @override
   void initState() {
@@ -306,7 +309,10 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  Widget _genreSections({required bool personalized}) => _KeepAliveSection(
+  Widget _genreSections({
+    bool personalized = false,
+    bool firstGenre = false,
+  }) => _KeepAliveSection(
     child: FutureBuilder<List<HomeSection>>(
       future: _sections,
       builder: (context, snapshot) {
@@ -331,7 +337,11 @@ class _HomePageState extends State<HomePage>
         }
         if (!snapshot.hasData) {
           return personalized
-              ? const SkeletonCarousel(featured: true)
+              ? const SkeletonCarousel(
+                  featured: true,
+                  showFilters: true,
+                  posterScale: _personalizedPosterScale,
+                )
               : const SizedBox.shrink();
         }
         if (personalized) {
@@ -347,7 +357,11 @@ class _HomePageState extends State<HomePage>
             builder: (context, snapshot) {
               if (snapshot.hasError) return const SizedBox.shrink();
               if (!snapshot.hasData) {
-                return const SkeletonCarousel(featured: true);
+                return const SkeletonCarousel(
+                  featured: true,
+                  showFilters: true,
+                  posterScale: _personalizedPosterScale,
+                );
               }
               final seen = <(String?, String?)>{};
               return _personalizedCarousel(
@@ -359,10 +373,15 @@ class _HomePageState extends State<HomePage>
             },
           );
         }
+        final sections = snapshot.data!;
+        final leading = sections
+            .where((section) => section.type == HomeSectionType.genre)
+            .firstOrNull;
         return Column(
           children: [
-            for (final section in snapshot.data!)
-              if (section.type != HomeSectionType.personalized)
+            for (final section in sections)
+              if (section.type != HomeSectionType.personalized &&
+                  (section.heroSection == leading?.heroSection) == firstGenre)
                 ContentCarousel(
                   key: ValueKey(section.heroSection),
                   onChanged: () => setState(() {}),
@@ -392,8 +411,19 @@ class _HomePageState extends State<HomePage>
           color: Theme.of(context).colorScheme.primary,
         ),
         title: 'Para você',
-        contents: contents,
+        contents: _personalizedType == 'ALL'
+            ? contents
+            : contents
+                  .where((item) => item['type'] == _personalizedType)
+                  .toList(),
         featured: true,
+        posterScale: _personalizedPosterScale,
+        filters: TvScoreSegmentedControl<String>(
+          textScale: _personalizedPosterScale,
+          options: const {'ALL': 'Todos', 'MOVIE': 'Filmes', 'TV': 'Séries'},
+          selectedValue: _personalizedType,
+          onChanged: (value) => setState(() => _personalizedType = value),
+        ),
         onChanged: () => setState(() {}),
       );
 
@@ -463,6 +493,7 @@ class _HomePageState extends State<HomePage>
               },
             ),
           ),
+          _genreSections(firstGenre: true),
           _KeepAliveSection(
             child: TopRatedCarousel(
               heroSection: 'top-rated',
@@ -479,7 +510,7 @@ class _HomePageState extends State<HomePage>
               onChanged: () => setState(() {}),
             ),
           ),
-          _genreSections(personalized: false),
+          _genreSections(),
         ],
       ),
     );

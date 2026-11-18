@@ -9,11 +9,13 @@ class TvScoreSegmentedControl<T> extends StatefulWidget {
     required this.options,
     required this.selectedValue,
     required this.onChanged,
+    this.textScale = 1,
   });
 
   final Map<T, String> options;
   final T selectedValue;
   final ValueChanged<T> onChanged;
+  final double textScale;
 
   @override
   State<TvScoreSegmentedControl<T>> createState() =>
@@ -170,7 +172,7 @@ class _TvScoreSegmentedControlState<T>
                                             .textTheme
                                             .labelMedium
                                             ?.copyWith(
-                                              fontSize: 13,
+                                              fontSize: 13 * widget.textScale,
                                               fontWeight: FontWeight.w500,
                                             ),
                                       ),

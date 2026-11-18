@@ -58,6 +58,7 @@ void main() {
             'titulo': 'Filme',
             'sinopse': 'Sinopse',
             'nota': 8.2,
+            'ano': 2024,
             'generos': [18],
             'poster': '/filme.jpg',
             'score_recomendacao': 2.5,
@@ -78,6 +79,7 @@ void main() {
       expect(first.identity, (id: 7, type: 'MOVIE'));
       expect(first.content, containsPair('score', '8.2'));
       expect(first.content, containsPair('title', 'Filme'));
+      expect(first.content['year'], '2024');
       expect(first.content, containsPair('overview', 'Sinopse'));
       expect(first.content, containsPair('genre_ids', '18'));
       expect(
@@ -88,6 +90,7 @@ void main() {
       expect(first.reason, 'Drama');
       expect(first.synopsisSimilarity, 0.4);
       expect(result.items.last.reason, isNull);
+      expect(result.items.last.content['year'], isEmpty);
       expect(result.items.last.content['poster_path'], isEmpty);
     },
   );
@@ -98,7 +101,13 @@ void main() {
       const poster = 'https://image.tmdb.org/t/p/w500/serie.jpg';
       respond('series', {
         'recomendacoes': [
-          {'id': 7, 'titulo': 'Série', 'poster': poster, 'tipoConteudo': 'tv'},
+          {
+            'id': 7,
+            'titulo': 'Série',
+            'poster': poster,
+            'tipoConteudo': 'tv',
+            'ano': 2019,
+          },
         ],
       });
       final result = await api.getSeriesRecommendations();
@@ -106,6 +115,7 @@ void main() {
       expect(series.identity, (id: 7, type: 'TV'));
       expect(series.identity, isNot((id: 7, type: 'MOVIE')));
       expect(series.content['poster_path'], poster);
+      expect(series.content['year'], '2019');
       expect(series.rankingScore, isNull);
       expect(result.partial, isNull);
       expect(result.warnings, isNull);

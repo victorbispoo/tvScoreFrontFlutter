@@ -153,6 +153,7 @@ extension RecommendationsService on ApiService {
       'genres': genres,
       'poster_path': absolutePoster ? null : poster,
     }, type);
+    if (item['ano'] case final int year) content['year'] = year.toString();
     if (absolutePoster) content['poster_path'] = poster;
     return Recommendation(
       content: Map.unmodifiable(content),

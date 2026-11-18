@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_carousel.dart';
+import 'package:tv_score_front_flutter/widgets/content_poster.dart';
 import 'package:tv_score_front_flutter/widgets/ranked_content_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/top_rated_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/trending_carousel.dart';
@@ -15,6 +16,7 @@ import 'support/backend_http.dart';
 class _HomeBackend extends BackendHttp {
   _HomeBackend({
     this.preferred = true,
+    this.multipleGenres = false,
     this.movieStatus = 200,
     this.seriesStatus = 200,
     this.empty = false,
@@ -43,6 +45,7 @@ class _HomeBackend extends BackendHttp {
   }
 
   final bool preferred;
+  final bool multipleGenres;
   final int movieStatus;
   final int seriesStatus;
   final bool empty;
@@ -61,10 +64,18 @@ class _HomeBackend extends BackendHttp {
 
   @override
   Object? respond(String method, Uri uri, String body) {
+    if (multipleGenres && uri.path.endsWith('/conteudos/generos')) {
+      return [
+        {'codigo': 'drama', 'nome': 'Drama'},
+        {'codigo': 'comedia', 'nome': 'Comédia'},
+        {'codigo': 'terror', 'nome': 'Terror'},
+      ];
+    }
     if (uri.path.endsWith('/usuarios/eu/generos')) {
       return {
         'generos': [
           if (preferred) {'codigo': 'drama'},
+          if (multipleGenres) {'codigo': 'comedia'},
         ],
       };
     }
@@ -94,7 +105,11 @@ class _HomeBackend extends BackendHttp {
 }
 
 void main() {
-  Future<void> mount(WidgetTester tester, _HomeBackend backend) async {
+  Future<void> mount(
+    WidgetTester tester,
+    _HomeBackend backend, {
+    bool dark = false,
+  }) async {
     FlutterSecureStorage.setMockInitialValues({});
     final previous = HttpOverrides.current;
     HttpOverrides.global = backend;
@@ -108,7 +123,10 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: HomePage())),
+      MaterialApp(
+        theme: dark ? ThemeData.dark() : ThemeData.light(),
+        home: const Scaffold(body: HomePage()),
+      ),
     );
   }
 
@@ -146,7 +164,11 @@ void main() {
       final personalized = section(tester, 'personalized');
       expect(titles(personalized), ['MOVIE 2', 'TV 2', 'MOVIE 3']);
       expect(personalized.first['recommendation_score'], '0.3');
-      expect(find.text('Pelo seu gosto por drama'), findsOneWidget);
+      expect(
+        personalized.first['recommendation_reason'],
+        'Pelo seu gosto por drama',
+      );
+      expect(find.text('Pelo seu gosto por drama'), findsNothing);
       expect(
         titles(
           tester
@@ -200,6 +222,67 @@ void main() {
     },
   );
 
+  testWidgets(
+    'organiza gêneros ao redor do ranking e filtra Para você localmente',
+    (tester) async {
+      final backend = _HomeBackend(multipleGenres: true);
+      await mount(tester, backend, dark: true);
+      await tester.pumpAndSettle();
+      double y(String heading) => tester.getTopLeft(find.text(heading)).dy;
+      final headings = [
+        'Para você',
+        'Em alta',
+        'Drama',
+        'Mais bem avaliados',
+        'Comédia',
+        'Descubra algo',
+      ];
+      for (var i = 1; i < headings.length; i++) {
+        expect(y(headings[i - 1]), lessThan(y(headings[i])));
+      }
+      final personalized = find.byWidgetPredicate(
+        (widget) =>
+            widget is ContentCarousel && widget.heroSection == 'personalized',
+      );
+      final poster = find
+          .descendant(of: personalized, matching: find.byType(ContentPoster))
+          .first;
+      expect(
+        tester.widget<Text>(find.text('Para você')).style!.fontSize,
+        closeTo(23 * 1.1, .01),
+      );
+      final cardTitle = find.descendant(
+        of: personalized,
+        matching: find.text('MOVIE 2'),
+      );
+      expect(
+        tester.widget<Text>(cardTitle).style!.fontSize,
+        closeTo(14 * 1.1, .01),
+      );
+      expect(
+        find.descendant(of: personalized, matching: find.textContaining('•')),
+        findsNothing,
+      );
+      expect(tester.getSize(poster).width, closeTo(158 * 1.1, .1));
+      expect(
+        tester.getSize(poster).height / tester.getSize(poster).width,
+        closeTo(1.5, .01),
+      );
+      for (final (filter, expected) in [
+        ('Filmes', ['MOVIE 2', 'MOVIE 3']),
+        ('Séries', ['TV 2']),
+        ('Todos', ['MOVIE 2', 'TV 2', 'MOVIE 3']),
+      ]) {
+        await tester.tap(
+          find.descendant(of: personalized, matching: find.text(filter)),
+        );
+        await tester.pumpAndSettle();
+        expect(titles(section(tester, 'personalized')), expected);
+      }
+      expect(backend.recommendationReads, 2);
+    },
+  );
+
   testWidgets('mantém filmes quando séries falham', (tester) async {
     await mount(tester, _HomeBackend(seriesStatus: 503));
     await tester.pumpAndSettle();
@@ -223,6 +306,9 @@ void main() {
     await mount(tester, backend);
     tester.view.physicalSize = const Size(390, 750);
     await tester.pumpAndSettle();
+    final navigator = tester.state<NavigatorState>(
+      find.byType(Navigator, skipOffstage: false),
+    );
     final horizontal = find.descendant(
       of: find.byWidgetPredicate(
         (widget) =>
@@ -245,7 +331,6 @@ void main() {
     expect(horizontalOffset, greaterThan(0));
     expect(verticalOffset, greaterThan(0));
 
-    final navigator = Navigator.of(tester.element(find.byType(HomePage)));
     navigator.push<void>(
       MaterialPageRoute(
         builder: (_) => const Scaffold(body: Text('Outra tela')),

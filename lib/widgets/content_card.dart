@@ -13,12 +13,14 @@ class ContentCard extends StatelessWidget {
     this.onChanged,
     this.onFavoriteChanged,
     this.heroTag,
+    this.textScale = 1,
   });
 
   final VoidCallback? onChanged;
   final VoidCallback? onFavoriteChanged;
   final Map<String, String> content;
   final Object? heroTag;
+  final double textScale;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -81,6 +83,13 @@ class ContentCard extends StatelessWidget {
                           Text(
                             content['score'] ?? '—',
                             style: TextStyle(
+                              fontSize: textScale == 1
+                                  ? null
+                                  : (DefaultTextStyle.of(
+                                              context,
+                                            ).style.fontSize ??
+                                            14) *
+                                        textScale,
                               color: RatingScale.badgeColor(
                                 context,
                                 double.tryParse(content['score'] ?? ''),
@@ -96,34 +105,29 @@ class ContentCard extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           SizedBox(
-            height: 40,
+            height: 40 * textScale,
             child: Text(
               content['title'] ?? '',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 14 * textScale,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           Text(
-            '${content['year']} • ${content.primaryGenre}',
+            [
+              if ((content['year'] ?? '').isNotEmpty) content['year'],
+              content.primaryGenre,
+            ].join(' • '),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 11 * textScale,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          if (content['recommendation_reason'] case final reason?)
-            Flexible(
-              child: Text(
-                reason,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
         ],
       ),
     ),

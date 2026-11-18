@@ -104,11 +104,13 @@ class SkeletonCarousel extends StatelessWidget {
     this.featured = false,
     this.showHeading = true,
     this.showFilters = false,
+    this.posterScale = 1,
   });
 
   final bool featured;
   final bool showHeading;
   final bool showFilters;
+  final double posterScale;
 
   @override
   Widget build(BuildContext context) => SkeletonShimmer(
@@ -125,29 +127,33 @@ class SkeletonCarousel extends StatelessWidget {
             const SizedBox(height: 14),
           ],
           if (showFilters) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  SkeletonBlock(width: 76, height: 36, radius: 18),
-                  SizedBox(width: 8),
-                  SkeletonBlock(width: 76, height: 36, radius: 18),
-                  SizedBox(width: 8),
-                  SkeletonBlock(width: 76, height: 36, radius: 18),
-                ],
-              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: featured
+                  ? const SkeletonBlock(height: 36, radius: 18)
+                  : const Row(
+                      children: [
+                        SkeletonBlock(width: 76, height: 36, radius: 18),
+                        SizedBox(width: 8),
+                        SkeletonBlock(width: 76, height: 36, radius: 18),
+                        SizedBox(width: 8),
+                        SkeletonBlock(width: 76, height: 36, radius: 18),
+                      ],
+                    ),
             ),
             const SizedBox(height: 10),
           ],
           SizedBox(
-            height: featured ? 318 : 284,
+            height:
+                (featured ? 318 : 284) +
+                (featured ? 158 : 144) * (posterScale - 1) * 1.5,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: 3,
               separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (_, _) => SizedBox(
-                width: featured ? 158 : 144,
+                width: (featured ? 158 : 144) * posterScale,
                 child: const SkeletonPosterCard(),
               ),
             ),

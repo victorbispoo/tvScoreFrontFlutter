@@ -39,7 +39,7 @@ class RankedContentCarousel extends StatelessWidget {
             final content = contents[index];
             final heroTag = heroTags?[index];
             return SizedBox(
-              width: 248,
+              width: 259,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () async {
@@ -53,20 +53,43 @@ class RankedContentCarousel extends StatelessWidget {
                 child: Row(
                   children: [
                     SizedBox(
-                      width: 30,
-                      child: Text(
-                        (index + 1).toString().padLeft(2, '0'),
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      width: 141,
+                      height: 144,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 0,
+                            bottom: 5,
+                            width: 54,
+                            height: 48,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.bottomLeft,
+                              child: Text(
+                                (index + 1).toString().padLeft(2, '0'),
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            width: 96,
+                            height: 144,
+                            child: ContentPoster(
+                              content: content,
+                              heroTag: heroTag,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(
-                      width: 100,
-                      height: 150,
-                      child: ContentPoster(content: content, heroTag: heroTag),
                     ),
                     const SizedBox(width: 10),
                     Expanded(

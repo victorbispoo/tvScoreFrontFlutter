@@ -297,6 +297,7 @@ class _DetailsPageState extends State<DetailsPage> {
     final colors = theme.colorScheme;
     final metadataStyle = TextStyle(color: colors.onSurfaceVariant);
     final year = content['year']?.trim() ?? '';
+    final recommendationReason = content['recommendation_reason']?.trim();
     final genres = (content['genre'] ?? '')
         .split('•')
         .map((genre) => genre.trim())
@@ -459,7 +460,29 @@ class _DetailsPageState extends State<DetailsPage> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    if (recommendationReason != null &&
+                        recommendationReason.isNotEmpty)
+                      ExpansionTile(
+                        key: ValueKey((
+                          content.contentKey,
+                          recommendationReason,
+                        )),
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: const EdgeInsets.only(bottom: 8),
+                        shape: const Border(),
+                        collapsedShape: const Border(),
+                        leading: const Icon(HugeIconsSolid.sparkles, size: 16),
+                        title: Text(
+                          'Recomendado para você',
+                          style: theme.textTheme.labelLarge,
+                        ),
+                        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(recommendationReason, style: metadataStyle),
+                        ],
+                      )
+                    else
+                      const SizedBox(height: 16),
                     _whereToWatch,
                     if (content['overview'] != null) ...[
                       const SizedBox(height: 12),
