@@ -23,6 +23,7 @@ typedef HomeSection = ({
   String title,
   IconData icon,
   List<Map<String, String>> contents,
+  String? nextPageGenre,
 });
 
 class HomePage extends StatefulWidget {
@@ -41,6 +42,17 @@ class _HomePageState extends State<HomePage>
   Future<void>? _recommendationLoad;
   List<Map<String, String>> _forYouRecommendations = const [];
   Set<(String?, String?)> _recommended = const {};
+  List<HomeSection>? _catalogSections;
+  List<Map<String, String>>? _highlights;
+  final _extraGenreContents = <String, List<Map<String, String>>>{};
+  Map<String, List<Map<String, String>>> _distributed = const {};
+  bool _canChangeTrendingFilter = false;
+  bool _recommendationsPending = false;
+  bool _catalogPending = false;
+  bool _trendingPending = false;
+  bool _extraPageRequested = false;
+  bool _recommendationsReloadQueued = false;
+  String _trendingType = 'ALL';
   String _topRatedType = 'ALL';
   String _personalizedType = 'ALL';
   static const _personalizedPosterScale = 1.1;
@@ -49,18 +61,146 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _availableGenres = ApiService().getAvailableGenres();
-    _sections = _loadSections();
-    _trending = ApiService().getHighlights();
+    _reloadCatalog();
+    _reloadTrending();
     _topRated = ApiService().getTopRatedContents(_topRatedType);
     _loadRecommendations();
     ApiService.contentPreferencesRevision.addListener(_reloadPreferences);
+    ApiService.recommendationsRevision.addListener(_recommendationsInvalidated);
   }
 
   void _reloadPreferences() {
-    setState(() {
-      _sections = _loadSections();
+    setState(_reloadCatalog);
+  }
+
+  void _recommendationsInvalidated() {
+    if (_recommendationsReloadQueued) return;
+    _recommendationsReloadQueued = true;
+    Future<void>.microtask(() {
+      _recommendationsReloadQueued = false;
+      if (mounted) _loadRecommendations();
     });
-    _loadRecommendations();
+  }
+
+  void _reloadCatalog() {
+    final token = ApiService.token;
+    final request = _sections = _loadSections();
+    _catalogPending = true;
+    void complete(List<HomeSection>? sections) {
+      if (!mounted || !identical(_sections, request)) return;
+      setState(() {
+        _catalogPending = false;
+        _catalogSections = ApiService.token == token ? sections : const [];
+        _extraPageRequested = false;
+        _extraGenreContents.clear();
+        _distributeContents();
+      });
+      _fillEmptyGenre();
+    }
+
+    request.then(complete, onError: (Object _) => complete(null));
+  }
+
+  void _reloadTrending() {
+    final request = _trending = ApiService().getHighlights();
+    _trendingPending = true;
+    void complete(List<Map<String, String>> contents) {
+      if (!mounted || !identical(_trending, request)) return;
+      setState(() {
+        _trendingPending = false;
+        _highlights = contents;
+        _distributeContents();
+      });
+      _fillEmptyGenre();
+    }
+
+    request.then(complete, onError: (Object _) => complete(const []));
+  }
+
+  void _distributeContents() {
+    final used = <(String?, String?)>{};
+    final sections = _catalogSections ?? const <HomeSection>[];
+    final highlights = _highlights ?? const <Map<String, String>>[];
+    List<Map<String, String>> allocate(
+      Iterable<Map<String, String>> candidates, {
+      String type = 'ALL',
+      int? limit,
+    }) {
+      final filtered = candidates
+          .where((item) => type == 'ALL' || item['type'] == type)
+          .where((item) => used.add(item.contentKey));
+      return (limit == null ? filtered : filtered.take(limit)).toList();
+    }
+
+    final fallback = sections
+        .where((section) => section.type == HomeSectionType.personalized)
+        .firstOrNull
+        ?.contents;
+    final personalized = _forYouRecommendations.isNotEmpty
+        ? _forYouRecommendations
+        : fallback != null && fallback.isNotEmpty
+        ? fallback
+        : _catalogSections == null
+        ? const <Map<String, String>>[]
+        : highlights;
+    final forYou = allocate(
+      personalized,
+      type: _personalizedType,
+      limit: _forYouRecommendations.isEmpty ? 12 : null,
+    );
+    _canChangeTrendingFilter = highlights.any(
+      (item) => !used.contains(item.contentKey),
+    );
+    _distributed = {
+      'personalized': forYou,
+      'trending': allocate(
+        _prioritizeTrending(highlights),
+        type: _trendingType,
+      ),
+      for (final section in sections)
+        if (section.type != HomeSectionType.personalized)
+          section.heroSection: allocate([
+            ...section.contents,
+            ...?_extraGenreContents[section.heroSection],
+          ]),
+    };
+  }
+
+  Future<void> _fillEmptyGenre() async {
+    if (_extraPageRequested ||
+        _catalogPending ||
+        _trendingPending ||
+        _recommendationsPending) {
+      return;
+    }
+    final section = _catalogSections
+        ?.where(
+          (section) =>
+              section.nextPageGenre != null &&
+              _distributed[section.heroSection]?.isEmpty == true,
+        )
+        .firstOrNull;
+    if (section == null) return;
+    _extraPageRequested = true;
+    final catalog = _sections;
+    final token = ApiService.token;
+    try {
+      final page = await ApiService().getGenrePage(
+        section.nextPageGenre!,
+        page: 2,
+      );
+      if (!mounted ||
+          !identical(_sections, catalog) ||
+          ApiService.token != token) {
+        return;
+      }
+      setState(() {
+        _extraGenreContents[section.heroSection] = page.contents;
+        _distributeContents();
+      });
+    } catch (_) {
+      // An optional catalog page must not interrupt the Home.
+    }
   }
 
   Future<void> _loadRecommendations({bool refresh = false}) {
@@ -69,8 +209,11 @@ class _HomePageState extends State<HomePage>
       _recommendationLoad = null;
       _recommended = const {};
       _forYouRecommendations = const [];
+      _recommendationsPending = false;
+      _distributeContents();
       return Future.value();
     }
+    _recommendationsPending = true;
     final api = ApiService();
     late final Future<void> load;
     Future<List<Recommendation>> read(
@@ -106,10 +249,14 @@ class _HomePageState extends State<HomePage>
           read(api.getSeriesRecommendations),
         ]).then((results) {
           if (!mounted || !identical(_recommendationLoad, load)) return;
+          _recommendationsPending = false;
           if (ApiService.token != token) {
             setState(() {
               _recommended = const {};
               _forYouRecommendations = const [];
+              _catalogSections = const [];
+              _extraGenreContents.clear();
+              _distributeContents();
             });
             return;
           }
@@ -131,7 +278,9 @@ class _HomePageState extends State<HomePage>
           setState(() {
             _recommended = seen;
             _forYouRecommendations = contents;
+            _distributeContents();
           });
+          _fillEmptyGenre();
         });
     return _recommendationLoad = load;
   }
@@ -186,6 +335,9 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     ApiService.contentPreferencesRevision.removeListener(_reloadPreferences);
+    ApiService.recommendationsRevision.removeListener(
+      _recommendationsInvalidated,
+    );
     super.dispose();
   }
 
@@ -221,11 +373,19 @@ class _HomePageState extends State<HomePage>
       if (discoverGenre != null) discoverGenre['codigo'] as String,
     };
 
-    final results = await Future.wait(codesToLoad.map(api.getContentsByGenre));
-
-    final contentsByCode = Map<String, List<Map<String, String>>>.fromIterables(
-      codesToLoad,
-      results,
+    final pages = Map.fromEntries(
+      await Future.wait(
+        codesToLoad.map((code) async {
+          try {
+            return MapEntry(code, await api.getGenrePage(code));
+          } catch (_) {
+            return MapEntry(code, (
+              contents: const <Map<String, String>>[],
+              hasNextPage: false,
+            ));
+          }
+        }),
+      ),
     );
 
     final sections = <HomeSection>[];
@@ -234,15 +394,15 @@ class _HomePageState extends State<HomePage>
       final lists = preferredGenres
           .map(
             (genre) =>
-                contentsByCode[genre['codigo']] ?? <Map<String, String>>[],
+                pages[genre['codigo']]?.contents ?? <Map<String, String>>[],
           )
           .toList();
       final forYou = <Map<String, String>>[];
       final seen = <(String?, String?)>{};
-      for (var index = 0; forYou.length < 12; index++) {
+      for (var index = 0; ; index++) {
         var added = false;
         for (final list in lists) {
-          if (index < list.length && forYou.length < 12) {
+          if (index < list.length) {
             final content = list[index];
             if (seen.add(content.contentKey)) forYou.add(content);
             added = true;
@@ -257,6 +417,7 @@ class _HomePageState extends State<HomePage>
         title: 'Para você',
         icon: HugeIconsSolid.sparkles,
         contents: forYou,
+        nextPageGenre: null,
       ));
     }
 
@@ -266,7 +427,10 @@ class _HomePageState extends State<HomePage>
         heroSection: 'genre:${genre['codigo']}',
         title: genre['nome'] as String,
         icon: genreIcon(genre['codigo'] as String),
-        contents: contentsByCode[genre['codigo']] ?? [],
+        contents: pages[genre['codigo']]?.contents ?? [],
+        nextPageGenre: pages[genre['codigo']]?.hasNextPage == true
+            ? genre['codigo'] as String
+            : null,
       ));
     }
 
@@ -276,7 +440,10 @@ class _HomePageState extends State<HomePage>
         heroSection: 'discover:${discoverGenre['codigo']}',
         title: 'Descubra algo',
         icon: HugeIconsSolid.compass01,
-        contents: contentsByCode[discoverGenre['codigo']] ?? [],
+        contents: pages[discoverGenre['codigo']]?.contents ?? [],
+        nextPageGenre: pages[discoverGenre['codigo']]?.hasNextPage == true
+            ? discoverGenre['codigo'] as String
+            : null,
       ));
     }
 
@@ -285,17 +452,15 @@ class _HomePageState extends State<HomePage>
 
   Future<void> _refresh() async {
     _availableGenres = ApiService().getAvailableGenres();
-    final sections = _loadSections();
-    final trending = ApiService().getHighlights();
     final topRated = ApiService().getTopRatedContents(_topRatedType);
     setState(() {
-      _sections = sections;
-      _trending = trending;
+      _reloadCatalog();
+      _reloadTrending();
       _topRated = topRated;
     });
     final recommendations = _loadRecommendations(refresh: true);
     try {
-      await (sections, trending, topRated, recommendations).wait;
+      await (_sections, _trending, topRated, recommendations).wait;
     } catch (error, stackTrace) {
       debugPrint('Erro ao atualizar Home: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -317,7 +482,7 @@ class _HomePageState extends State<HomePage>
       future: _sections,
       builder: (context, snapshot) {
         if (personalized && _forYouRecommendations.isNotEmpty) {
-          return _personalizedCarousel(_forYouRecommendations);
+          return _personalizedCarousel(_distributed['personalized'] ?? []);
         }
         if (snapshot.hasError) {
           return personalized
@@ -326,7 +491,7 @@ class _HomePageState extends State<HomePage>
                   child: TextButton(
                     onPressed: () => setState(() {
                       _availableGenres = ApiService().getAvailableGenres();
-                      _sections = _loadSections();
+                      _reloadCatalog();
                     }),
                     child: const Text(
                       'Não foi possível carregar os gêneros. Tentar novamente',
@@ -350,7 +515,7 @@ class _HomePageState extends State<HomePage>
               .firstOrNull
               ?.contents;
           if (fallback != null && fallback.isNotEmpty) {
-            return _personalizedCarousel(fallback);
+            return _personalizedCarousel(_distributed['personalized'] ?? []);
           }
           return FutureBuilder(
             future: _trending,
@@ -363,13 +528,8 @@ class _HomePageState extends State<HomePage>
                   posterScale: _personalizedPosterScale,
                 );
               }
-              final seen = <(String?, String?)>{};
-              return _personalizedCarousel(
-                snapshot.data!
-                    .where((content) => seen.add(content.contentKey))
-                    .take(12)
-                    .toList(),
-              );
+              if (snapshot.data!.isEmpty) return const SizedBox.shrink();
+              return _personalizedCarousel(_distributed['personalized'] ?? []);
             },
           );
         }
@@ -392,9 +552,7 @@ class _HomePageState extends State<HomePage>
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   title: section.title,
-                  contents: section.type == HomeSectionType.genre
-                      ? _prioritizeMatches(section.contents)
-                      : section.contents,
+                  contents: _distributed[section.heroSection] ?? [],
                 ),
           ],
         );
@@ -411,18 +569,17 @@ class _HomePageState extends State<HomePage>
           color: Theme.of(context).colorScheme.primary,
         ),
         title: 'Para você',
-        contents: _personalizedType == 'ALL'
-            ? contents
-            : contents
-                  .where((item) => item['type'] == _personalizedType)
-                  .toList(),
+        contents: contents,
         featured: true,
         posterScale: _personalizedPosterScale,
         filters: TvScoreSegmentedControl<String>(
           textScale: _personalizedPosterScale,
           options: const {'ALL': 'Todos', 'MOVIE': 'Filmes', 'TV': 'Séries'},
           selectedValue: _personalizedType,
-          onChanged: (value) => setState(() => _personalizedType = value),
+          onChanged: (value) => setState(() {
+            _personalizedType = value;
+            _distributeContents();
+          }),
         ),
         onChanged: () => setState(() {}),
       );
@@ -474,9 +631,7 @@ class _HomePageState extends State<HomePage>
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return TextButton(
-                    onPressed: () => setState(
-                      () => _trending = ApiService().getHighlights(),
-                    ),
+                    onPressed: () => setState(_reloadTrending),
                     child: const Text(
                       'Não foi possível carregar Em alta. Tentar novamente',
                     ),
@@ -486,7 +641,13 @@ class _HomePageState extends State<HomePage>
                   return const SkeletonCarousel(showFilters: true);
                 }
                 return TrendingCarousel(
-                  contents: _prioritizeTrending(snapshot.data!),
+                  contents: _distributed['trending'] ?? [],
+                  showWhenEmpty: _canChangeTrendingFilter,
+                  selectedType: _trendingType,
+                  onTypeSelected: (value) => setState(() {
+                    _trendingType = value;
+                    _distributeContents();
+                  }),
                   onChanged: () => setState(() {}),
                   heroSection: 'trending',
                 );

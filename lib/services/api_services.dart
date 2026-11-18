@@ -23,9 +23,12 @@ class ApiService {
 
   final DateTime Function() _recommendationClock;
   static final _recommendations = <String, _RecommendationEntry>{};
+  static final recommendationsRevision = ValueNotifier<int>(0);
 
   static void _invalidateRecommendations(int session) {
-    if (session == _sessionVersion) _recommendations.clear();
+    if (session != _sessionVersion) return;
+    _recommendations.clear();
+    recommendationsRevision.value++;
   }
 
   static void _advanceSession() {

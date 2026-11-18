@@ -282,6 +282,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    final personalized = find.byWidgetPredicate(
+      (widget) =>
+          widget is ContentCarousel && widget.heroSection == 'personalized',
+    );
+    await tester.tap(
+      find.descendant(of: personalized, matching: find.text('Filmes')),
+    );
+    await tester.pumpAndSettle();
     final trending = find.byType(TrendingCarousel);
     final seriesFilter = find.descendant(
       of: trending,

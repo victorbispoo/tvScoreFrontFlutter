@@ -44,17 +44,24 @@ extension ContentService on ApiService {
     return _mapContent(data, type)..putIfAbsent('ondeAssistir', () => '{}');
   }
 
-  Future<List<Map<String, String>>> getContentsByGenre(String code) async {
+  Future<({List<Map<String, String>> contents, bool hasNextPage})> getGenrePage(
+    String code, {
+    int page = 1,
+  }) async {
     final response = await dio.get(
       '/conteudos/por-genero',
-      queryParameters: {'genero': code, 'pagina': 1},
+      queryParameters: {'genero': code, 'pagina': page},
     );
 
     final results = response.data['results'] as List? ?? [];
-    return results.map((item) {
-      final data = Map<String, dynamic>.from(item as Map);
-      return _mapContent(data, data['tipoConteudo'] as String);
-    }).toList();
+    final totalPages = response.data['total_pages'];
+    return (
+      contents: results.map((item) {
+        final data = Map<String, dynamic>.from(item as Map);
+        return _mapContent(data, data['tipoConteudo'] as String);
+      }).toList(),
+      hasNextPage: totalPages is int && page < totalPages,
+    );
   }
 
   Future<({List<Map<String, String>> contents, int page, int totalPages})>

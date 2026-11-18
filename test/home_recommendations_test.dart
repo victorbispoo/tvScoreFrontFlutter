@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +23,7 @@ class _HomeBackend extends BackendHttp {
     this.empty = false,
     this.invalidResponse = false,
     this.networkFailure = false,
+    this.paginated = false,
   }) {
     catalog
       ..clear()
@@ -51,6 +53,7 @@ class _HomeBackend extends BackendHttp {
   final bool empty;
   final bool invalidResponse;
   bool networkFailure;
+  final bool paginated;
 
   int get recommendationReads =>
       requests.where((request) => request.contains('/recomendacoes/')).length;
@@ -64,6 +67,37 @@ class _HomeBackend extends BackendHttp {
 
   @override
   Object? respond(String method, Uri uri, String body) {
+    if (uri.path.endsWith('/conteudos/por-genero')) {
+      final code = uri.queryParameters['genero'];
+      final page = uri.queryParameters['pagina'];
+      requests.add('GET gênero $code página $page');
+      Map<String, dynamic> extra(int id) => details({
+        'id': '$id',
+        'type': 'MOVIE',
+        'title': 'Gênero $id',
+        'year': '2024',
+        'score': '8.0',
+      });
+      return {
+        if (paginated) 'total_pages': 3,
+        'results': [
+          if (page == '2')
+            extra(105)
+          else if (code == 'drama') ...[
+            for (final i in [0, 1, 2, 4]) details(catalog[i]),
+            if (!paginated) extra(101),
+          ] else if (code == 'comedia') ...[
+            details(catalog[3]),
+            extra(101),
+            extra(102),
+          ] else ...[
+            details(catalog[5]),
+            extra(102),
+            extra(103),
+          ],
+        ],
+      };
+    }
     if (multipleGenres && uri.path.endsWith('/conteudos/generos')) {
       return [
         {'codigo': 'drama', 'nome': 'Drama'},
@@ -175,7 +209,7 @@ void main() {
               .widget<TrendingCarousel>(find.byType(TrendingCarousel))
               .contents,
         ),
-        ['MOVIE 2', 'MOVIE 1', 'MOVIE 3', 'MOVIE 4', 'TV 2', 'TV 3'],
+        ['MOVIE 1', 'MOVIE 4', 'TV 3'],
       );
       expect(
         titles(
@@ -185,22 +219,8 @@ void main() {
         ),
         ['MOVIE 4', 'MOVIE 2', 'TV 2', 'MOVIE 1', 'TV 3', 'MOVIE 3'],
       );
-      expect(titles(section(tester, 'genre:drama')), [
-        'MOVIE 2',
-        'MOVIE 3',
-        'TV 2',
-        'MOVIE 1',
-        'MOVIE 4',
-        'TV 3',
-      ]);
-      expect(titles(section(tester, 'discover:comedia')), [
-        'MOVIE 1',
-        'MOVIE 2',
-        'MOVIE 3',
-        'MOVIE 4',
-        'TV 2',
-        'TV 3',
-      ]);
+      expect(titles(section(tester, 'genre:drama')), ['Gênero 101']);
+      expect(titles(section(tester, 'discover:comedia')), ['Gênero 102']);
 
       for (final carousel in [TrendingCarousel, TopRatedCarousel]) {
         await tester.tap(
@@ -212,6 +232,8 @@ void main() {
         await tester.pumpAndSettle();
       }
       expect(backend.recommendationReads, 2);
+      expect(titles(section(tester, 'trending')), ['TV 3']);
+      expect(titles(section(tester, 'genre:drama')), ['MOVIE 1', 'Gênero 101']);
       backend.delayedPaths.clear();
       final refreshing = tester
           .state<RefreshIndicatorState>(find.byType(RefreshIndicator))
@@ -219,6 +241,7 @@ void main() {
       await tester.pumpAndSettle();
       await refreshing;
       expect(backend.recommendationReads, 4);
+      expect(titles(section(tester, 'trending')), ['TV 3']);
     },
   );
 
@@ -278,10 +301,75 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(titles(section(tester, 'personalized')), expected);
+        if (filter == 'Filmes') {
+          expect(titles(section(tester, 'trending')), contains('TV 2'));
+        }
       }
+      expect(titles(section(tester, 'genre:drama')), ['Gênero 101']);
+      expect(titles(section(tester, 'genre:comedia')), ['Gênero 102']);
+      expect(titles(section(tester, 'discover:terror')), ['Gênero 103']);
       expect(backend.recommendationReads, 2);
     },
   );
+
+  testWidgets('repõe um gênero vazio com uma única página adicional', (
+    tester,
+  ) async {
+    final backend = _HomeBackend(paginated: true);
+    await mount(tester, backend);
+    await tester.pumpAndSettle();
+    expect(titles(section(tester, 'genre:drama')), ['Gênero 105']);
+    expect(backend.requests.where((entry) => entry.endsWith('página 2')), [
+      'GET gênero drama página 2',
+    ]);
+    expect(
+      backend.requests.where((entry) => entry.endsWith('página 3')),
+      isEmpty,
+    );
+  });
+
+  testWidgets('mantém prioridades se o catálogo terminar depois da IA', (
+    tester,
+  ) async {
+    final backend = _HomeBackend()
+      ..responseDelay = const Duration(seconds: 1)
+      ..delayedPaths.addAll(['/conteudos/por-genero', '/filmes/em-alta']);
+    await mount(tester, backend);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(titles(section(tester, 'personalized')), [
+      'MOVIE 2',
+      'TV 2',
+      'MOVIE 3',
+    ]);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    expect(titles(section(tester, 'trending')), ['MOVIE 1', 'MOVIE 4', 'TV 3']);
+    expect(titles(section(tester, 'genre:drama')), ['Gênero 101']);
+    expect(titles(section(tester, 'discover:comedia')), ['Gênero 102']);
+    expect(backend.recommendationReads, 2);
+  });
+
+  testWidgets('recompõe a Home quando um favorito invalida as recomendações', (
+    tester,
+  ) async {
+    final backend = _HomeBackend();
+    await mount(tester, backend);
+    await tester.pumpAndSettle();
+    expect(backend.recommendationReads, 2);
+    final api = ApiService();
+    api.dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) =>
+            handler.resolve(Response(requestOptions: options, statusCode: 201)),
+      ),
+    );
+    final save = api.addFavourite({'type': 'MOVIE', 'id': '2'});
+    await tester.pump(const Duration(milliseconds: 100));
+    await save;
+    await tester.pumpAndSettle();
+    expect(backend.recommendationReads, 4);
+    expect(titles(section(tester, 'trending')), ['MOVIE 1', 'MOVIE 4', 'TV 3']);
+  });
 
   testWidgets('mantém filmes quando séries falham', (tester) async {
     await mount(tester, _HomeBackend(seriesStatus: 503));
@@ -397,7 +485,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(titles(section(tester, 'personalized')).first, 'MOVIE 1');
       expect(find.text('Para você'), findsOneWidget);
-      expect(find.text('Drama'), preferred ? findsWidgets : findsNothing);
+      expect(find.text('Drama'), findsNothing);
     });
   }
 }

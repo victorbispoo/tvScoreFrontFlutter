@@ -24,14 +24,21 @@ void main() {
     ];
 
     for (final width in [320.0, 390.0, 480.0]) {
+      var filter = 'ALL';
       await tester.binding.setSurfaceSize(Size(width, 800));
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TrendingCarousel(
-              key: ValueKey(width),
-              contents: contents,
-              onChanged: () {},
+            body: StatefulBuilder(
+              builder: (context, setState) => TrendingCarousel(
+                key: ValueKey(width),
+                contents: contents
+                    .where((item) => filter == 'ALL' || item['type'] == filter)
+                    .toList(),
+                selectedType: filter,
+                onTypeSelected: (value) => setState(() => filter = value),
+                onChanged: () {},
+              ),
             ),
           ),
         ),
