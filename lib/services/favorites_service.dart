@@ -14,21 +14,25 @@ extension FavoritesService on ApiService {
   }
 
   Future<void> addFavourite(Map<String, String> content) async {
+    final session = ApiService._sessionVersion;
     final reference = content.apiReference;
     await dio.post(
       '/favoritos',
       data: {'filmeSerieId': reference.id, 'tipoConteudo': reference.type},
       options: _authorizationOptions,
     );
+    ApiService._invalidateRecommendations(session);
   }
 
   Future<void> removeFavourite(Map<String, String> content) async {
+    final session = ApiService._sessionVersion;
     final reference = content.apiReference;
     await dio.delete(
       '/favoritos/${reference.id}',
       queryParameters: {'tipoConteudo': reference.type},
       options: _authorizationOptions,
     );
+    ApiService._invalidateRecommendations(session);
   }
 
   Future<void> loadFavorites() async {

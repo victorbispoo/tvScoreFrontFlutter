@@ -18,6 +18,21 @@ part 'preferences_service.dart';
 part 'recommendations_service.dart';
 
 class ApiService {
+  ApiService({DateTime Function()? recommendationClock})
+    : _recommendationClock = recommendationClock ?? DateTime.now;
+
+  final DateTime Function() _recommendationClock;
+  static final _recommendations = <String, _RecommendationEntry>{};
+
+  static void _invalidateRecommendations(int session) {
+    if (session == _sessionVersion) _recommendations.clear();
+  }
+
+  static void _advanceSession() {
+    _sessionVersion++;
+    _recommendations.clear();
+  }
+
   static const maxSearchPage = 500;
   // Use --dart-define=USE_MOCK_MOVIES=false para voltar ao backend.
   static const useMockContents = bool.fromEnvironment(
@@ -31,7 +46,14 @@ class ApiService {
   Options get _authorizationOptions =>
       Options(headers: {'Authorization': 'Bearer ${ApiService.token}'});
 
-  static String? token;
+  static String? _token;
+  static String? get token => _token;
+  static set token(String? value) {
+    if (_token == value) return;
+    _token = value;
+    _advanceSession();
+  }
+
   static int _sessionVersion = 0;
 
   static void _checkSession(int version) {
@@ -59,7 +81,7 @@ class ApiService {
   }
 
   Future<void> open(String email, String defaultName) async {
-    _sessionVersion++;
+    _advanceSession();
     userPhotoUrl.value = null;
     _clearReviewCache();
     final preferences = SharedPreferencesAsync();

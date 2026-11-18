@@ -24,6 +24,7 @@ extension PreferencesService on ApiService {
       options: _authorizationOptions,
     );
     ApiService._checkSession(session);
+    ApiService._invalidateRecommendations(session);
   }
 
   Future<List<Map<String, String>>> getPreferredContents() async {
@@ -89,6 +90,7 @@ extension PreferencesService on ApiService {
       options: _authorizationOptions,
     );
     ApiService._checkSession(session);
+    ApiService._invalidateRecommendations(session);
   }
 
   Future<List<Map<String, dynamic>>> getPreferredGenres() async {

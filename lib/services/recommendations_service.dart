@@ -1,22 +1,64 @@
 part of 'api_services.dart';
 
-extension RecommendationsService on ApiService {
-  Future<Recommendations> getMovieRecommendations() =>
-      _getRecommendations('filmes', 'MOVIE');
+class _RecommendationEntry {
+  late final Future<Recommendations> future;
+  DateTime? expiresAt;
+}
 
-  Future<Recommendations> getSeriesRecommendations() =>
-      _getRecommendations('series', 'TV');
+extension RecommendationsService on ApiService {
+  Future<Recommendations> getMovieRecommendations({bool refresh = false}) =>
+      _getRecommendations('filmes', 'MOVIE', refresh);
+
+  Future<Recommendations> getSeriesRecommendations({bool refresh = false}) =>
+      _getRecommendations('series', 'TV', refresh);
 
   Future<Recommendations> _getRecommendations(
     String resource,
     String type,
-  ) async {
-    final token = ApiService.token;
-    if (token == null || token.isEmpty) {
-      throw const RecommendationException(RecommendationFailure.invalidSession);
+    bool refresh,
+  ) {
+    if (ApiService.token?.isNotEmpty != true) {
+      return Future.error(
+        const RecommendationException(RecommendationFailure.invalidSession),
+      );
     }
-    final session = ApiService._sessionVersion;
+    final cache = ApiService._recommendations;
+    final cached = cache[resource];
+    if (cached != null) {
+      final expiresAt = cached.expiresAt;
+      if (expiresAt == null ||
+          (!refresh && _recommendationClock().isBefore(expiresAt))) {
+        return cached.future;
+      }
+    }
 
+    final entry = cache[resource] = _RecommendationEntry();
+    final session = ApiService._sessionVersion;
+    entry.future = _fetchRecommendations(resource, type, session).then(
+      (result) {
+        if (!identical(cache[resource], entry)) {
+          throw const RecommendationException(
+            RecommendationFailure.invalidated,
+          );
+        }
+        entry.expiresAt = _recommendationClock().add(
+          const Duration(minutes: 15),
+        );
+        return result;
+      },
+      onError: (Object error, StackTrace stack) {
+        if (identical(cache[resource], entry)) cache.remove(resource);
+        Error.throwWithStackTrace(error, stack);
+      },
+    );
+    return entry.future;
+  }
+
+  Future<Recommendations> _fetchRecommendations(
+    String resource,
+    String type,
+    int session,
+  ) async {
     try {
       final response = await dio.get<Map<String, dynamic>>(
         '/recomendacoes/$resource',
@@ -27,10 +69,13 @@ extension RecommendationsService on ApiService {
     } on StateError {
       throw const RecommendationException(RecommendationFailure.invalidSession);
     } on DioException catch (error) {
+      if (session != ApiService._sessionVersion) {
+        throw const RecommendationException(
+          RecommendationFailure.invalidSession,
+        );
+      }
       final status = error.response?.statusCode;
-      if (status == 401 &&
-          session == ApiService._sessionVersion &&
-          token == ApiService.token) {
+      if (status == 401) {
         await _invalidateSession();
       }
       throw RecommendationException(switch (status) {
@@ -67,18 +112,22 @@ extension RecommendationsService on ApiService {
       throw const FormatException('Lista de recomendações ausente.');
     }
     return Recommendations(
-      preferences: (data['preferencias'] as Map?)?.map(
-        (key, value) => MapEntry(key as String, value as num),
-      ),
+      preferences: switch (data['preferencias']) {
+        null => null,
+        final Map values => Map<String, num>.unmodifiable(values),
+        _ => throw const FormatException('Preferências inválidas.'),
+      },
       total: data['total'] as int?,
       partial: data['parcial'] as bool?,
-      warnings: (data['avisos'] as List?)
-          ?.map((value) => value as String)
-          .toList(),
-      items: [
+      warnings: switch (data['avisos']) {
+        null => null,
+        final List values => List<String>.unmodifiable(values),
+        _ => throw const FormatException('Avisos inválidos.'),
+      },
+      items: List.unmodifiable([
         for (final item in data['recomendacoes'] as List)
           _parseRecommendation(item as Map<String, dynamic>, type),
-      ],
+      ]),
     );
   }
 

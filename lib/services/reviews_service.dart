@@ -190,6 +190,7 @@ extension ReviewsService on ApiService {
 
     _replaceReviewFor(content, savedReview);
     ApiService._clearReviewCache();
+    ApiService._invalidateRecommendations(session);
   }
 
   Future<void> deleteReview(Review review) async {
@@ -211,5 +212,6 @@ extension ReviewsService on ApiService {
         .where((item) => item.id != id)
         .toList();
     ApiService._clearReviewCache();
+    ApiService._invalidateRecommendations(session);
   }
 }

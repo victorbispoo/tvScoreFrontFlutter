@@ -34,6 +34,7 @@ class Recommendation {
 
 enum RecommendationFailure {
   invalidSession,
+  invalidated,
   accessDenied,
   invalidResponse,
   unavailable,

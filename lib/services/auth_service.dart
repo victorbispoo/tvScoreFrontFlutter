@@ -125,9 +125,9 @@ extension AuthService on ApiService {
   static const _sessionKey = 'tv_score_session';
 
   static void _clearAccount() {
-    ApiService._sessionVersion++;
+    ApiService._advanceSession();
     ApiService._clearReviewCache();
-    ApiService.token = null;
+    ApiService._token = null;
     ApiService.userName = '';
     ApiService.userPhotoUrl.value = null;
     ApiService.userEmail = '';
