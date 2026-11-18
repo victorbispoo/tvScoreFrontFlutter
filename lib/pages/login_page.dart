@@ -8,7 +8,9 @@ import '../widgets/auth_text_field.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.passwordReset = false});
+
+  final bool passwordReset;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -67,6 +69,18 @@ class _LoginPageState extends State<LoginPage> {
                           ],
                         ),
                         const SizedBox(height: 12),
+                        if (widget.passwordReset) ...[
+                          Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              'Senha redefinida. Entre com sua nova senha.',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         Text(
                           'Email',
                           style: TextStyle(

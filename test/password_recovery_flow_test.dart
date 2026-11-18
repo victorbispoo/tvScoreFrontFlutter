@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tv_score_front_flutter/core/app_routes.dart';
 import 'package:tv_score_front_flutter/pages/login_page.dart';
@@ -10,6 +11,8 @@ import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/auth_text_field.dart';
 
 import 'support/backend_http.dart';
+
+final _token = 'a' * 43;
 
 class RecoveryBackend extends BackendHttp {
   RecoveryBackend(this.status);
@@ -22,10 +25,7 @@ class RecoveryBackend extends BackendHttp {
     calls++;
     expect(method, 'POST');
     if (uri.path.endsWith('/redefinicao')) {
-      expect(jsonDecode(body), {
-        'token': 'opaque+/=',
-        'novaSenha': ' senha nova ',
-      });
+      expect(jsonDecode(body), {'token': _token, 'novaSenha': ' senha nova '});
       return null;
     }
     expect(jsonDecode(body), {'email': 'user@example.com'});
@@ -37,20 +37,25 @@ void main() {
   Future<GlobalKey<NavigatorState>> launch(
     WidgetTester tester,
     int status, {
-    String? initialRoute,
+    RouteSettings? recoveryRoute,
+    Brightness brightness = Brightness.dark,
   }) async {
     final previous = HttpOverrides.current;
     HttpOverrides.global = RecoveryBackend(status);
     addTearDown(() => HttpOverrides.global = previous);
     ApiService.token = 'existing-session';
+    FlutterSecureStorage.setMockInitialValues({});
     final navigator = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
       MaterialApp(
         navigatorKey: navigator,
-        theme: ThemeData.dark(),
-        home: const LoginPage(),
+        theme: ThemeData(brightness: brightness),
+        home: recoveryRoute == null ? const LoginPage() : null,
         onGenerateRoute: AppRoutes.generate,
-        initialRoute: initialRoute,
+        initialRoute: recoveryRoute?.name,
+        onGenerateInitialRoutes: recoveryRoute == null
+            ? null
+            : (_) => [AppRoutes.generate(recoveryRoute)!],
       ),
     );
     await tester.pumpAndSettle();
@@ -76,7 +81,9 @@ void main() {
     await tester.tap(find.text('Enviar solicitação'));
     await tester.pumpAndSettle();
     expect(
-      find.text('Se houver uma conta, enviaremos instruções.'),
+      find.text(
+        'Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação.',
+      ),
       findsOneWidget,
     );
     await tester.tap(find.text('Voltar ao login'));
@@ -89,17 +96,18 @@ void main() {
   for (final status in [204, 400]) {
     testWidgets('reset receives URL token and handles $status', (tester) async {
       final url = Uri.parse(
-        'http://localhost:3000/redefinir-senha?token=opaque%2B%2F%3D',
+        'https://tvscore.example/redefinir-senha?token=$_token',
       );
       final navigator = await launch(
         tester,
         status,
-        initialRoute: AppRoutes.recoveryRouteFromUrl(url),
+        recoveryRoute: AppRoutes.recoveryRouteFromUrl(url),
+        brightness: status == 204 ? Brightness.light : Brightness.dark,
       );
       final page = tester.widget<PasswordRecoveryPage>(
         find.byType(PasswordRecoveryPage),
       );
-      expect(page.token, 'opaque+/=');
+      expect(page.token, _token);
       expect(
         ModalRoute.of(
           tester.element(find.byType(PasswordRecoveryPage)),
@@ -107,6 +115,9 @@ void main() {
         AppRoutes.resetPassword,
       );
       final fields = find.byType(TextFormField);
+      await tester.tap(find.byTooltip('Mostrar senha').first);
+      await tester.pump();
+      expect(find.byTooltip('Ocultar senha'), findsOneWidget);
       await tester.enterText(fields.at(0), ' senha nova ');
       await tester.enterText(fields.at(1), 'different');
       final submit = find.widgetWithText(FilledButton, 'Redefinir senha');
@@ -115,7 +126,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('As senhas não coincidem.'), findsOneWidget);
       await tester.enterText(fields.at(1), ' senha nova ');
-      await tester.tap(submit);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
       if (status == 204) {
         expect(find.byType(LoginPage), findsOneWidget);
@@ -127,8 +138,11 @@ void main() {
       } else {
         expect(find.byType(PasswordRecoveryPage), findsOneWidget);
         expect(find.textContaining('O link é inválido'), findsOneWidget);
+        await tester.tap(find.text('Solicitar novo link'));
+        await tester.pumpAndSettle();
+        expect(find.text('Recuperar senha'), findsOneWidget);
       }
-      expect(ApiService.token, 'existing-session');
+      expect(ApiService.token, status == 204 ? isNull : 'existing-session');
       expect(tester.takeException(), isNull);
     });
   }
@@ -136,20 +150,24 @@ void main() {
   testWidgets('missing token disables reset; hash URLs are accepted', (
     tester,
   ) async {
-    expect(
-      AppRoutes.recoveryRouteFromUrl(
-        Uri.parse('http://localhost:3000/#/redefinir-senha?token=opaque'),
-      ),
-      '/redefinir-senha?token=opaque',
+    final hashed = AppRoutes.recoveryRouteFromUrl(
+      Uri.parse('https://tvscore.example/#/redefinir-senha?token=$_token'),
     );
-    await launch(tester, 204, initialRoute: '/redefinir-senha');
+    expect(hashed?.name, AppRoutes.resetPassword);
+    expect(hashed?.arguments, _token);
+    await launch(
+      tester,
+      204,
+      recoveryRoute: const RouteSettings(name: AppRoutes.resetPassword),
+    );
     expect(
       find.text('Link de recuperação inválido. Solicite um novo link.'),
       findsOneWidget,
     );
+    expect(find.widgetWithText(FilledButton, 'Redefinir senha'), findsNothing);
     expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNull,
+      find.widgetWithText(FilledButton, 'Solicitar novo link'),
+      findsOneWidget,
     );
   });
 

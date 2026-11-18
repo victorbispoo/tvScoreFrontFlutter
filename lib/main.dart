@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'core/app_routes.dart';
 import 'core/app_shell.dart';
 import 'core/app_theme.dart';
+import 'core/recovery_browser_url.dart'
+    if (dart.library.js_interop) 'core/recovery_browser_url_web.dart';
 import 'core/system_ui_style.dart';
 import 'core/theme_controller.dart';
 import 'pages/login_page.dart';
@@ -14,15 +16,21 @@ export 'core/app_shell.dart' show AppShell;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final url = Uri.base;
+  final recoveryRoute = kIsWeb ? AppRoutes.recoveryRouteFromUrl(url) : null;
+  if (recoveryRoute != null) {
+    replaceRecoveryBrowserUrl(AppRoutes.recoveryUrlWithoutToken(url));
+  }
   await ThemeController.instance.restore();
-  final loggedIn = await ApiService().restoreSession();
-  runApp(TvScoreApp(loggedIn: loggedIn));
+  final loggedIn = recoveryRoute == null && await ApiService().restoreSession();
+  runApp(TvScoreApp(loggedIn: loggedIn, recoveryRoute: recoveryRoute));
 }
 
 class TvScoreApp extends StatelessWidget {
-  const TvScoreApp({super.key, this.loggedIn = false});
+  const TvScoreApp({super.key, this.loggedIn = false, this.recoveryRoute});
 
   final bool loggedIn;
+  final RouteSettings? recoveryRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +47,13 @@ class TvScoreApp extends StatelessWidget {
         darkTheme: AppTheme.dark,
         themeMode: mode,
         onGenerateRoute: AppRoutes.generate,
-        initialRoute: kIsWeb ? AppRoutes.recoveryRouteFromUrl(Uri.base) : null,
-        home: loggedIn ? const AppShell() : const LoginPage(),
+        initialRoute: recoveryRoute?.name,
+        onGenerateInitialRoutes: recoveryRoute == null
+            ? null
+            : (_) => [AppRoutes.generate(recoveryRoute!)!],
+        home: recoveryRoute == null
+            ? (loggedIn ? const AppShell() : const LoginPage())
+            : null,
       ),
     );
   }

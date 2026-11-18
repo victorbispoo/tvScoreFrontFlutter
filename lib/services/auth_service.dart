@@ -5,11 +5,17 @@ class RecoveryRateLimit implements Exception {
   final DateTime retryAt;
 }
 
+class InvalidRecoveryLink implements Exception {
+  const InvalidRecoveryLink();
+}
+
 extension AuthService on ApiService {
   static DateTime? _recoveryRetryAt;
+  static DateTime? _resetRetryAt;
   static bool _requestingRecovery = false;
 
   DateTime? get recoveryRetryAt => _recoveryRetryAt;
+  DateTime? get resetRetryAt => _resetRetryAt;
 
   static DateTime _retryAt(String? header) {
     final now = DateTime.now().toUtc();
@@ -70,15 +76,7 @@ extension AuthService on ApiService {
           'Não foi possível solicitar a recuperação. Tente novamente.',
         );
       }
-      final data = response.data;
-      final message = data is String
-          ? data
-          : data is Map
-          ? data['mensagem'] ?? data['message']
-          : null;
-      return message is String && message.isNotEmpty
-          ? message
-          : 'Se houver uma conta com este e-mail, você receberá instruções para recuperar a senha.';
+      return 'Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação.';
     } on DioException catch (error) {
       if (error.response?.statusCode == 429) {
         _recoveryRetryAt = _retryAt(
@@ -95,11 +93,13 @@ extension AuthService on ApiService {
   }
 
   Future<void> resetPassword(String token, String newPassword) async {
-    final bytes = utf8.encode(newPassword).length;
-    if (token.isEmpty || bytes < 8 || bytes > 72) {
-      throw const FormatException(
-        'Link inválido ou senha fora do limite de 8 a 72 bytes UTF-8.',
-      );
+    if (!PasswordRecoveryRules.isValidToken(token)) {
+      throw const InvalidRecoveryLink();
+    }
+    final validation = PasswordRecoveryRules.validatePassword(newPassword);
+    if (validation != null) throw FormatException(validation);
+    if (_resetRetryAt?.isAfter(DateTime.now()) ?? false) {
+      throw RecoveryRateLimit(_resetRetryAt!);
     }
     try {
       final response = await dio.post(
@@ -112,11 +112,31 @@ extension AuthService on ApiService {
           'Não foi possível redefinir a senha. Tente novamente.',
         );
       }
+      await _invalidateSession();
     } on DioException catch (error) {
-      throw FormatException(
-        error.response?.statusCode == 400
-            ? 'O link é inválido, expirou ou já foi usado, ou a nova senha é inválida. Solicite outro link ou confira a senha.'
-            : 'Não foi possível redefinir a senha. Tente novamente.',
+      final response = error.response;
+      if (response?.statusCode == 429) {
+        _resetRetryAt = _retryAt(response?.headers.value('retry-after'));
+        throw RecoveryRateLimit(_resetRetryAt!);
+      }
+      if (response?.statusCode == 400) {
+        final data = response?.data;
+        final message = data is Map ? data['mensagem'] : null;
+        if (message == 'A nova senha deve ser diferente da atual.') {
+          throw const FormatException('Escolha uma senha diferente da atual.');
+        }
+        if (message == 'Emojis não são permitidos na senha.' ||
+            message ==
+                'A senha está muito longa. Escolha uma senha mais curta.' ||
+            message == 'A nova senha deve ter entre 8 e 72 bytes UTF-8.' ||
+            message ==
+                'A senha deve ter pelo menos 6 caracteres e não pode conter apenas espaços.') {
+          throw FormatException(message as String);
+        }
+        throw const InvalidRecoveryLink();
+      }
+      throw const FormatException(
+        'Não foi possível redefinir a senha. Tente novamente.',
       );
     }
   }

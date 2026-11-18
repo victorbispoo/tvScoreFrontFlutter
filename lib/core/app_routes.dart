@@ -24,16 +24,29 @@ abstract final class AppRoutes {
   static const recovery = '/recuperar-senha';
   static const resetPassword = '/redefinir-senha';
 
-  static String? recoveryRouteFromUrl(Uri url) {
+  static RouteSettings? recoveryRouteFromUrl(Uri url) {
     final route = url.fragment.startsWith('/')
         ? Uri.tryParse(url.fragment)
         : url;
     if (route?.path != resetPassword) return null;
-    return Uri(
-      path: resetPassword,
-      query: route!.hasQuery ? route.query : null,
-    ).toString();
+    return RouteSettings(
+      name: resetPassword,
+      arguments: _recoveryToken(route!),
+    );
   }
+
+  static String? _recoveryToken(Uri uri) {
+    try {
+      return uri.queryParametersAll['token']?.singleOrNull;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  static Uri recoveryUrlWithoutToken(Uri url) => Uri(
+    path: url.path,
+    fragment: url.fragment.startsWith('/') ? resetPassword : null,
+  );
 
   static Route<dynamic>? generate(RouteSettings settings) {
     final Widget page;
@@ -46,11 +59,17 @@ abstract final class AppRoutes {
               : '',
         );
       case resetPassword:
-        page = PasswordRecoveryPage.reset(token: uri!.queryParameters['token']);
+        page = PasswordRecoveryPage.reset(
+          token: settings.arguments is String
+              ? settings.arguments as String
+              : _recoveryToken(uri!),
+        );
         // Keep the opaque token out of navigator observers and diagnostic route names.
         settings = const RouteSettings(name: resetPassword);
       case login:
-        page = const LoginPage();
+        page = LoginPage(
+          passwordReset: settings.arguments == const (passwordReset: true),
+        );
       case home:
         page = const AppShell();
       case register:

@@ -13,6 +13,7 @@ class AuthTextField extends StatefulWidget {
     this.textInputAction,
     this.keyboardType,
     this.onChanged,
+    this.onSubmitted,
     this.prefixIcon,
     this.suffixIcon,
     this.hintText,
@@ -27,6 +28,7 @@ class AuthTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final Widget? prefixIcon;
   final IconButton? suffixIcon;
   final FormFieldValidator<String>? validator;
@@ -78,6 +80,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           textInputAction: widget.textInputAction,
           keyboardType: widget.keyboardType,
           onChanged: widget.onChanged,
+          onFieldSubmitted: widget.onSubmitted,
           style: TextStyle(
             color: widget.enabled
                 ? Theme.of(context).colorScheme.onSurface

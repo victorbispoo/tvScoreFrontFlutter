@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/password_recovery_rules.dart';
 import '../data/mock_contents.dart';
 import '../models/content_metadata.dart';
 import '../models/recommendations.dart';
