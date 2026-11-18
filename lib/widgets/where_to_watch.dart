@@ -114,7 +114,6 @@ class WhereToWatch extends StatelessWidget {
                 try {
                   if (await launchUrl(Uri.parse(url))) return;
                 } catch (_) {
-                  // The platform may not have an app that handles this URL.
                 }
                 if (context.mounted) {
                   TvScoreSnackbar.error(
@@ -133,7 +132,7 @@ class WhereToWatch extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: colors.surface,
-                  border: Border.all(color: colors.outlineVariant),
+                  border: Border.all(),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: logo is String && RegExp(r'^/[\w.-]+$').hasMatch(logo)
