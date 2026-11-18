@@ -23,6 +23,16 @@ class FloatingNavigationBar extends StatefulWidget {
   final ValueChanged<double>? onIndicatorDragged;
   final void Function(double position, int target)? onIndicatorReleased;
 
+  static const _height = 68.0;
+  static const _bottomMargin = 8.0;
+  static const _scrollGap = 12.0;
+
+  static double scrollClearance(BuildContext context) =>
+      _height +
+      _bottomMargin +
+      MediaQuery.paddingOf(context).bottom +
+      _scrollGap;
+
   static const _icons = [
     HugeIcons.strokeRoundedHome01,
     HugeIcons.strokeRoundedFavourite,
@@ -85,7 +95,12 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+    padding: const EdgeInsets.fromLTRB(
+      20,
+      0,
+      20,
+      FloatingNavigationBar._bottomMargin,
+    ),
     child: DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(36),
@@ -105,7 +120,7 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
-            height: 68,
+            height: FloatingNavigationBar._height,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(36),

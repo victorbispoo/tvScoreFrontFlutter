@@ -9,9 +9,10 @@ import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class FavoritesPage extends StatefulWidget {
-  const FavoritesPage({super.key, this.onExplore});
+  const FavoritesPage({super.key, this.onExplore, this.bottomPadding = 20});
 
   final VoidCallback? onExplore;
+  final double bottomPadding;
 
   @override
   State<FavoritesPage> createState() => _FavoritesPageState();
@@ -77,6 +78,12 @@ class _FavoritesPageState extends State<FavoritesPage>
                 .clamp(1, 6);
             final width = (available - spacing * (columns - 1)) / columns;
             final mainAxisExtent = width * 1.5 + 65;
+            final gridPadding = EdgeInsets.fromLTRB(
+              20,
+              0,
+              20,
+              widget.bottomPadding,
+            );
             return CustomScrollView(
               slivers: [
                 SliverPadding(
@@ -111,30 +118,40 @@ class _FavoritesPageState extends State<FavoritesPage>
                       columns: columns,
                       mainAxisExtent: mainAxisExtent,
                       shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                      padding: gridPadding,
                     ),
                   )
                 else if (_error != null)
                   SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_error!),
-                          const SizedBox(height: 12),
-                          FilledButton(
-                            onPressed: _loadFavorites,
-                            child: const Text('Tentar novamente'),
-                          ),
-                        ],
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: widget.bottomPadding),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_error!),
+                            const SizedBox(height: 12),
+                            FilledButton(
+                              onPressed: _loadFavorites,
+                              child: const Text('Tentar novamente'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   )
                 else if (contents.isEmpty)
                   SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: EdgeInsets.fromLTRB(
+                          24,
+                          0,
+                          24,
+                          widget.bottomPadding,
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -172,7 +189,7 @@ class _FavoritesPageState extends State<FavoritesPage>
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                    padding: gridPadding,
                     sliver: SliverGrid.builder(
                       itemCount: contents.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

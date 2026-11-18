@@ -14,9 +14,10 @@ import '../widgets/tv_score_segmented_control.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, this.isActive = true});
+  const ProfilePage({super.key, this.isActive = true, this.bottomPadding = 20});
 
   final bool isActive;
+  final double bottomPadding;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -127,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage>
     super.build(context);
     return BackdropGroup(
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, widget.bottomPadding),
         children: [
           const Text(
             'Perfil',

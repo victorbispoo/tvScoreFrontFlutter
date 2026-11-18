@@ -44,6 +44,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = FloatingNavigationBar.scrollClearance(context);
     return Scaffold(
       extendBody: true,
       body: TvScoreSnackbar.withFloatingNavigation(
@@ -55,9 +56,15 @@ class _AppShellState extends State<AppShell> {
                 controller: _pages,
                 onPageChanged: (index) => setState(() => _index = index),
                 children: [
-                  const HomePage(),
-                  FavoritesPage(onExplore: () => _selectPage(0)),
-                  ProfilePage(isActive: _index == 2),
+                  HomePage(bottomPadding: bottomPadding),
+                  FavoritesPage(
+                    bottomPadding: bottomPadding,
+                    onExplore: () => _selectPage(0),
+                  ),
+                  ProfilePage(
+                    isActive: _index == 2,
+                    bottomPadding: bottomPadding,
+                  ),
                 ],
               ),
             ),

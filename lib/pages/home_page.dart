@@ -27,7 +27,9 @@ typedef HomeSection = ({
 });
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.bottomPadding = 12});
+
+  final double bottomPadding;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -592,7 +594,7 @@ class _HomePageState extends State<HomePage>
       onRefresh: _refresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.only(top: 12, bottom: widget.bottomPadding),
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),

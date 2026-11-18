@@ -106,7 +106,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Streaming Teste'), findsOneWidget);
+    expect(find.byTooltip('Streaming Teste'), findsOneWidget);
     final saveTitle = find.byTooltip('Adicionar aos favoritos');
     await tester.scrollUntilVisible(
       saveTitle,
@@ -255,14 +255,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Em alta'), findsOneWidget);
+    expect(find.text('Para você'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Descubra algo'),
+      find.text('Mais bem avaliados'),
       400,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.text('Descubra algo'), findsOneWidget);
+    expect(find.text('Mais bem avaliados'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
