@@ -293,11 +293,18 @@ class _DetailsPageState extends State<DetailsPage> {
         (_reviewSummary?['totalAvaliacoes'] as num?)?.toInt() ?? 0;
     final communityAverage = _reviewSummary?['media'] as num?;
     final canEditReview = !_busy && !_loadingMyReview && _myReviewError == null;
-    final metadataStyle = TextStyle(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    );
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final metadataStyle = TextStyle(color: colors.onSurfaceVariant);
     final year = content['year']?.trim() ?? '';
-    final genres = content['genre']?.trim() ?? '';
+    final genres = (content['genre'] ?? '')
+        .split('•')
+        .map((genre) => genre.trim())
+        .where((genre) => genre.isNotEmpty && genre != 'não informado')
+        .toList();
+    final genreFill = theme.brightness == Brightness.dark
+        ? colors.secondaryContainer.withValues(alpha: .34)
+        : colors.primaryContainer.withValues(alpha: .32);
     return DetailsSystemUi(
       backdrop: content['backdrop_path'],
       builder: (context, systemUi) => Scaffold(
@@ -360,13 +367,41 @@ class _DetailsPageState extends State<DetailsPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      [
-                        if (year.isNotEmpty) year,
-                        genres.isEmpty ? 'Gêneros não informados' : genres,
-                      ].join(' • '),
-                      style: metadataStyle,
-                    ),
+                    if (year.isNotEmpty) Text(year, style: metadataStyle),
+                    if (genres.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 5,
+                        children: [
+                          for (final genre in genres)
+                            DecoratedBox(
+                              decoration: ShapeDecoration(
+                                color: genreFill,
+                                shape: StadiumBorder(
+                                  side: BorderSide(
+                                    color: colors.outlineVariant.withValues(
+                                      alpha: .65,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                  vertical: 3,
+                                ),
+                                child: Text(
+                                  genre,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 14,

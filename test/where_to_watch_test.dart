@@ -70,9 +70,14 @@ void main() {
       expect(find.text('Streaming C'), findsNothing);
       expect(find.text('Netflix'), findsNothing);
       expect(find.text('+2'), findsOneWidget);
-      expect(find.byType(Tooltip), findsNWidgets(3));
+      expect(find.byType(Tooltip), findsNWidgets(4));
+      expect(find.text('Ver opções'), findsNothing);
       expect(find.byIcon(Icons.live_tv_outlined), findsNWidgets(3));
-      await tester.tap(find.text('Ver opções'));
+      expect(
+        tester.getSize(find.widgetWithText(TextButton, '+2')),
+        const Size.square(48),
+      );
+      await tester.tap(find.text('+2'));
       await tester.pumpAndSettle();
       expect(find.text('Assinatura'), findsOneWidget);
       expect(find.text('Netflix'), findsOneWidget);
@@ -125,8 +130,8 @@ void main() {
     }
   });
 
-  for (final count in [1, 3]) {
-    testWidgets('mostra $count logos sem contador', (tester) async {
+  for (final count in [1, 3, 4]) {
+    testWidgets('mostra até três logos para $count provedores', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -141,8 +146,12 @@ void main() {
           ),
         ),
       );
-      expect(find.byType(Tooltip), findsNWidgets(count));
-      expect(find.textContaining('+'), findsNothing);
+      expect(
+        find.byIcon(Icons.live_tv_outlined),
+        findsNWidgets(count > 3 ? 3 : count),
+      );
+      expect(find.text('+1'), count == 4 ? findsOneWidget : findsNothing);
+      expect(find.text('Ver opções'), findsNothing);
       expect(find.text('Disponível para compra'), findsOneWidget);
     });
   }
@@ -186,7 +195,8 @@ void main() {
               'type': 'MOVIE',
               'title': title,
               'year': '2024',
-              'genre': 'Animação • Aventura • Fantasia • Drama • Mistério',
+              'genre':
+                  'Animação • Aventura • Ficção Científica e Fantasia • Drama • Mistério',
               'score': '8.8',
               'overview': 'Sinopse do conteúdo',
               'ondeAssistir': '{}',
@@ -200,10 +210,23 @@ void main() {
         rated ? 'TVScore:\u00a09.0/10' : 'TVScore: sem avaliações',
       );
       expect(find.text(title), findsOneWidget);
-      expect(
-        find.text('2024 • Animação • Aventura • Fantasia • Drama • Mistério'),
-        findsOneWidget,
-      );
+      final year = find.text('2024');
+      expect(year, findsOneWidget);
+      for (final genre in [
+        'Animação',
+        'Aventura',
+        'Ficção Científica e Fantasia',
+        'Drama',
+        'Mistério',
+      ]) {
+        final pill = find.text(genre);
+        expect(pill, findsOneWidget);
+        expect(tester.widget<Text>(pill).maxLines, isNull);
+        expect(
+          tester.getTopLeft(pill).dy,
+          greaterThan(tester.getTopLeft(year).dy),
+        );
+      }
       expect(
         find.ancestor(of: tmdb, matching: find.byType(Row)),
         findsOneWidget,

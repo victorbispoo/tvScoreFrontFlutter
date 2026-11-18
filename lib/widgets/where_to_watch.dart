@@ -8,6 +8,9 @@ import 'tv_score_snackbar.dart';
 typedef _Provider = ({String name, String? logo});
 
 class WhereToWatch extends StatelessWidget {
+  static const _previewSize = 48.0;
+  static final _tileRadius = BorderRadius.circular(10);
+
   factory WhereToWatch(String? availability, {Key? key}) {
     Object? decoded;
     try {
@@ -69,6 +72,8 @@ class WhereToWatch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final additional = _providers.length - 3;
     final secondary = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
@@ -104,25 +109,37 @@ class WhereToWatch extends StatelessWidget {
               for (final provider in _providers.take(3))
                 Tooltip(
                   message: provider.name,
-                  child: _logo(context, provider, 48),
+                  child: _logo(context, provider, _previewSize),
                 ),
-              if (_providers.length > 3)
-                Text('+${_providers.length - 3}', style: secondary),
+              if (additional > 0)
+                Tooltip(
+                  message: 'Ver todos os provedores',
+                  excludeFromSemantics: true,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      fixedSize: const Size.square(_previewSize),
+                      minimumSize: const Size.square(_previewSize),
+                      padding: EdgeInsets.zero,
+                      backgroundColor: colors.surfaceContainerLow,
+                      foregroundColor: colors.onSurface,
+                      side: BorderSide(color: colors.outlineVariant),
+                      shape: RoundedRectangleBorder(borderRadius: _tileRadius),
+                    ),
+                    onPressed: () => _showOptions(context),
+                    child: Text(
+                      '+$additional',
+                      semanticsLabel:
+                          'Ver todos os provedores. Mais $additional',
+                    ),
+                  ),
+                ),
             ],
           ),
         ],
-        if (_providers.isNotEmpty || _link != null)
-          Wrap(
-            spacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (_groups.isNotEmpty)
-                Text(_categories[_groups.keys.first]!.$2, style: secondary),
-              TextButton(
-                onPressed: () => _showOptions(context),
-                child: const Text('Ver opções'),
-              ),
-            ],
+        if (_groups.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(_categories[_groups.keys.first]!.$2, style: secondary),
           ),
       ],
     );
@@ -202,8 +219,7 @@ class WhereToWatch extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colors.surface,
-        border: Border.all(color: colors.outlineVariant),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: _tileRadius,
       ),
       child: logo != null
           ? Image.network(
