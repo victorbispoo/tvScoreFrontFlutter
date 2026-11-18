@@ -113,6 +113,17 @@ class ContentCard extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
+          if (content['recommendation_reason'] case final reason?)
+            Flexible(
+              child: Text(
+                reason,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
         ],
       ),
     ),

@@ -4,6 +4,8 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_routes.dart';
 import '../core/light_logo_color_mapper.dart';
+import '../models/content_metadata.dart';
+import '../models/recommendations.dart';
 import '../services/api_services.dart';
 import '../widgets/content_carousel.dart';
 import '../widgets/genre_preferences.dart';
@@ -35,6 +37,9 @@ class _HomePageState extends State<HomePage>
   late Future<List<Map<String, dynamic>>> _availableGenres;
   late Future<List<Map<String, String>>> _trending;
   late Future<List<Map<String, String>>> _topRated;
+  Future<void>? _recommendationLoad;
+  List<Map<String, String>> _forYouRecommendations = const [];
+  Set<(String?, String?)> _recommended = const {};
   String _topRatedType = 'ALL';
 
   @override
@@ -44,6 +49,7 @@ class _HomePageState extends State<HomePage>
     _sections = _loadSections();
     _trending = ApiService().getHighlights();
     _topRated = ApiService().getTopRatedContents(_topRatedType);
+    _loadRecommendations();
     ApiService.contentPreferencesRevision.addListener(_reloadPreferences);
   }
 
@@ -51,6 +57,95 @@ class _HomePageState extends State<HomePage>
     setState(() {
       _sections = _loadSections();
     });
+    _loadRecommendations();
+  }
+
+  Future<void> _loadRecommendations({bool refresh = false}) {
+    if (ApiService.token == null) return Future.value();
+    final api = ApiService();
+    Future<List<Recommendation>> read(Future<Recommendations> request) async {
+      try {
+        return (await request).items;
+      } on RecommendationException {
+        return const [];
+      }
+    }
+
+    late final Future<void> load;
+    load =
+        Future.wait([
+          read(api.getMovieRecommendations(refresh: refresh)),
+          read(api.getSeriesRecommendations(refresh: refresh)),
+        ]).then((results) {
+          if (!mounted || !identical(_recommendationLoad, load)) return;
+          final (movies, series) = (results[0], results[1]);
+          final seen = <(String?, String?)>{};
+          final contents = [
+            for (var i = 0; i < movies.length || i < series.length; i++)
+              for (final list in [movies, series])
+                if (i < list.length && seen.add(list[i].content.contentKey))
+                  {
+                    ...list[i].content,
+                    if (list[i].rankingScore case final score?)
+                      'recommendation_score': score.toString(),
+                    if (list[i].reason case final reason?
+                        when reason.trim().isNotEmpty)
+                      'recommendation_reason': reason,
+                  },
+          ];
+          setState(() {
+            _recommended = seen;
+            _forYouRecommendations = contents;
+          });
+        });
+    return _recommendationLoad = load;
+  }
+
+  bool _isRecommended(Map<String, String> content) =>
+      _recommended.contains(content.contentKey);
+
+  List<Map<String, String>> _prioritizeMatches(
+    List<Map<String, String>> contents,
+  ) => _recommended.isEmpty
+      ? contents
+      : [
+          ...contents.where(_isRecommended),
+          ...contents.where((content) => !_isRecommended(content)),
+        ];
+
+  List<Map<String, String>> _prioritizeTrending(
+    List<Map<String, String>> contents,
+  ) {
+    if (_recommended.isEmpty) return contents;
+    final ordered = contents.toList();
+    // Limit the recommendation signal to one neighboring trend rank.
+    for (var i = 0; i + 1 < ordered.length; i += 2) {
+      final (first, second) = (ordered[i], ordered[i + 1]);
+      if (first['type'] == second['type'] &&
+          !_isRecommended(first) &&
+          _isRecommended(second)) {
+        ordered[i] = second;
+        ordered[i + 1] = first;
+      }
+    }
+    return ordered;
+  }
+
+  List<Map<String, String>> _prioritizeRated(
+    List<Map<String, String>> contents,
+  ) {
+    if (_recommended.isEmpty) return contents;
+    final ordered = <Map<String, String>>[];
+    for (var start = 0; start < contents.length;) {
+      var end = start + 1;
+      while (end < contents.length &&
+          contents[end]['score'] == contents[start]['score']) {
+        end++;
+      }
+      ordered.addAll(_prioritizeMatches(contents.sublist(start, end)));
+      start = end;
+    }
+    return ordered;
   }
 
   @override
@@ -108,11 +203,13 @@ class _HomePageState extends State<HomePage>
           )
           .toList();
       final forYou = <Map<String, String>>[];
+      final seen = <(String?, String?)>{};
       for (var index = 0; forYou.length < 12; index++) {
         var added = false;
         for (final list in lists) {
           if (index < list.length && forYou.length < 12) {
-            forYou.add(list[index]);
+            final content = list[index];
+            if (seen.add(content.contentKey)) forYou.add(content);
             added = true;
           }
         }
@@ -161,8 +258,9 @@ class _HomePageState extends State<HomePage>
       _trending = trending;
       _topRated = topRated;
     });
+    final recommendations = _loadRecommendations(refresh: true);
     try {
-      await (sections, trending, topRated).wait;
+      await (sections, trending, topRated, recommendations).wait;
     } catch (error, stackTrace) {
       debugPrint('Erro ao atualizar Home: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -180,6 +278,9 @@ class _HomePageState extends State<HomePage>
     child: FutureBuilder<List<HomeSection>>(
       future: _sections,
       builder: (context, snapshot) {
+        if (personalized && _forYouRecommendations.isNotEmpty) {
+          return _personalizedCarousel(_forYouRecommendations);
+        }
         if (snapshot.hasError) {
           return personalized
               ? Padding(
@@ -201,28 +302,68 @@ class _HomePageState extends State<HomePage>
               ? const SkeletonCarousel(featured: true)
               : const SizedBox.shrink();
         }
+        if (personalized) {
+          final fallback = snapshot.data!
+              .where((section) => section.type == HomeSectionType.personalized)
+              .firstOrNull
+              ?.contents;
+          if (fallback != null && fallback.isNotEmpty) {
+            return _personalizedCarousel(fallback);
+          }
+          return FutureBuilder(
+            future: _trending,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) return const SizedBox.shrink();
+              if (!snapshot.hasData) {
+                return const SkeletonCarousel(featured: true);
+              }
+              final seen = <(String?, String?)>{};
+              return _personalizedCarousel(
+                snapshot.data!
+                    .where((content) => seen.add(content.contentKey))
+                    .take(12)
+                    .toList(),
+              );
+            },
+          );
+        }
         return Column(
           children: [
             for (final section in snapshot.data!)
-              if ((section.type == HomeSectionType.personalized) ==
-                  personalized)
+              if (section.type != HomeSectionType.personalized)
                 ContentCarousel(
+                  key: ValueKey(section.heroSection),
                   onChanged: () => setState(() {}),
                   heroSection: section.heroSection,
                   icon: Icon(
                     section.icon,
-                    size: personalized ? 18 : 16,
+                    size: 16,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   title: section.title,
-                  contents: section.contents,
-                  featured: personalized,
+                  contents: section.type == HomeSectionType.genre
+                      ? _prioritizeMatches(section.contents)
+                      : section.contents,
                 ),
           ],
         );
       },
     ),
   );
+
+  Widget _personalizedCarousel(List<Map<String, String>> contents) =>
+      ContentCarousel(
+        heroSection: 'personalized',
+        icon: Icon(
+          HugeIconsSolid.sparkles,
+          size: 18,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: 'Para você',
+        contents: contents,
+        featured: true,
+        onChanged: () => setState(() {}),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +424,7 @@ class _HomePageState extends State<HomePage>
                   return const SkeletonCarousel(showFilters: true);
                 }
                 return TrendingCarousel(
-                  contents: snapshot.data!,
+                  contents: _prioritizeTrending(snapshot.data!),
                   onChanged: () => setState(() {}),
                   heroSection: 'trending',
                 );
@@ -302,6 +443,7 @@ class _HomePageState extends State<HomePage>
                 _topRated = ApiService().getTopRatedContents(_topRatedType);
               }),
               contents: _topRated,
+              orderContents: _prioritizeRated,
               onChanged: () => setState(() {}),
             ),
           ),

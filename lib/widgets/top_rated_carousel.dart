@@ -14,6 +14,7 @@ class TopRatedCarousel extends StatelessWidget {
     required this.onRetry,
     required this.onChanged,
     this.heroSection,
+    this.orderContents,
   });
 
   final Future<List<Map<String, String>>> contents;
@@ -22,6 +23,8 @@ class TopRatedCarousel extends StatelessWidget {
   final String selectedType;
   final ValueChanged<String> onTypeSelected;
   final VoidCallback onRetry;
+  final List<Map<String, String>> Function(List<Map<String, String>>)?
+  orderContents;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -85,7 +88,7 @@ class TopRatedCarousel extends StatelessWidget {
             );
           }
           return RankedContentCarousel(
-            contents: contents,
+            contents: orderContents?.call(contents) ?? contents,
             onChanged: onChanged,
             heroSection: heroSection,
           );

@@ -30,6 +30,9 @@ class ContentCarousel extends StatelessWidget {
     final icon = this.icon;
     final subtitle = this.subtitle;
     if (contents.isEmpty) return const SizedBox.shrink();
+    final heroTags = heroSection == null
+        ? null
+        : carouselPosterHeroTags('home:$heroSection', contents);
     return Padding(
       padding: EdgeInsets.only(
         bottom: Theme.of(context).brightness == Brightness.light ? 18 : 26,
@@ -82,13 +85,7 @@ class ContentCarousel extends StatelessWidget {
                 child: ContentCard(
                   content: contents[index],
                   onChanged: onChanged,
-                  heroTag: heroSection == null
-                      ? null
-                      : posterHeroTag(
-                          'home:$heroSection',
-                          contents[index],
-                          occurrence: index,
-                        ),
+                  heroTag: heroTags?[index],
                 ),
               ),
             ),

@@ -9,6 +9,7 @@ import 'package:tv_score_front_flutter/widgets/content_card.dart';
 import 'package:tv_score_front_flutter/widgets/content_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/poster_hero_tag.dart';
 import 'package:tv_score_front_flutter/widgets/ranked_content_carousel.dart';
+import 'package:tv_score_front_flutter/widgets/trending_carousel.dart';
 import 'support/backend_http.dart';
 
 void main() {
@@ -183,9 +184,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Séries').first);
+    final trending = find.byType(TrendingCarousel);
+    await tester.tap(
+      find.descendant(of: trending, matching: find.text('Séries')),
+    );
     await tester.pumpAndSettle();
-    final card = find.byType(ContentCard).first;
+    final card = find
+        .descendant(of: trending, matching: find.byType(ContentCard))
+        .first;
     await tester.ensureVisible(card);
     await tester.pumpAndSettle();
     final source = tester.widget<ContentCard>(card);

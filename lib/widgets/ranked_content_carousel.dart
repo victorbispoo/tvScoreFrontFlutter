@@ -22,6 +22,9 @@ class RankedContentCarousel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (contents.isEmpty) return const SizedBox.shrink();
+    final heroTags = heroSection == null
+        ? null
+        : carouselPosterHeroTags('home:$heroSection', contents);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 26),
@@ -34,13 +37,7 @@ class RankedContentCarousel extends StatelessWidget {
           separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (context, index) {
             final content = contents[index];
-            final heroTag = heroSection == null
-                ? null
-                : posterHeroTag(
-                    'home:$heroSection',
-                    content,
-                    occurrence: index,
-                  );
+            final heroTag = heroTags?[index];
             return SizedBox(
               width: 248,
               child: InkWell(
