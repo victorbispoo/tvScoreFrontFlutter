@@ -36,6 +36,7 @@ class _DetailsPageState extends State<DetailsPage> {
   final _api = ApiService();
   late final TextEditingController _comment;
   late Widget _whereToWatch;
+  Future<Map<String, String>>? _details;
   late double _rating;
   bool _busy = false;
   Map<String, dynamic>? _reviewSummary;
@@ -48,7 +49,7 @@ class _DetailsPageState extends State<DetailsPage> {
   @override
   void initState() {
     super.initState();
-    _whereToWatch = _buildWhereToWatch();
+    _loadDetails();
     _rating = 8.0;
     _comment = TextEditingController();
     _loadMyReview();
@@ -59,29 +60,35 @@ class _DetailsPageState extends State<DetailsPage> {
   void didUpdateWidget(covariant DetailsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.content.contentKey != widget.content.contentKey ||
-        oldWidget.content['ondeAssistir'] != widget.content['ondeAssistir']) {
-      _whereToWatch = _buildWhereToWatch();
+        oldWidget.content['ondeAssistir'] != widget.content['ondeAssistir'] ||
+        oldWidget.content['backdrop_path'] != widget.content['backdrop_path']) {
+      _loadDetails();
     }
+  }
+
+  void _loadDetails() {
+    final content = widget.content;
+    _details = null;
+    if (content['ondeAssistir'] == null ||
+        (content['backdrop_path'] ?? '').isEmpty) {
+      final reference = content.apiReference;
+      _details = _api.getContent(reference.id, reference.type);
+    }
+    _whereToWatch = _buildWhereToWatch();
   }
 
   Widget _buildWhereToWatch() {
     final availability = widget.content['ondeAssistir'];
     if (availability != null) return WhereToWatch(availability);
-    return FutureBuilder<String?>(
-      future: _loadWatchAvailability(),
+    return FutureBuilder<Map<String, String>>(
+      future: _details,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const SkeletonBlock(height: 48);
         }
-        return WhereToWatch(snapshot.data);
+        return WhereToWatch(snapshot.data?['ondeAssistir']);
       },
     );
-  }
-
-  Future<String?> _loadWatchAvailability() async {
-    final reference = widget.content.apiReference;
-    final details = await _api.getContent(reference.id, reference.type);
-    return details['ondeAssistir'];
   }
 
   Future<void> _checkCommunityReviews() async {
@@ -266,6 +273,20 @@ class _DetailsPageState extends State<DetailsPage> {
   @override
   Widget build(BuildContext context) {
     final content = widget.content;
+    if ((content['backdrop_path'] ?? '').isNotEmpty) {
+      return _buildDetails(context, content);
+    }
+    return FutureBuilder<Map<String, String>>(
+      key: ValueKey(content.contentKey),
+      future: _details,
+      builder: (context, snapshot) => _buildDetails(context, {
+        ...content,
+        'backdrop_path': snapshot.data?['backdrop_path'] ?? '',
+      }),
+    );
+  }
+
+  Widget _buildDetails(BuildContext context, Map<String, String> content) {
     final saved = _api.isSaved(content);
     final review = _api.reviewFor(content);
     final totalReviews =

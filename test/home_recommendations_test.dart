@@ -203,11 +203,15 @@ void main() {
   testWidgets('mantém filmes quando séries falham', (tester) async {
     await mount(tester, _HomeBackend(seriesStatus: 503));
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
     expect(titles(section(tester, 'personalized')), ['MOVIE 2', 'MOVIE 3']);
   });
 
   testWidgets('mantém séries quando filmes falham', (tester) async {
     await mount(tester, _HomeBackend(movieStatus: 504));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(titles(section(tester, 'personalized')), ['TV 2']);
   });
@@ -288,13 +292,14 @@ void main() {
       expect(find.byType(RankedContentCarousel), findsOneWidget);
       if (backend.networkFailure) {
         backend.networkFailure = false;
-        final refresh = tester
-            .state<RefreshIndicatorState>(find.byType(RefreshIndicator))
-            .show();
+        await tester.pump(const Duration(seconds: 1));
         await tester.pumpAndSettle();
-        await refresh;
         expect(titles(section(tester, 'personalized')).first, 'MOVIE 2');
         expect(backend.recommendationReads, 4);
+      } else {
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+        expect(titles(section(tester, 'personalized')).first, 'MOVIE 1');
       }
     });
   }

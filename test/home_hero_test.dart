@@ -6,11 +6,20 @@ import 'package:tv_score_front_flutter/pages/details_page.dart';
 import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
+import 'package:tv_score_front_flutter/widgets/content_header.dart';
 import 'package:tv_score_front_flutter/widgets/content_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/poster_hero_tag.dart';
 import 'package:tv_score_front_flutter/widgets/ranked_content_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/trending_carousel.dart';
 import 'support/backend_http.dart';
+
+class _BackdropBackend extends BackendHttp {
+  @override
+  Map<String, dynamic> details(Map<String, String> content) => {
+    ...super.details(content),
+    'backdrop_path': '/backdrop.jpg',
+  };
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +30,31 @@ void main() {
     'title': 'Filme repetido',
     'poster_path': '',
   };
+
+  testWidgets('detalhes recupera backdrop ausente com uma única consulta', (
+    tester,
+  ) async {
+    final backend = _BackdropBackend();
+    final previous = HttpOverrides.current;
+    HttpOverrides.global = backend;
+    addTearDown(() => HttpOverrides.global = previous);
+    ApiService.token = null;
+    await tester.pumpWidget(
+      const MaterialApp(home: DetailsPage(content: movie)),
+    );
+    await tester.pumpAndSettle();
+    final content = tester
+        .widget<ContentHeader>(find.byType(ContentHeader))
+        .content;
+    expect(
+      content['backdrop_path'],
+      'https://image.tmdb.org/t/p/w780/backdrop.jpg',
+    );
+    expect(
+      backend.requests.where((item) => item == 'GET /filmes/42'),
+      hasLength(1),
+    );
+  });
 
   testWidgets('mesmo conteúdo em seções diferentes recebe tags únicas', (
     tester,

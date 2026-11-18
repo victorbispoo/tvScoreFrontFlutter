@@ -152,6 +152,9 @@ class BackendHttp extends HttpOverrides {
       ];
     }
     if (path == '/usuarios/eu/generos') return {'generos': []};
+    if (path == '/recomendacoes/filmes' || path == '/recomendacoes/series') {
+      return {'recomendacoes': []};
+    }
     if (path == '/conteudos/por-genero') {
       return {'results': catalog.map(details).toList()};
     }

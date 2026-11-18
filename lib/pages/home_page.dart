@@ -69,19 +69,38 @@ class _HomePageState extends State<HomePage>
       return Future.value();
     }
     final api = ApiService();
-    Future<List<Recommendation>> read(Future<Recommendations> request) async {
+    late final Future<void> load;
+    Future<List<Recommendation>> read(
+      Future<Recommendations> Function({bool refresh}) request,
+    ) async {
       try {
-        return (await request).items;
-      } on RecommendationException {
+        return (await request(refresh: refresh)).items;
+      } on RecommendationException catch (error) {
+        if (!refresh &&
+            const {
+              RecommendationFailure.unavailable,
+              RecommendationFailure.timeout,
+              RecommendationFailure.requestFailed,
+            }.contains(error.failure)) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+          if (mounted &&
+              identical(_recommendationLoad, load) &&
+              ApiService.token == token) {
+            try {
+              return (await request()).items;
+            } on RecommendationException {
+              return const [];
+            }
+          }
+        }
         return const [];
       }
     }
 
-    late final Future<void> load;
     load =
         Future.wait([
-          read(api.getMovieRecommendations(refresh: refresh)),
-          read(api.getSeriesRecommendations(refresh: refresh)),
+          read(api.getMovieRecommendations),
+          read(api.getSeriesRecommendations),
         ]).then((results) {
           if (!mounted || !identical(_recommendationLoad, load)) return;
           if (ApiService.token != token) {
