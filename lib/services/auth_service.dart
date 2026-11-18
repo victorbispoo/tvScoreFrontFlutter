@@ -140,6 +140,14 @@ extension AuthService on ApiService {
     _clearAccount();
   }
 
+  Future<void> _invalidateSession() async {
+    try {
+      await logout();
+    } catch (_) {
+      _clearAccount();
+    }
+  }
+
   Future<void> changePassword(
     String currentPassword,
     String newPassword,
@@ -163,11 +171,7 @@ extension AuthService on ApiService {
       }
     } on DioException catch (error) {
       if (error.response?.statusCode == 401) {
-        try {
-          await logout();
-        } catch (_) {
-          _clearAccount();
-        }
+        await _invalidateSession();
         rethrow;
       }
       throw FormatException(switch (error.response?.statusCode) {
