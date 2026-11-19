@@ -51,7 +51,6 @@ class _AppShellState extends State<AppShell>
   }
 
   Future<void> _selectPage(int index) async {
-    if (!ApiService.hasSession) return;
     if (_useDesktopTransition) return _selectDesktopPage(index);
     if (!_pages.hasClients || index == _navigationTarget?.index) return;
     if (_pages.page == index && _navigationTarget == null) return;
@@ -80,7 +79,6 @@ class _AppShellState extends State<AppShell>
     return LayoutBuilder(
       builder: (context, constraints) {
         final desktop = AppBreakpoints.isDesktop(constraints.maxWidth);
-        final hasSession = ApiService.hasSession;
         final adaptTransition = desktop && AppBreakpoints.supportsWidePages;
         if (adaptTransition != _useDesktopTransition) {
           _useDesktopTransition = adaptTransition;
@@ -144,7 +142,7 @@ class _AppShellState extends State<AppShell>
                           },
                           child: PageView(
                             controller: _pages,
-                            physics: adaptTransition || !hasSession
+                            physics: adaptTransition
                                 ? const NeverScrollableScrollPhysics()
                                 : null,
                             onPageChanged: (index) =>
@@ -152,16 +150,24 @@ class _AppShellState extends State<AppShell>
                             children: [
                               for (final (index, page) in [
                                 HomePage(bottomPadding: bottomPadding),
-                                if (hasSession) ...[
-                                  FavoritesPage(
-                                    bottomPadding: bottomPadding,
-                                    onExplore: () => _selectPage(0),
-                                  ),
-                                  ProfilePage(
-                                    isActive: _index == 2,
-                                    bottomPadding: bottomPadding,
-                                  ),
-                                ],
+                                ValueListenableBuilder<int>(
+                                  valueListenable: ApiService.sessionRevision,
+                                  builder: (context, revision, _) =>
+                                      FavoritesPage(
+                                        key: ValueKey(revision),
+                                        bottomPadding: bottomPadding,
+                                        onExplore: () => _selectPage(0),
+                                      ),
+                                ),
+                                ValueListenableBuilder<int>(
+                                  valueListenable: ApiService.sessionRevision,
+                                  builder: (context, revision, _) =>
+                                      ProfilePage(
+                                        key: ValueKey(revision),
+                                        isActive: _index == 2,
+                                        bottomPadding: bottomPadding,
+                                      ),
+                                ),
                               ].indexed)
                                 TickerMode(
                                   enabled: !adaptTransition || _index == index,
@@ -179,21 +185,18 @@ class _AppShellState extends State<AppShell>
                             child: FloatingNavigationBar(
                               index: _index,
                               onSelected: _selectPage,
-                              pageController: hasSession ? _pages : null,
+                              pageController: _pages,
                               onIndicatorDragStarted: () {
-                                if (!hasSession) return;
                                 _navigationTarget = null;
                                 _pages.position.hold(() {});
                               },
                               onIndicatorDragged: (position) {
-                                if (!hasSession) return;
                                 _pages.jumpTo(
                                   position * _pages.position.viewportDimension,
                                 );
                                 _pages.position.hold(() {});
                               },
                               onIndicatorReleased: (position, target) {
-                                if (!hasSession) return;
                                 _navigationTarget = null;
                                 _pages.jumpTo(
                                   position * _pages.position.viewportDimension,

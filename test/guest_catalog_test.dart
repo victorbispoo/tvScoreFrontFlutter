@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tv_score_front_flutter/main.dart';
@@ -15,6 +16,39 @@ import 'package:tv_score_front_flutter/widgets/review_form.dart';
 import 'support/backend_http.dart';
 
 void main() {
+  for (final token in <String?>[null, '']) {
+    test(
+      'sem token ($token), serviços pessoais não enviam requisições',
+      () async {
+        final previousToken = ApiService.token;
+        ApiService.token = token;
+        addTearDown(() => ApiService.token = previousToken);
+        final api = ApiService();
+        var requests = 0;
+        api.dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              requests++;
+              handler.resolve(Response(requestOptions: options, data: {}));
+            },
+          ),
+        );
+
+        for (final request in <Future<dynamic> Function()>[
+          api.getFavorites,
+          api.getPreferredGenres,
+          api.getPreferredContents,
+          api.loadProfilePhoto,
+          () => api.getContentReviewsPage(1000, 'MOVIE'),
+          () => api.getContentReviews(1000, 'MOVIE'),
+        ]) {
+          await expectLater(request(), throwsStateError);
+        }
+        expect(requests, 0);
+      },
+    );
+  }
+
   testWidgets('visitante abre a Home, pesquisa e vê detalhes públicos', (
     tester,
   ) async {
@@ -45,10 +79,15 @@ void main() {
         find.descendant(of: navigation, matching: find.text(label)),
       );
       await tester.pumpAndSettle();
-      expect(find.byType(HomePage), findsOneWidget);
+      expect(
+        find.byType(label == 'Favoritos' ? FavoritesPage : ProfilePage),
+        findsOneWidget,
+      );
     }
-    expect(find.byType(FavoritesPage, skipOffstage: false), findsNothing);
-    expect(find.byType(ProfilePage, skipOffstage: false), findsNothing);
+    await tester.tap(
+      find.descendant(of: navigation, matching: find.text('Início')),
+    );
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Pesquisar'));
     await tester.pumpAndSettle();
@@ -81,7 +120,7 @@ void main() {
     expect(
       backend.requests.where(
         (request) => !RegExp(
-          r'^GET /(?:(?:filmes|series|conteudos)/|avaliacoes/conteudo/d+/resumo$)',
+          r'^GET /(?:(?:filmes|series|conteudos)/|avaliacoes/conteudo/\d+/resumo$)',
         ).hasMatch(request),
       ),
       isEmpty,

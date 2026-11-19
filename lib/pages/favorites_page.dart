@@ -5,6 +5,7 @@ import '../core/app_breakpoints.dart';
 import '../core/app_haptics.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
+import '../widgets/guest_account_prompt.dart';
 import '../widgets/poster_hero_tag.dart';
 import '../widgets/skeleton_loading.dart';
 import '../widgets/tv_score_snackbar.dart';
@@ -35,6 +36,10 @@ class _FavoritesPageState extends State<FavoritesPage>
   }
 
   Future<void> _loadFavorites() async {
+    if (!ApiService.hasSession) {
+      _loading = false;
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -66,7 +71,10 @@ class _FavoritesPageState extends State<FavoritesPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final contents = ApiService.savedContents;
+    final hasSession = ApiService.hasSession;
+    final contents = hasSession
+        ? ApiService.savedContents
+        : const <Map<String, String>>[];
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -109,20 +117,40 @@ class _FavoritesPageState extends State<FavoritesPage>
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${contents.length} ${contents.length == 1 ? 'título salvo' : 'títulos salvos'}',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                        if (hasSession) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            '${contents.length} ${contents.length == 1 ? 'título salvo' : 'títulos salvos'}',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
                 ),
-                if (_loading && contents.isEmpty)
+                if (!hasSession)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        0,
+                        24,
+                        widget.bottomPadding,
+                      ),
+                      child: const GuestAccountPrompt(
+                        icon: HugeIconsStroke.favourite,
+                        title: 'Seus favoritos no TVScore',
+                        message:
+                            'Entre na sua conta para salvar filmes e séries favoritos.',
+                      ),
+                    ),
+                  )
+                else if (_loading && contents.isEmpty)
                   SliverToBoxAdapter(
                     child: SkeletonGrid(
                       columns: columns,

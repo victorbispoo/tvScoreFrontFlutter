@@ -146,11 +146,13 @@ class _HomePageState extends State<HomePage>
         : _catalogSections == null
         ? const <Map<String, String>>[]
         : highlights;
-    final forYou = allocate(
-      personalized,
-      type: _personalizedType,
-      limit: _forYouRecommendations.isEmpty ? 12 : null,
-    );
+    final forYou = ApiService.hasSession
+        ? allocate(
+            personalized,
+            type: _personalizedType,
+            limit: _forYouRecommendations.isEmpty ? 12 : null,
+          )
+        : <Map<String, String>>[];
     _canChangeTrendingFilter = highlights.any(
       (item) => !used.contains(item.contentKey),
     );

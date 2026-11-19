@@ -153,6 +153,7 @@ extension AuthService on ApiService {
     ApiService.userEmail = '';
     ApiService.savedContents = [];
     ApiService.reviews = [];
+    ApiService._sessionRevision.value++;
   }
 
   Future<void> logout() async {

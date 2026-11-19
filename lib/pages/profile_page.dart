@@ -11,6 +11,7 @@ import '../core/theme_controller.dart';
 import '../services/api_services.dart';
 import '../widgets/edit_profile_sheet.dart';
 import '../widgets/genre_preferences.dart';
+import '../widgets/guest_account_prompt.dart';
 import '../widgets/tv_score_segmented_control.dart';
 import '../widgets/tv_score_snackbar.dart';
 
@@ -47,7 +48,7 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   void initState() {
     super.initState();
-    _reviewStats = widget.isActive
+    _reviewStats = widget.isActive && ApiService.hasSession
         ? _fetchReviewStats()
         : Future.value((count: 0, average: null));
   }
@@ -55,7 +56,7 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   void didUpdateWidget(covariant ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !oldWidget.isActive) {
+    if (ApiService.hasSession && widget.isActive && !oldWidget.isActive) {
       _reviewStats = _fetchReviewStats();
     }
   }
@@ -232,6 +233,34 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ),
           );
+          if (!ApiService.hasSession) {
+            return ListView(
+              padding: EdgeInsets.fromLTRB(
+                inset,
+                wide ? 32 : 20,
+                inset,
+                wide ? 24 + widget.bottomPadding : widget.bottomPadding,
+              ),
+              children: [
+                const Text(
+                  'Perfil',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32),
+                  child: GuestAccountPrompt(
+                    icon: HugeIconsStroke.user,
+                    title: 'Sua conta no TVScore',
+                    message:
+                        'Entre ou crie uma conta para organizar seus favoritos e avaliações.',
+                  ),
+                ),
+                personalizationTitle,
+                SizedBox(height: wide ? 16 : 12),
+                appearance,
+              ],
+            );
+          }
           return ListView(
             padding: EdgeInsets.fromLTRB(
               inset,

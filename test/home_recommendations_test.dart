@@ -444,7 +444,13 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(ApiService.token, isNull);
-    expect(titles(section(tester, 'personalized')).first, 'MOVIE 1');
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is ContentCarousel && widget.heroSection == 'personalized',
+      ),
+      findsNothing,
+    );
     expect(find.byType(TrendingCarousel), findsOneWidget);
     expect(find.byType(RankedContentCarousel), findsOneWidget);
   });

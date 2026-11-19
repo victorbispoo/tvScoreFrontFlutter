@@ -73,6 +73,8 @@ void main() {
       ),
     );
     await api.changePassword('atual', '123456');
+    // A successful password change ends the session; authenticate the next case.
+    ApiService.token = 'old-token';
     await api.changePassword('atual', 'á' * 36);
     expect(calls, 2);
   });

@@ -129,7 +129,8 @@ void main() {
       ),
     );
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.byType(SkeletonCarousel), findsWidgets);
+    // Visitors do not render the personalized section while genres load.
+    expect(find.byType(SkeletonCarousel), findsNothing);
     expect(find.text('Em alta'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();

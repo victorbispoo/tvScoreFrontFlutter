@@ -95,7 +95,7 @@ void main() {
     expect(find.text('Mais bem avaliados'), findsOneWidget);
     expect(
       find.textContaining('Não foi possível carregar os gêneros'),
-      findsOneWidget,
+      findsNothing,
     );
   });
 

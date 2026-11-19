@@ -47,16 +47,24 @@ class ApiService {
     BaseOptions(baseUrl: 'https://tvscore-backend.onrender.com/api'),
   );
 
-  Options get _authorizationOptions =>
-      Options(headers: {'Authorization': 'Bearer ${ApiService.token}'});
+  Options get _authorizationOptions {
+    final token = ApiService.token;
+    if (token == null || token.isEmpty) {
+      throw StateError('Entre na sua conta para continuar.');
+    }
+    return Options(headers: {'Authorization': 'Bearer $token'});
+  }
 
   static String? _token;
+  static final _sessionRevision = ValueNotifier<int>(0);
+  static ValueListenable<int> get sessionRevision => _sessionRevision;
   static String? get token => _token;
   static bool get hasSession => _token?.isNotEmpty ?? false;
   static set token(String? value) {
     if (_token == value) return;
     _token = value;
     _advanceSession();
+    _sessionRevision.value++;
   }
 
   static int _sessionVersion = 0;

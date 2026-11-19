@@ -188,7 +188,7 @@ void main() {
           HttpOverrides.global = previous;
           ApiService.token = previousToken;
         });
-        ApiService.token = 'details-layout-test';
+        ApiService.token = 'details-layout-test-$title';
         await tester.pumpWidget(
           MaterialApp(
             theme: rated ? ThemeData.dark() : ThemeData.light(),
