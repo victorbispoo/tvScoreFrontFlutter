@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/app_breakpoints.dart';
 import 'tv_score_snackbar.dart';
 
 typedef _Provider = ({String name, String? logo});
@@ -148,6 +149,11 @@ class WhereToWatch extends StatelessWidget {
   Future<void> _showOptions(BuildContext context) => showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
+    constraints:
+        AppBreakpoints.supportsWidePages &&
+            AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width)
+        ? const BoxConstraints(maxWidth: 600, maxHeight: 700)
+        : null,
     isScrollControlled: true,
     showDragHandle: true,
     builder: (context) => SafeArea(

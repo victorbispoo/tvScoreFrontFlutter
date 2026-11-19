@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
 import '../core/app_haptics.dart';
 import '../models/content_metadata.dart';
 import '../models/review.dart';
@@ -256,6 +257,13 @@ class _DetailsPageState extends State<DetailsPage> {
                   context: context,
                   isScrollControlled: true,
                   useSafeArea: true,
+                  constraints:
+                      AppBreakpoints.supportsWidePages &&
+                          AppBreakpoints.isDesktop(
+                            MediaQuery.sizeOf(context).width,
+                          )
+                      ? const BoxConstraints(maxWidth: 720, maxHeight: 760)
+                      : null,
                   backgroundColor: Colors.transparent,
                   builder: (_) => CommunityReviewsSheet(
                     contentId: reference.id,
@@ -287,6 +295,9 @@ class _DetailsPageState extends State<DetailsPage> {
   }
 
   Widget _buildDetails(BuildContext context, Map<String, String> content) {
+    final desktop =
+        AppBreakpoints.supportsWidePages &&
+        AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
     final saved = _api.isSaved(content);
     final review = _api.reviewFor(content);
     final totalReviews =
@@ -347,195 +358,218 @@ class _DetailsPageState extends State<DetailsPage> {
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              ContentHeader(
-                content: content,
-                heroTag: widget.heroTag,
-                isSaved: saved,
-                onFavoritePressed: _busy ? null : _toggleSaved,
-              ),
-
-              Padding(
-                padding: EdgeInsets.only(left: 20, right: 20),
-                child: Column(
-                  crossAxisAlignment: .start,
-                  children: [
-                    Text(
-                      content['title'] ?? '',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (year.isNotEmpty) Text(year, style: metadataStyle),
-                    if (genres.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 5,
-                        children: [
-                          for (final genre in genres)
-                            DecoratedBox(
-                              decoration: ShapeDecoration(
-                                color: genreFill,
-                                shape: StadiumBorder(
-                                  side: BorderSide(
-                                    color: colors.outlineVariant.withValues(
-                                      alpha: .65,
+              Column(
+                children: [
+                  ContentHeader(
+                    content: content,
+                    heroTag: widget.heroTag,
+                    isSaved: saved,
+                    onFavoritePressed: _busy ? null : _toggleSaved,
+                    information: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          content['title'] ?? '',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (year.isNotEmpty) Text(year, style: metadataStyle),
+                        if (genres.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 5,
+                            children: [
+                              for (final genre in genres)
+                                DecoratedBox(
+                                  decoration: ShapeDecoration(
+                                    color: genreFill,
+                                    shape: StadiumBorder(
+                                      side: BorderSide(
+                                        color: colors.outlineVariant.withValues(
+                                          alpha: .65,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 3,
+                                    ),
+                                    child: Text(
+                                      genre,
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: colors.onSurfaceVariant,
+                                          ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 9,
-                                  vertical: 3,
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 14,
+                          runSpacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  HugeIconsSolid.star,
+                                  color: Colors.amber,
+                                  size: 14,
                                 ),
-                                child: Text(
-                                  genre,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: colors.onSurfaceVariant,
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    'TMDB:\u00a0${content['score']}/10',
+                                    style: metadataStyle,
                                   ),
                                 ),
+                              ],
+                            ),
+                            if (_loadingCommunity)
+                              const SkeletonBlock(width: 110, height: 15)
+                            else if (_communityError != null)
+                              Column(
+                                crossAxisAlignment: .start,
+                                children: [
+                                  Text(_communityError!),
+                                  TextButton(
+                                    onPressed: _checkCommunityReviews,
+                                    child: const Text('Tentar novamente'),
+                                  ),
+                                ],
+                              )
+                            else
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SvgPicture.asset(
+                                    'lib/assets/logoSemTexto.svg',
+                                    height: 15,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      totalReviews == 0
+                                          ? 'TVScore: sem avaliações'
+                                          : 'TVScore:\u00a0${communityAverage?.toStringAsFixed(1) ?? '—'}/10',
+                                      style: metadataStyle,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 14,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              HugeIconsSolid.star,
-                              color: Colors.amber,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                'TMDB:\u00a0${content['score']}/10',
-                                style: metadataStyle,
-                              ),
-                            ),
                           ],
                         ),
-                        if (_loadingCommunity)
-                          const SkeletonBlock(width: 110, height: 15)
-                        else if (_communityError != null)
-                          Column(
-                            crossAxisAlignment: .start,
+                        if (recommendationReason != null &&
+                            recommendationReason.isNotEmpty)
+                          ExpansionTile(
+                            key: ValueKey((
+                              content.contentKey,
+                              recommendationReason,
+                            )),
+                            tilePadding: EdgeInsets.zero,
+                            childrenPadding: const EdgeInsets.only(bottom: 8),
+                            shape: const Border(),
+                            collapsedShape: const Border(),
+                            leading: const Icon(
+                              HugeIconsSolid.sparkles,
+                              size: 16,
+                            ),
+                            title: Text(
+                              'Recomendado para você',
+                              style: theme.textTheme.labelLarge,
+                            ),
+                            expandedCrossAxisAlignment:
+                                CrossAxisAlignment.stretch,
                             children: [
-                              Text(_communityError!),
-                              TextButton(
-                                onPressed: _checkCommunityReviews,
-                                child: const Text('Tentar novamente'),
-                              ),
+                              Text(recommendationReason, style: metadataStyle),
                             ],
                           )
                         else
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SvgPicture.asset(
-                                'lib/assets/logoSemTexto.svg',
-                                height: 15,
-                              ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  totalReviews == 0
-                                      ? 'TVScore: sem avaliações'
-                                      : 'TVScore:\u00a0${communityAverage?.toStringAsFixed(1) ?? '—'}/10',
-                                  style: metadataStyle,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 16),
+                        _whereToWatch,
+                        if (content['overview'] != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            content['overview']!,
+                            style: const TextStyle(height: 1.6),
                           ),
+                        ],
                       ],
                     ),
-                    if (recommendationReason != null &&
-                        recommendationReason.isNotEmpty)
-                      ExpansionTile(
-                        key: ValueKey((
-                          content.contentKey,
-                          recommendationReason,
-                        )),
-                        tilePadding: EdgeInsets.zero,
-                        childrenPadding: const EdgeInsets.only(bottom: 8),
-                        shape: const Border(),
-                        collapsedShape: const Border(),
-                        leading: const Icon(HugeIconsSolid.sparkles, size: 16),
-                        title: Text(
-                          'Recomendado para você',
-                          style: theme.textTheme.labelLarge,
+                  ),
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: desktop ? 960 : double.infinity,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: desktop ? 32 : 20,
                         ),
-                        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(recommendationReason, style: metadataStyle),
-                        ],
-                      )
-                    else
-                      const SizedBox(height: 16),
-                    _whereToWatch,
-                    if (content['overview'] != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        content['overview']!,
-                        style: const TextStyle(height: 1.6),
-                      ),
-                    ],
-
-                    if (content['type'] == 'TV') ...[
-                      const SizedBox(height: 24),
-                      EpisodePanel(seriesId: int.parse(content['id']!)),
-                    ],
-                    const SizedBox(height: 24),
-                    if (_loadingMyReview)
-                      const LinearProgressIndicator()
-                    else if (_myReviewError != null)
-                      Column(
-                        crossAxisAlignment: .start,
-                        children: [
-                          Text(_myReviewError!),
-                          TextButton(
-                            onPressed: _loadMyReview,
-                            child: const Text('Tentar Novamente'),
-                          ),
-                        ],
-                      ),
-                    ReviewForm(
-                      isEditing: review != null,
-                      rating: _rating,
-                      commentController: _comment,
-                      enabled: canEditReview,
-                      isSaving: _busy,
-                      onRatingChanged: (value) {
-                        if (value == _rating) return;
-                        AppHaptics.selection();
-                        setState(() => _rating = value);
-                      },
-                      onSave: _saveReview,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Avaliações da comunidade',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        child: Column(
+                          crossAxisAlignment: desktop
+                              ? CrossAxisAlignment.stretch
+                              : CrossAxisAlignment.start,
+                          children: [
+                            if (content['type'] == 'TV') ...[
+                              const SizedBox(height: 24),
+                              EpisodePanel(seriesId: int.parse(content['id']!)),
+                            ],
+                            const SizedBox(height: 24),
+                            if (_loadingMyReview)
+                              const LinearProgressIndicator()
+                            else if (_myReviewError != null)
+                              Column(
+                                crossAxisAlignment: .start,
+                                children: [
+                                  Text(_myReviewError!),
+                                  TextButton(
+                                    onPressed: _loadMyReview,
+                                    child: const Text('Tentar Novamente'),
+                                  ),
+                                ],
+                              ),
+                            ReviewForm(
+                              isEditing: review != null,
+                              rating: _rating,
+                              commentController: _comment,
+                              enabled: canEditReview,
+                              isSaving: _busy,
+                              onRatingChanged: (value) {
+                                if (value == _rating) return;
+                                AppHaptics.selection();
+                                setState(() => _rating = value);
+                              },
+                              onSave: _saveReview,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Avaliações da comunidade',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildCommunitySection(),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildCommunitySection(),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
