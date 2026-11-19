@@ -13,6 +13,7 @@
 .agents/
 docs/
 migrate_working_dir/
+MEMORIA_PROJETO.md
 
 # IntelliJ related
 *.iml
