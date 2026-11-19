@@ -95,7 +95,7 @@ extension ReviewsService on ApiService {
     final response = await dio.get(
       '/avaliacoes/conteudo/$contentId/resumo',
       queryParameters: {'tipoConteudo': type},
-      options: _authorizationOptions,
+      options: ApiService.hasSession ? _authorizationOptions : null,
     );
 
     return Map<String, dynamic>.from(response.data as Map);

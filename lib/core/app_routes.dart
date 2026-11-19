@@ -6,6 +6,7 @@ import '../pages/my_reviews_page.dart';
 import '../pages/password_recovery_page.dart';
 import '../pages/register_page.dart';
 import '../pages/search_page.dart';
+import '../services/api_services.dart';
 import 'app_shell.dart';
 
 typedef DetailsArguments = ({
@@ -77,7 +78,7 @@ abstract final class AppRoutes {
       case search:
         page = const SearchPage();
       case myReviews:
-        page = const MyReviewsPage();
+        page = ApiService.hasSession ? const MyReviewsPage() : const AppShell();
       case details:
         final args = settings.arguments;
         if (args is! DetailsArguments) {

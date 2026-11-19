@@ -53,7 +53,7 @@ class _DetailsPageState extends State<DetailsPage> {
     _loadDetails();
     _rating = 8.0;
     _comment = TextEditingController();
-    _loadMyReview();
+    if (ApiService.hasSession) _loadMyReview();
     _checkCommunityReviews();
   }
 
@@ -102,14 +102,16 @@ class _DetailsPageState extends State<DetailsPage> {
       final reference = widget.content.apiReference;
       final (summary, reviews) = await (
         _api.getContentReviewSummary(reference.id, reference.type),
-        _api.getContentReviewsPage(reference.id, reference.type, size: 3),
+        ApiService.hasSession
+            ? _api.getContentReviewsPage(reference.id, reference.type, size: 3)
+            : Future.value(null),
       ).wait;
 
       if (!mounted) return;
       setState(() {
         _reviewSummary = summary;
-        _communityReviews = reviews.reviews;
-        _communityTotal = reviews.totalElements;
+        _communityReviews = reviews?.reviews ?? [];
+        _communityTotal = reviews?.totalElements ?? 0;
       });
     } catch (error) {
       if (!mounted) return;
@@ -295,6 +297,7 @@ class _DetailsPageState extends State<DetailsPage> {
   }
 
   Widget _buildDetails(BuildContext context, Map<String, String> content) {
+    final hasSession = ApiService.hasSession;
     final desktop =
         AppBreakpoints.supportsWidePages &&
         AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
@@ -364,7 +367,9 @@ class _DetailsPageState extends State<DetailsPage> {
                     content: content,
                     heroTag: widget.heroTag,
                     isSaved: saved,
-                    onFavoritePressed: _busy ? null : _toggleSaved,
+                    onFavoritePressed: !hasSession || _busy
+                        ? null
+                        : _toggleSaved,
                     information: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -526,43 +531,45 @@ class _DetailsPageState extends State<DetailsPage> {
                               const SizedBox(height: 24),
                               EpisodePanel(seriesId: int.parse(content['id']!)),
                             ],
-                            const SizedBox(height: 24),
-                            if (_loadingMyReview)
-                              const LinearProgressIndicator()
-                            else if (_myReviewError != null)
-                              Column(
-                                crossAxisAlignment: .start,
-                                children: [
-                                  Text(_myReviewError!),
-                                  TextButton(
-                                    onPressed: _loadMyReview,
-                                    child: const Text('Tentar Novamente'),
-                                  ),
-                                ],
+                            if (hasSession) ...[
+                              const SizedBox(height: 24),
+                              if (_loadingMyReview)
+                                const LinearProgressIndicator()
+                              else if (_myReviewError != null)
+                                Column(
+                                  crossAxisAlignment: .start,
+                                  children: [
+                                    Text(_myReviewError!),
+                                    TextButton(
+                                      onPressed: _loadMyReview,
+                                      child: const Text('Tentar Novamente'),
+                                    ),
+                                  ],
+                                ),
+                              ReviewForm(
+                                isEditing: review != null,
+                                rating: _rating,
+                                commentController: _comment,
+                                enabled: canEditReview,
+                                isSaving: _busy,
+                                onRatingChanged: (value) {
+                                  if (value == _rating) return;
+                                  AppHaptics.selection();
+                                  setState(() => _rating = value);
+                                },
+                                onSave: _saveReview,
                               ),
-                            ReviewForm(
-                              isEditing: review != null,
-                              rating: _rating,
-                              commentController: _comment,
-                              enabled: canEditReview,
-                              isSaving: _busy,
-                              onRatingChanged: (value) {
-                                if (value == _rating) return;
-                                AppHaptics.selection();
-                                setState(() => _rating = value);
-                              },
-                              onSave: _saveReview,
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Avaliações da comunidade',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Avaliações da comunidade',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildCommunitySection(),
+                              const SizedBox(height: 12),
+                              _buildCommunitySection(),
+                            ],
                             const SizedBox(height: 24),
                           ],
                         ),

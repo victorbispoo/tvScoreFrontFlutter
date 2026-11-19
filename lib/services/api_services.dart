@@ -52,6 +52,7 @@ class ApiService {
 
   static String? _token;
   static String? get token => _token;
+  static bool get hasSession => _token?.isNotEmpty ?? false;
   static set token(String? value) {
     if (_token == value) return;
     _token = value;

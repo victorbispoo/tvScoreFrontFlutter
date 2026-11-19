@@ -9,7 +9,6 @@ import 'core/recovery_browser_url.dart'
     if (dart.library.js_interop) 'core/recovery_browser_url_web.dart';
 import 'core/system_ui_style.dart';
 import 'core/theme_controller.dart';
-import 'pages/login_page.dart';
 import 'services/api_services.dart';
 
 export 'core/app_shell.dart' show AppShell;
@@ -22,14 +21,13 @@ Future<void> main() async {
     replaceRecoveryBrowserUrl(AppRoutes.recoveryUrlWithoutToken(url));
   }
   await ThemeController.instance.restore();
-  final loggedIn = recoveryRoute == null && await ApiService().restoreSession();
-  runApp(TvScoreApp(loggedIn: loggedIn, recoveryRoute: recoveryRoute));
+  if (recoveryRoute == null) await ApiService().restoreSession();
+  runApp(TvScoreApp(recoveryRoute: recoveryRoute));
 }
 
 class TvScoreApp extends StatelessWidget {
-  const TvScoreApp({super.key, this.loggedIn = false, this.recoveryRoute});
+  const TvScoreApp({super.key, this.recoveryRoute});
 
-  final bool loggedIn;
   final RouteSettings? recoveryRoute;
 
   @override
@@ -51,9 +49,7 @@ class TvScoreApp extends StatelessWidget {
         onGenerateInitialRoutes: recoveryRoute == null
             ? null
             : (_) => [AppRoutes.generate(recoveryRoute!)!],
-        home: recoveryRoute == null
-            ? (loggedIn ? const AppShell() : const LoginPage())
-            : null,
+        home: recoveryRoute == null ? const AppShell() : null,
       ),
     );
   }

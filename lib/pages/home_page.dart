@@ -208,7 +208,7 @@ class _HomePageState extends State<HomePage>
 
   Future<void> _loadRecommendations({bool refresh = false}) {
     final token = ApiService.token;
-    if (token == null) {
+    if (!ApiService.hasSession) {
       _recommendationLoad = null;
       _recommended = const {};
       _forYouRecommendations = const [];
@@ -352,7 +352,7 @@ class _HomePageState extends State<HomePage>
 
     final (available, preferred) = await (
       _availableGenres,
-      ApiService.token == null
+      !ApiService.hasSession
           ? Future.value(<Map<String, dynamic>>[])
           : api.getPreferredGenres(),
     ).wait;
@@ -641,7 +641,7 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
                 const SizedBox(height: 22),
-                _genreSections(personalized: true),
+                if (ApiService.hasSession) _genreSections(personalized: true),
                 _KeepAliveSection(
                   child: FutureBuilder<List<Map<String, String>>>(
                     future: _trending,

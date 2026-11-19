@@ -182,9 +182,13 @@ void main() {
           });
         }
         final previous = HttpOverrides.current;
+        final previousToken = ApiService.token;
         HttpOverrides.global = backend;
-        addTearDown(() => HttpOverrides.global = previous);
-        ApiService.token = null;
+        addTearDown(() {
+          HttpOverrides.global = previous;
+          ApiService.token = previousToken;
+        });
+        ApiService.token = 'details-layout-test';
         await tester.pumpWidget(
           MaterialApp(
             theme: rated ? ThemeData.dark() : ThemeData.light(),
