@@ -34,6 +34,14 @@ class RecoveryBackend extends BackendHttp {
 }
 
 void main() {
+  setUp(() {
+    final dispatcher =
+        TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
+    dispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
+    addTearDown(dispatcher.clearAccessibilityFeaturesTestValue);
+  });
   Future<GlobalKey<NavigatorState>> launch(
     WidgetTester tester,
     int status, {
@@ -70,7 +78,7 @@ void main() {
       find.byType(TextFormField).first,
       'user@example.com',
     );
-    final forgot = find.text('Esqueceu a senha?');
+    final forgot = find.text('Esqueci minha senha');
     await tester.ensureVisible(forgot);
     await tester.tap(forgot);
     await tester.pumpAndSettle();

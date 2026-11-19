@@ -13,6 +13,14 @@ import 'support/gallery.dart';
 
 void main() {
   setUp(() {
+    final dispatcher =
+        TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
+    dispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
+    addTearDown(dispatcher.clearAccessibilityFeaturesTestValue);
+  });
+  setUp(() {
     final previous = ImagePickerPlatform.instance;
     ImagePickerPlatform.instance = TestGallery();
     addTearDown(() => ImagePickerPlatform.instance = previous);
@@ -151,9 +159,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('login reduz a caixa da logo original para 170 dp', (
-    tester,
-  ) async {
+  testWidgets('login keeps the official logo compact', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         onGenerateRoute: AppRoutes.generate,
@@ -169,8 +175,8 @@ void main() {
           )
           .first,
     );
-    expect(logo.width, 170);
-    expect(logo.height, 170);
+    expect(logo.width, 144);
+    expect(logo.height, 96);
     expect(tester.takeException(), isNull);
   });
 

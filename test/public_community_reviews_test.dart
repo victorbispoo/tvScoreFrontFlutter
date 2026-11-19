@@ -45,6 +45,12 @@ class _PublicBackend extends PreferencesBackend {
 }
 
 void main() {
+  void reduceMotion(WidgetTester tester) {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+  }
+
   TestWidgetsFlutterBinding.ensureInitialized();
   late _PublicBackend backend;
   setUp(() async {
@@ -244,6 +250,7 @@ void main() {
     testWidgets(
       'autenticação retorna ao conteúdo, cadastro=$registration, sem publicar',
       (tester) async {
+        reduceMotion(tester);
         await open(tester);
         final original = tester.state(find.byType(DetailsPage));
         final button = find.text('Entrar para avaliar');
@@ -263,9 +270,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byType(LoginPage), findsOneWidget);
         if (registration) {
-          await tester.ensureVisible(find.text('Cadastre-se'));
+          await tester.ensureVisible(find.text('Criar conta'));
           await tester.pumpAndSettle();
-          await tester.tap(find.text('Cadastre-se'));
+          await tester.tap(find.text('Criar conta'));
           await tester.pumpAndSettle();
           expect(find.byType(RegisterPage), findsOneWidget);
           final fields = find.byType(TextFormField);
@@ -327,6 +334,7 @@ void main() {
   testWidgets('cancelar login mantém conteúdo e estado visitante', (
     tester,
   ) async {
+    reduceMotion(tester);
     await open(tester);
     final original = tester.state(find.byType(DetailsPage));
     await tester.ensureVisible(find.text('Entrar para avaliar'));
