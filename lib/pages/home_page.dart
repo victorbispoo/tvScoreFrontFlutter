@@ -612,7 +612,7 @@ class _HomePageState extends State<HomePage>
                       children: [
                         if (desktop)
                           Text(
-                            'In?cio',
+                            'Início',
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           )

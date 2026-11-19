@@ -169,7 +169,9 @@ class _PreferredContentPickerState extends State<PreferredContentPicker> {
           if (results.isNotEmpty)
             LayoutBuilder(
               builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 700 ? 3 : 2;
+                final columns = constraints.maxWidth >= 520
+                    ? ((constraints.maxWidth + 12) / 162).floor().clamp(3, 6)
+                    : 2;
                 final width =
                     (constraints.maxWidth - 12 * (columns - 1)) / columns;
                 return Wrap(

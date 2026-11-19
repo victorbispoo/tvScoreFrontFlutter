@@ -222,12 +222,14 @@ void main() {
     expect(find.text('Avatar: O Caminho da Água'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'titulo inexistente');
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pumpAndSettle();
     expect(
       find.text('Nenhum título encontrado. Tente outro nome.'),
       findsOneWidget,
     );
+
+    expect(backend.requests, hasLength(2));
 
     final requestCount = backend.requests.length;
     await tester.enterText(find.byType(TextField), 'stranger');

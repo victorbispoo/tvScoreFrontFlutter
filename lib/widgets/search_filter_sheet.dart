@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
 import '../models/search_filters.dart';
 
 Future<SearchFilters?> showSearchFilters(
@@ -15,6 +16,11 @@ Future<SearchFilters?> showSearchFilters(
   context: context,
   isScrollControlled: true,
   useSafeArea: true,
+  constraints:
+      AppBreakpoints.supportsWidePages &&
+          AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width)
+      ? const BoxConstraints(maxWidth: 560, maxHeight: 760)
+      : null,
   backgroundColor: Colors.transparent,
   builder: (context) => LayoutBuilder(
     builder: (context, constraints) {

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:tv_score_front_flutter/widgets/user_avatar.dart';
 
+import '../core/app_breakpoints.dart';
 import '../core/app_routes.dart';
 import '../core/theme_controller.dart';
 import '../services/api_services.dart';
@@ -127,170 +128,74 @@ class _ProfilePageState extends State<ProfilePage>
   Widget build(BuildContext context) {
     super.build(context);
     return BackdropGroup(
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, widget.bottomPadding),
-        children: [
-          const Text(
-            'Perfil',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ValueListenableBuilder<String?>(
-                valueListenable: ApiService.userPhotoUrl,
-                builder: (_, url, _) => UserAvatar(
-                  name: ApiService.userName,
-                  imageUrl: url,
-                  size: 72,
-                ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide =
+              AppBreakpoints.supportsWidePages &&
+              constraints.maxWidth >= AppBreakpoints.tablet;
+          final inset = wide
+              ? ((constraints.maxWidth - 960) / 2).clamp(28.0, double.infinity)
+              : 20.0;
+          final available = constraints.maxWidth - 2 * inset;
+          final twoColumns = wide && available >= 660;
+          const gap = 32.0;
+          final sectionWidth = twoColumns ? (available - gap) / 2 : available;
+          final desktopColumns =
+              twoColumns &&
+              AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
+          final logout = TextButton.icon(
+            onPressed: _logout,
+            icon: Icon(HugeIconsStroke.logout01),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              minimumSize: const Size(48, 48),
+            ),
+            label: const Text('Sair da conta'),
+          );
+          final libraryItems = <Widget>[
+            ListTile(
+              minVerticalPadding: wide ? 16 : null,
+              leading: const Icon(
+                HugeIconsStroke.preferenceHorizontal,
+                color: Colors.lightBlueAccent,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      ApiService.userName,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      ApiService.userEmail,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextButton(
-                      onPressed: _editProfile,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.primary,
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(48, 48),
-                        alignment: Alignment.centerLeft,
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      child: const Text('Editar perfil'),
-                    ),
-                  ],
-                ),
+              title: const Text('Preferências de conteúdo'),
+              subtitle: const Text(
+                'Edite seus gêneros, filmes e séries preferidos',
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Suas estatísticas',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          Divider(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            height: 1,
-          ),
-          const SizedBox(height: 20),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _ProfileStat(
-                  value: '${ApiService.savedContents.length}',
-                  label: 'Favoritos',
-                ),
+              trailing: const Icon(HugeIconsStroke.arrowRight01),
+              onTap: _editPreferences,
+            ),
+            ListTile(
+              minVerticalPadding: wide ? 16 : null,
+              leading: Icon(
+                HugeIconsStroke.star,
+                color: Colors.amber,
+                size: 24,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FutureBuilder<({int count, double? average})>(
-                  future: _reviewStats,
-                  builder: (context, snapshot) => _ProfileStat(
-                    value: snapshot.hasError
-                        ? '—'
-                        : snapshot.connectionState != ConnectionState.done
-                        ? '…'
-                        : '${snapshot.data?.count ?? 0}',
-                    label: 'Avaliações',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FutureBuilder<({int count, double? average})>(
-                  future: _reviewStats,
-                  builder: (context, snapshot) => _ProfileStat(
-                    value: snapshot.hasError
-                        ? '—'
-                        : snapshot.connectionState != ConnectionState.done
-                        ? '…'
-                        : snapshot.data?.average?.toStringAsFixed(1) ?? '—',
-                    label: 'Média',
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-          const Text(
+              title: const Text('Minhas avaliações'),
+              trailing: const Icon(HugeIconsStroke.arrowRight01),
+              onTap: () async {
+                await Navigator.pushNamed(context, AppRoutes.myReviews);
+                if (!mounted) return;
+                setState(() {
+                  _reviewStats = _fetchReviewStats();
+                });
+              },
+            ),
+          ];
+          const libraryTitle = Text(
             'Sua biblioteca',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 12),
-
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _ProfileGlassSurface(
-              child: ListTile(
-                leading: const Icon(
-                  HugeIconsStroke.preferenceHorizontal,
-                  color: Colors.lightBlueAccent,
-                ),
-                title: const Text('Preferências de conteúdo'),
-                subtitle: const Text(
-                  'Edite seus gêneros, filmes e séries preferidos',
-                ),
-                trailing: const Icon(HugeIconsStroke.arrowRight01),
-                onTap: _editPreferences,
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _ProfileGlassSurface(
-              child: ListTile(
-                leading: Icon(
-                  HugeIconsStroke.star,
-                  color: Colors.amber,
-                  size: 24,
-                ),
-                title: const Text('Minhas avaliações'),
-                trailing: const Icon(HugeIconsStroke.arrowRight01),
-                onTap: () async {
-                  await Navigator.pushNamed(context, AppRoutes.myReviews);
-                  if (!mounted) return;
-                  setState(() {
-                    _reviewStats = _fetchReviewStats();
-                  });
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
+          );
+          const personalizationTitle = Text(
             'Personalização',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 12),
-          _ProfileGlassSurface(
+          );
+          final appearance = _ProfileGlassSurface(
+            wide: wide,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(wide ? 22 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -298,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage>
                     'Aparência',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: wide ? 16 : 12),
                   ValueListenableBuilder<ThemeMode>(
                     valueListenable: ThemeController.instance,
                     builder: (context, mode, _) =>
@@ -326,32 +231,260 @@ class _ProfilePageState extends State<ProfilePage>
                 ],
               ),
             ),
-          ),
-          TextButton.icon(
-            onPressed: _logout,
-            icon: Icon(HugeIconsStroke.logout01),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-              minimumSize: const Size(48, 48),
+          );
+          return ListView(
+            padding: EdgeInsets.fromLTRB(
+              inset,
+              wide ? 32 : 20,
+              inset,
+              wide ? 24 + widget.bottomPadding : widget.bottomPadding,
             ),
-            label: const Text('Sair da conta'),
-          ),
-        ],
+            children: [
+              const Text(
+                'Perfil',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: wide ? 28 : 16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ValueListenableBuilder<String?>(
+                    valueListenable: ApiService.userPhotoUrl,
+                    builder: (_, url, _) => UserAvatar(
+                      name: ApiService.userName,
+                      imageUrl: url,
+                      size: wide ? 116 : 72,
+                    ),
+                  ),
+                  SizedBox(width: wide ? 24 : 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ApiService.userName,
+                          style: TextStyle(
+                            fontSize: wide ? 34 : 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          ApiService.userEmail,
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            fontSize: wide ? 15 : 13,
+                          ),
+                        ),
+                        SizedBox(height: wide ? 12 : 6),
+                        TextButton(
+                          onPressed: _editProfile,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            padding: wide
+                                ? const EdgeInsets.symmetric(horizontal: 16)
+                                : EdgeInsets.zero,
+                            side: wide
+                                ? BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                  )
+                                : null,
+                            minimumSize: const Size(48, 48),
+                            alignment: Alignment.centerLeft,
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          child: const Text('Editar perfil'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: wide ? 36 : 20),
+              const Text(
+                'Suas estatísticas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              if (!wide)
+                Divider(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1,
+                ),
+              const SizedBox(height: 20),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: wide ? 780 : double.infinity,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _ProfileStat(
+                          wide: wide,
+                          value: '${ApiService.savedContents.length}',
+                          label: 'Favoritos',
+                        ),
+                      ),
+                      SizedBox(width: wide ? 16 : 8),
+                      Expanded(
+                        child: FutureBuilder<({int count, double? average})>(
+                          future: _reviewStats,
+                          builder: (context, snapshot) => _ProfileStat(
+                            wide: wide,
+                            value: snapshot.hasError
+                                ? '—'
+                                : snapshot.connectionState !=
+                                      ConnectionState.done
+                                ? '…'
+                                : '${snapshot.data?.count ?? 0}',
+                            label: 'Avaliações',
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: wide ? 16 : 8),
+                      Expanded(
+                        child: FutureBuilder<({int count, double? average})>(
+                          future: _reviewStats,
+                          builder: (context, snapshot) => _ProfileStat(
+                            wide: wide,
+                            value: snapshot.hasError
+                                ? '—'
+                                : snapshot.connectionState !=
+                                      ConnectionState.done
+                                ? '…'
+                                : snapshot.data?.average?.toStringAsFixed(1) ??
+                                      '—',
+                            label: 'Média',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              if (desktopColumns) ...[
+                const SizedBox(height: 32),
+                Table(
+                  columnWidths: const {1: FixedColumnWidth(gap)},
+                  children: [
+                    const TableRow(
+                      children: [
+                        libraryTitle,
+                        SizedBox.shrink(),
+                        personalizationTitle,
+                      ],
+                    ),
+                    const TableRow(
+                      children: [
+                        SizedBox(height: 16),
+                        SizedBox.shrink(),
+                        SizedBox.shrink(),
+                      ],
+                    ),
+                    TableRow(
+                      children: [
+                        TableCell(
+                          verticalAlignment:
+                              TableCellVerticalAlignment.intrinsicHeight,
+                          child: _ProfileGlassSurface(
+                            wide: true,
+                            child: Column(
+                              children: [
+                                libraryItems.first,
+                                const SizedBox(height: 12),
+                                libraryItems.last,
+                                const SizedBox(height: 12),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox.shrink(),
+                        TableCell(
+                          verticalAlignment:
+                              TableCellVerticalAlignment.intrinsicHeight,
+                          child: appearance,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Center(child: logout),
+              ] else
+                Wrap(
+                  spacing: gap,
+                  children: [
+                    SizedBox(
+                      width: sectionWidth.clamp(0.0, double.infinity),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(height: wide ? 32 : 20),
+                          libraryTitle,
+                          SizedBox(height: wide ? 16 : 12),
+                          for (final item in libraryItems)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: wide ? 12 : 8),
+                              child: _ProfileGlassSurface(
+                                wide: wide,
+                                child: item,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: sectionWidth.clamp(0.0, double.infinity),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(height: wide ? 32 : 20),
+                          personalizationTitle,
+                          SizedBox(height: wide ? 16 : 12),
+                          appearance,
+                          if (wide) const SizedBox(height: 12),
+                          logout,
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class _ProfileStat extends StatelessWidget {
-  const _ProfileStat({required this.value, required this.label});
+  const _ProfileStat({
+    required this.value,
+    required this.label,
+    required this.wide,
+  });
 
   final String value;
   final String label;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) => _ProfileGlassSurface(
+    wide: wide,
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(wide ? 22 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -360,14 +493,17 @@ class _ProfileStat extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: wide ? 40 : 32,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: wide ? 14 : 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
@@ -378,26 +514,32 @@ class _ProfileStat extends StatelessWidget {
 }
 
 class _ProfileGlassSurface extends StatelessWidget {
-  const _ProfileGlassSurface({required this.child});
+  const _ProfileGlassSurface({required this.child, required this.wide});
 
   final Widget child;
+  final bool wide;
   static const double radius = 16;
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(radius),
-    child: BackdropFilter.grouped(
-      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-      child: Material(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: .96),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: .14),
-          ),
-        ),
-        child: child,
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final borderRadius = BorderRadius.circular(radius);
+    final surface = Material(
+      color: wide ? colors.surface : colors.surface.withValues(alpha: .96),
+      shape: RoundedRectangleBorder(
+        borderRadius: borderRadius,
+        side: BorderSide(color: colors.primary.withValues(alpha: .14)),
       ),
-    ),
-  );
+      clipBehavior: wide ? Clip.antiAlias : Clip.none,
+      child: child,
+    );
+    if (wide) return surface;
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter.grouped(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: surface,
+      ),
+    );
+  }
 }

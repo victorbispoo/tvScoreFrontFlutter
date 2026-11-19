@@ -166,6 +166,37 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets(
+    'preserva seleção ao redimensionar a grade de preferências',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1366, 900);
+      addTearDown(tester.view.reset);
+      await openFlow(tester);
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      await choose(tester, 0);
+      final cards = find.descendant(
+        of: find.byType(PreferredContentPicker),
+        matching: find.byType(ContentCard),
+      );
+      expect(
+        tester.getTopLeft(cards.at(2)).dy,
+        tester.getTopLeft(cards.first).dy,
+      );
+      tester.view.physicalSize = const Size(390, 800);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(cards.at(2)).dy,
+        greaterThan(tester.getTopLeft(cards.first).dy),
+      );
+      expect(find.text('1 de 5 selecionados'), findsOneWidget);
+      expect(find.text('Concluir').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+    variant: const TargetPlatformVariant({TargetPlatform.windows}),
+  );
+
   testWidgets('cantos e margem interna do card selecionam e desmarcam', (
     tester,
   ) async {

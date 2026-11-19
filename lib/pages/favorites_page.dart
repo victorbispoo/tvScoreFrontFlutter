@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
 import '../core/app_haptics.dart';
 import '../services/api_services.dart';
 import '../widgets/content_card.dart';
@@ -72,22 +73,31 @@ class _FavoritesPageState extends State<FavoritesPage>
         child: LayoutBuilder(
           builder: (context, constraints) {
             const spacing = 14.0;
-            final available = constraints.maxWidth - 40;
-            final columns = ((available + spacing) / (130 + spacing))
-                .floor()
-                .clamp(1, 6);
+            final wide =
+                AppBreakpoints.supportsWidePages &&
+                constraints.maxWidth >= AppBreakpoints.tablet;
+            final inset =
+                20 +
+                ((constraints.maxWidth - 1360) / 2).clamp(0.0, double.infinity);
+            final available = (constraints.maxWidth - 2 * inset).clamp(
+              1.0,
+              double.infinity,
+            );
+            final columns = wide
+                ? ((available + spacing) / 194).ceil()
+                : ((available + spacing) / (130 + spacing)).floor().clamp(1, 6);
             final width = (available - spacing * (columns - 1)) / columns;
             final mainAxisExtent = width * 1.5 + 65;
             final gridPadding = EdgeInsets.fromLTRB(
-              20,
+              inset,
               0,
-              20,
+              inset,
               widget.bottomPadding,
             );
             return CustomScrollView(
               slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  padding: EdgeInsets.fromLTRB(inset, 24, inset, 24),
                   sliver: SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

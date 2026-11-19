@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/app_routes.dart';
-import '../core/light_logo_color_mapper.dart';
 import '../core/password_recovery_rules.dart';
 import '../services/api_services.dart';
+import '../widgets/auth_form_layout.dart';
 import '../widgets/auth_text_field.dart';
 
 class PasswordRecoveryPage extends StatefulWidget {
@@ -140,24 +139,13 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
+              child: AuthFormLayout(
+                logoSpacing: 40,
                 child: Form(
                   key: _form,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Center(
-                        child: SvgPicture.asset(
-                          'lib/assets/tvScoreLogin.svg',
-                          width: 170,
-                          height: 170,
-                          colorMapper: theme.brightness == Brightness.light
-                              ? const LightLogoColorMapper()
-                              : null,
-                        ),
-                      ),
-                      SizedBox(height: 40,),
                       Text(
                         widget.resetting
                             ? 'Redefinir senha'
@@ -183,6 +171,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
                         AuthTextField(
                           label: 'Nova senha',
                           controller: _password,
+                          initialField: true,
                           isPassword: true,
                           enabled: !_busy,
                           textInputAction: TextInputAction.next,
@@ -208,6 +197,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
                         AuthTextField(
                           label: 'E-mail',
                           controller: _email,
+                          initialField: true,
                           enabled: !_busy,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.done,

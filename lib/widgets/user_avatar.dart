@@ -50,6 +50,7 @@ class UserAvatar extends StatelessWidget {
               ? fallback
               : Image.network(
                   imageUrl!,
+                  webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                   fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => fallback,
                   loadingBuilder: (_, child, progress) =>
@@ -117,6 +118,8 @@ Future<void> showProfilePhoto(
                             )
                           : Image.network(
                               url!,
+                              webHtmlElementStrategy:
+                                  WebHtmlElementStrategy.fallback,
                               fit: BoxFit.contain,
                               semanticLabel: 'Foto de perfil',
                               errorBuilder: (_, _, _) => Text(

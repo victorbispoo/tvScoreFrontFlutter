@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
 import '../models/content_metadata.dart';
 import '../models/search_filters.dart';
 import '../services/api_services.dart';
@@ -55,7 +56,7 @@ class _SearchPageState extends State<SearchPage>
     }
   }
 
-  void _onQueryChanged(String value) {
+  void _onQueryChanged(String value, {bool submit = false}) {
     _debounce?.cancel();
     _skeletonDelay?.cancel();
     final version = ++_searchVersion;
@@ -73,6 +74,10 @@ class _SearchPageState extends State<SearchPage>
     });
 
     if (term.isEmpty) return;
+    if (submit) {
+      unawaited(_search(term, version));
+      return;
+    }
 
     _debounce = Timer(
       const Duration(milliseconds: 400),
@@ -197,6 +202,9 @@ class _SearchPageState extends State<SearchPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final wide =
+        AppBreakpoints.supportsWidePages &&
+        MediaQuery.sizeOf(context).width >= AppBreakpoints.tablet;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -214,264 +222,304 @@ class _SearchPageState extends State<SearchPage>
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1360),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                        child: TextField(
-                          controller: _query,
-                          onChanged: _onQueryChanged,
-                          textInputAction: TextInputAction.search,
-                          decoration: InputDecoration(
-                            hintText: 'Busque por título...',
-                            prefixIcon: const Icon(
-                              HugeIconsStroke.search01,
-                              size: 20,
-                            ),
-                            suffixIcon: _query.text.isEmpty
-                                ? null
-                                : IconButton(
-                                    tooltip: 'Limpar busca',
-                                    onPressed: () {
-                                      _query.clear();
-                                      _onQueryChanged('');
-                                    },
-                                    icon: const Icon(
-                                      HugeIconsStroke.cancel01,
-                                      size: 18,
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: wide ? 680 : double.infinity,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                              child: TextField(
+                                controller: _query,
+                                onChanged: _onQueryChanged,
+                                onSubmitted: (value) {
+                                  if ((_debounce?.isActive ?? false) ||
+                                      _error != null) {
+                                    _onQueryChanged(value, submit: true);
+                                  }
+                                },
+                                textInputAction: TextInputAction.search,
+                                decoration: InputDecoration(
+                                  hintText: 'Busque por título...',
+                                  prefixIcon: const Icon(
+                                    HugeIconsStroke.search01,
+                                    size: 20,
+                                  ),
+                                  suffixIcon: _query.text.isEmpty
+                                      ? null
+                                      : IconButton(
+                                          tooltip: 'Limpar busca',
+                                          onPressed: () {
+                                            _query.clear();
+                                            _onQueryChanged('');
+                                          },
+                                          icon: const Icon(
+                                            HugeIconsStroke.cancel01,
+                                            size: 18,
+                                          ),
+                                        ),
+                                  filled: true,
+                                  fillColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surface,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                    borderSide: BorderSide(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: .16),
                                     ),
                                   ),
-                            filled: true,
-                            fillColor: Theme.of(context).colorScheme.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: .16),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                    borderSide: BorderSide(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: .16),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                    borderSide: BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 15,
+                                  ),
+                                ),
                               ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: .16),
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
-                                width: 1.4,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 15,
                             ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton.filledTonal(
+                              tooltip: 'Filtros',
+                              onPressed: _openFilters,
+                              icon: const Icon(
+                                HugeIconsStroke.filterHorizontal,
+                                size: 21,
+                              ),
+                              style: IconButton.styleFrom(
+                                minimumSize: const Size(52, 52),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.surface,
+                                foregroundColor: _filters.isActive
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                side: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary
+                                      .withValues(
+                                        alpha: _filters.isActive ? .55 : .16,
+                                      ),
+                                ),
+                              ),
+                            ),
+                            if (_filters.isActive)
+                              Positioned(
+                                right: 4,
+                                top: 4,
+                                child: Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      IconButton.filledTonal(
-                        tooltip: 'Filtros',
-                        onPressed: _openFilters,
-                        icon: const Icon(
-                          HugeIconsStroke.filterHorizontal,
-                          size: 21,
-                        ),
-                        style: IconButton.styleFrom(
-                          minimumSize: const Size(52, 52),
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.surface,
-                          foregroundColor: _filters.isActive
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                          side: BorderSide(
-                            color: Theme.of(context).colorScheme.primary
-                                .withValues(
-                                  alpha: _filters.isActive ? .55 : .16,
-                                ),
-                          ),
-                        ),
+                  const SizedBox(height: 12),
+                  if (_query.text.trim().isEmpty)
+                    Text(
+                      'Encontre filmes e séries do catálogo.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
                       ),
-                      if (_filters.isActive)
-                        Positioned(
-                          right: 4,
-                          top: 4,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              shape: BoxShape.circle,
+                    )
+                  else
+                    Text(
+                      'Resultados para “${_query.text.trim()}”',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        if (_query.text.trim().isEmpty) {
+                          return const Center(
+                            child: Text('Digite o nome de um filme ou série.'),
+                          );
+                        }
+                        if (_loading) {
+                          if (!_showSkeleton) return const SizedBox.shrink();
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              const spacing = 14.0;
+                              final columns =
+                                  ((constraints.maxWidth +
+                                              (wide ? spacing : 0)) /
+                                          (wide ? 194 : 174))
+                                      .ceil()
+                                      .clamp(1, 20);
+                              final cardWidth =
+                                  (constraints.maxWidth -
+                                      spacing * (columns - 1)) /
+                                  columns;
+                              return SkeletonGrid(
+                                columns: columns,
+                                mainAxisExtent: cardWidth * 1.5 + 64,
+                              );
+                            },
+                          );
+                        }
+                        if (_error != null) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(_error!, textAlign: TextAlign.center),
+                                const SizedBox(height: 12),
+                                FilledButton(
+                                  onPressed: () => _onQueryChanged(_query.text),
+                                  child: const Text('Tentar novamente'),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                    ],
+                          );
+                        }
+                        final results = _results;
+                        final hasMore =
+                            _currentPage > 0 &&
+                            _currentPage < _totalPages &&
+                            _currentPage < ApiService.maxSearchPage;
+                        if (results.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  hasMore
+                                      ? 'Nenhum título corresponde aos filtros nesta página.'
+                                      : _filters.isActive
+                                      ? 'Nenhum título encontrado. Ajuste os filtros ou o nome.'
+                                      : 'Nenhum título encontrado. Tente outro nome.',
+                                  textAlign: TextAlign.center,
+                                ),
+                                if (hasMore) ...[
+                                  const SizedBox(height: 12),
+                                  _loadingMore
+                                      ? const CircularProgressIndicator()
+                                      : TextButton(
+                                          onPressed: _loadMore,
+                                          child: const Text(
+                                            'Buscar mais páginas',
+                                          ),
+                                        ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            const spacing = 14.0;
+                            final columns =
+                                ((constraints.maxWidth + (wide ? spacing : 0)) /
+                                        (wide ? 194 : 174))
+                                    .ceil()
+                                    .clamp(1, 20);
+                            final cardWidth =
+                                (constraints.maxWidth -
+                                    spacing * (columns - 1)) /
+                                columns;
+
+                            return Column(
+                              children: [
+                                Expanded(
+                                  child: GridView.builder(
+                                    controller: _scrollController,
+                                    keyboardDismissBehavior:
+                                        ScrollViewKeyboardDismissBehavior
+                                            .onDrag,
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: columns,
+                                          mainAxisExtent: cardWidth * 1.5 + 64,
+                                          crossAxisSpacing: spacing,
+                                          mainAxisSpacing: 20,
+                                        ),
+                                    itemCount: results.length,
+                                    itemBuilder: (_, index) => ContentCard(
+                                      content: results[index],
+                                      heroTag: posterHeroTag(
+                                        'search',
+                                        results[index],
+                                        occurrence: index,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if (hasMore)
+                                  _loadingMore
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: CircularProgressIndicator(),
+                                        )
+                                      : TextButton(
+                                          onPressed: _loadMore,
+                                          child: Text(
+                                            _loadMoreFailed
+                                                ? 'Tentar novamente'
+                                                : 'Carregar mais',
+                                          ),
+                                        ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              if (_query.text.trim().isEmpty)
-                Text(
-                  'Encontre filmes e séries do catálogo.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 13,
-                  ),
-                )
-              else
-                Text(
-                  'Resultados para “${_query.text.trim()}”',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 13,
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Builder(
-                  builder: (context) {
-                    if (_query.text.trim().isEmpty) {
-                      return const Center(
-                        child: Text('Digite o nome de um filme ou série.'),
-                      );
-                    }
-                    if (_loading) {
-                      if (!_showSkeleton) return const SizedBox.shrink();
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          const spacing = 14.0;
-                          final columns = (constraints.maxWidth / 174).ceil();
-                          final cardWidth =
-                              (constraints.maxWidth - spacing * (columns - 1)) /
-                              columns;
-                          return SkeletonGrid(
-                            columns: columns,
-                            mainAxisExtent: cardWidth * 1.5 + 64,
-                          );
-                        },
-                      );
-                    }
-                    if (_error != null) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(_error!, textAlign: TextAlign.center),
-                            const SizedBox(height: 12),
-                            FilledButton(
-                              onPressed: () => _onQueryChanged(_query.text),
-                              child: const Text('Tentar novamente'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    final results = _results;
-                    final hasMore =
-                        _currentPage > 0 &&
-                        _currentPage < _totalPages &&
-                        _currentPage < ApiService.maxSearchPage;
-                    if (results.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              hasMore
-                                  ? 'Nenhum título corresponde aos filtros nesta página.'
-                                  : _filters.isActive
-                                  ? 'Nenhum título encontrado. Ajuste os filtros ou o nome.'
-                                  : 'Nenhum título encontrado. Tente outro nome.',
-                              textAlign: TextAlign.center,
-                            ),
-                            if (hasMore) ...[
-                              const SizedBox(height: 12),
-                              _loadingMore
-                                  ? const CircularProgressIndicator()
-                                  : TextButton(
-                                      onPressed: _loadMore,
-                                      child: const Text('Buscar mais páginas'),
-                                    ),
-                            ],
-                          ],
-                        ),
-                      );
-                    }
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        const spacing = 14.0;
-                        final columns = (constraints.maxWidth / 174).ceil();
-                        final cardWidth =
-                            (constraints.maxWidth - spacing * (columns - 1)) /
-                            columns;
-
-                        return Column(
-                          children: [
-                            Expanded(
-                              child: GridView.builder(
-                                controller: _scrollController,
-                                keyboardDismissBehavior:
-                                    ScrollViewKeyboardDismissBehavior.onDrag,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: columns,
-                                      mainAxisExtent: cardWidth * 1.5 + 64,
-                                      crossAxisSpacing: spacing,
-                                      mainAxisSpacing: 20,
-                                    ),
-                                itemCount: results.length,
-                                itemBuilder: (_, index) => ContentCard(
-                                  content: results[index],
-                                  heroTag: posterHeroTag(
-                                    'search',
-                                    results[index],
-                                    occurrence: index,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (hasMore)
-                              _loadingMore
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12),
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : TextButton(
-                                      onPressed: _loadMore,
-                                      child: Text(
-                                        _loadMoreFailed
-                                            ? 'Tentar novamente'
-                                            : 'Carregar mais',
-                                      ),
-                                    ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

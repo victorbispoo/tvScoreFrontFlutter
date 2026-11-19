@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
+
 class AuthTextField extends StatefulWidget {
   const AuthTextField({
     super.key,
@@ -14,6 +16,7 @@ class AuthTextField extends StatefulWidget {
     this.keyboardType,
     this.onChanged,
     this.onSubmitted,
+    this.initialField = false,
     this.prefixIcon,
     this.suffixIcon,
     this.hintText,
@@ -29,6 +32,7 @@ class AuthTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final bool initialField;
   final Widget? prefixIcon;
   final IconButton? suffixIcon;
   final FormFieldValidator<String>? validator;
@@ -72,6 +76,10 @@ class _AuthTextFieldState extends State<AuthTextField> {
         child: TextFormField(
           controller: widget.controller,
           focusNode: _focusNode,
+          autofocus:
+              widget.initialField &&
+              AppBreakpoints.supportsWidePages &&
+              AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width),
           enabled: widget.enabled,
           obscureText: widget.isPassword && _hidden,
           enableSuggestions: !widget.isPassword,

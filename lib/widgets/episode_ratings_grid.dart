@@ -20,6 +20,10 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
     int seasonNumber,
     int episodeNumber,
   ) {
+    final theme = Theme.of(context);
+    final textColor = theme.brightness == Brightness.light
+        ? Colors.white
+        : theme.colorScheme.onSurface;
     final votes = (episode['vote_count'] as num?)?.toInt() ?? 0;
     final value = (episode['vote_average'] as num?)?.toDouble();
     final rating =
@@ -51,16 +55,13 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
               children: [
                 Text(
                   'E$episodeNumber',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: textColor, fontSize: 11),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   rating?.toStringAsFixed(1) ?? '—',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: textColor,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),

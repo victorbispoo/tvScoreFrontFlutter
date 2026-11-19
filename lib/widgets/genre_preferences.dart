@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
+
 import '../models/content_metadata.dart';
 import '../services/api_services.dart';
 import 'preferred_content_picker.dart';
@@ -157,7 +159,11 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
       final genres = snapshot.data ?? [];
       return LayoutBuilder(
         builder: (context, constraints) {
-          final columns = constraints.maxWidth < 240 ? 1 : 2;
+          final columns = constraints.maxWidth >= 520
+              ? ((constraints.maxWidth + 12) / 172).floor().clamp(3, 5)
+              : constraints.maxWidth < 240
+              ? 1
+              : 2;
           final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
           return Wrap(
             spacing: 12,
@@ -224,7 +230,19 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
   @override
   Widget build(BuildContext context) {
     final count = _step == 0 ? _selected.length : _contents.length;
-    return Dialog.fullscreen(
+    final wide =
+        AppBreakpoints.supportsWidePages &&
+        MediaQuery.sizeOf(context).width >= AppBreakpoints.tablet;
+    return Dialog(
+      insetPadding: wide ? const EdgeInsets.all(24) : EdgeInsets.zero,
+      constraints: wide
+          ? const BoxConstraints(maxWidth: 1040, maxHeight: 860)
+          : const BoxConstraints.expand(),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(wide ? 24 : 0),
+      ),
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: PopScope(
         canPop: false,
@@ -242,12 +260,7 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
           body: SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth:
-                      _step == 1 && MediaQuery.sizeOf(context).width >= 900
-                      ? 760
-                      : 520,
-                ),
+                constraints: BoxConstraints(maxWidth: wide ? 1040 : 520),
                 child: Column(
                   children: [
                     Padding(

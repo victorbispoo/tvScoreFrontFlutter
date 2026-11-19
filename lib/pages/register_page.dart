@@ -4,6 +4,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_routes.dart';
 import '../services/api_services.dart';
+import '../widgets/auth_form_layout.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/genre_preferences.dart';
 import '../widgets/profile_photo_editor.dart';
@@ -170,11 +171,13 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: constraints.maxHeight - 36,
+                minHeight: (constraints.maxHeight - 36).clamp(
+                  0.0,
+                  double.infinity,
+                ),
               ),
               child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                child: AuthFormLayout(
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -197,6 +200,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SizedBox(height: 24),
                         AuthTextField(
                           label: 'Nome',
+                          initialField: true,
                           controller: _nameController,
                           textInputAction: TextInputAction.next,
                           onChanged: (_) => setState(() {}),
@@ -230,6 +234,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           controller: _passwordController,
                           isPassword: true,
                           textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _register(),
                           onChanged: (_) => setState(() {}),
                           validator: (value) {
                             if (value == null || value.isEmpty) {

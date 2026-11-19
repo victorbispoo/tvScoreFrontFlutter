@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../controllers/login_controller.dart';
 import '../core/app_routes.dart';
-import '../core/light_logo_color_mapper.dart';
+import '../widgets/auth_form_layout.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/tv_score_snackbar.dart';
 
@@ -32,6 +31,20 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    if (_controller.isLoading || !_formKey.currentState!.validate()) return;
+    final success = await _controller.submit();
+    if (!mounted) return;
+    if (!success) {
+      TvScoreSnackbar.error(
+        context,
+        _controller.errorMessage ?? 'Não foi possível entrar. Tente novamente.',
+      );
+      return;
+    }
+    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,30 +58,13 @@ class _LoginPageState extends State<LoginPage> {
                   horizontal: 24,
                   vertical: 10,
                 ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                child: AuthFormLayout(
+                  logoSpacing: 12,
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Column(
-                          children: [
-                            SizedBox(
-                              width: 170,
-                              height: 170,
-                              child: SvgPicture.asset(
-                                'lib/assets/tvScoreLogin.svg',
-                                colorMapper:
-                                    Theme.of(context).brightness ==
-                                        Brightness.light
-                                    ? const LightLogoColorMapper()
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
                         if (widget.passwordReset) ...[
                           Semantics(
                             liveRegion: true,
@@ -93,6 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 8),
                         AuthTextField(
                           label: 'Email',
+                          initialField: true,
                           hintText: 'Digite seu e-mail...',
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -136,6 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                           controller: _controller.passwordController,
                           isPassword: true,
                           textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submit(),
                         ),
                         Align(
                           alignment: Alignment.centerRight,
@@ -164,26 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                               builder: (context, child) => FilledButton(
                                 onPressed: _controller.isLoading
                                     ? null
-                                    : () async {
-                                        if (!_formKey.currentState!
-                                            .validate()) {
-                                          return;
-                                        }
-                                        final success = await _controller
-                                            .submit();
-                                        if (!context.mounted) return;
-                                        if (!success) {
-                                          TvScoreSnackbar.error(
-                                            context,
-                                            _controller.errorMessage ??
-                                                'Não foi possível entrar. Tente novamente.',
-                                          );
-                                          return;
-                                        }
-                                        Navigator.of(
-                                          context,
-                                        ).pushReplacementNamed(AppRoutes.home);
-                                      },
+                                    : _submit,
                                 child: _controller.isLoading
                                     ? const SizedBox(
                                         width: 20,
