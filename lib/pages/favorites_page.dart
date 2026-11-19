@@ -32,7 +32,18 @@ class _FavoritesPageState extends State<FavoritesPage>
   @override
   void initState() {
     super.initState();
+    ApiService.savedContentsRevision.addListener(_favoritesChanged);
     _loadFavorites();
+  }
+
+  void _favoritesChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    ApiService.savedContentsRevision.removeListener(_favoritesChanged);
+    super.dispose();
   }
 
   Future<void> _loadFavorites() async {
@@ -56,7 +67,7 @@ class _FavoritesPageState extends State<FavoritesPage>
 
   Future<void> _removeContent(Map<String, String> content) async {
     try {
-      await _api.toggleSaved(content);
+      await _api.setSaved(content, false);
       if (!mounted) return;
       AppHaptics.confirmation();
       setState(() {});

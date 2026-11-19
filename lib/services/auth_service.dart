@@ -250,6 +250,15 @@ extension AuthService on ApiService {
     }
   }
 
+  Future<void> _loadSessionFavorites() async {
+    try {
+      await ensureFavoritesLoaded();
+    } catch (error) {
+      if (error is DioException && error.response?.statusCode == 401) rethrow;
+      debugPrint('Favorites could not be loaded; retry on the next access.');
+    }
+  }
+
   Future<bool> restoreSession() async {
     final attempt = ++_authAttempt;
     _clearAccount();
@@ -283,6 +292,7 @@ extension AuthService on ApiService {
         if (error.response?.statusCode == 401) rethrow;
         // A temporary connection failure must not discard a valid saved session.
       }
+      await _loadSessionFavorites();
       _checkAuthAttempt(attempt);
       return true;
     } catch (_) {
@@ -343,6 +353,7 @@ extension AuthService on ApiService {
           if (error.response?.statusCode == 401) rethrow;
         }
       }
+      await _loadSessionFavorites();
       checkAttempt();
     } on DioException catch (error) {
       debugPrint('Tipo: ${error.type}');

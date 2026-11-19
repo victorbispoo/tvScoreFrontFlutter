@@ -42,6 +42,8 @@ class _DetailsPageState extends State<DetailsPage> {
   Future<Map<String, String>>? _details;
   late double _rating;
   bool _busy = false;
+  bool _loadingFavorites = false;
+  bool _favoritesReady = false;
   Map<String, dynamic>? _reviewSummary;
   bool _loadingSummary = true;
   String? _summaryError;
@@ -62,7 +64,11 @@ class _DetailsPageState extends State<DetailsPage> {
     _rating = 8.0;
     _comment = TextEditingController();
     ApiService.sessionRevision.addListener(_sessionChanged);
-    if (ApiService.hasSession) _loadMyReview();
+    ApiService.savedContentsRevision.addListener(_favoritesChanged);
+    if (ApiService.hasSession) {
+      _loadMyReview();
+      _loadFavorites();
+    }
     _checkCommunityReviews();
   }
 
@@ -73,10 +79,38 @@ class _DetailsPageState extends State<DetailsPage> {
       _comment.clear();
       _rating = 8.0;
       _busy = false;
+      _favoritesReady = false;
+      _loadingFavorites = false;
       _myReviewError = null;
       _loadingMyReview = ApiService.hasSession;
     });
-    if (ApiService.hasSession) _loadMyReview();
+    if (ApiService.hasSession) {
+      _loadMyReview();
+      _loadFavorites();
+    }
+  }
+
+  void _favoritesChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadFavorites() async {
+    final session = ApiService.sessionRevision.value;
+    bool isCurrent() => mounted && session == ApiService.sessionRevision.value;
+    setState(() => _loadingFavorites = true);
+    try {
+      await _api.ensureFavoritesLoaded();
+      if (isCurrent()) setState(() => _favoritesReady = true);
+    } catch (_) {
+      if (mounted && isCurrent()) {
+        TvScoreSnackbar.error(
+          context,
+          'Não foi possível carregar seus favoritos. Toque no coração para tentar novamente.',
+        );
+      }
+    } finally {
+      if (isCurrent()) setState(() => _loadingFavorites = false);
+    }
   }
 
   @override
@@ -245,6 +279,7 @@ class _DetailsPageState extends State<DetailsPage> {
   @override
   void dispose() {
     ApiService.sessionRevision.removeListener(_sessionChanged);
+    ApiService.savedContentsRevision.removeListener(_favoritesChanged);
     _comment.dispose();
     super.dispose();
   }
@@ -255,7 +290,7 @@ class _DetailsPageState extends State<DetailsPage> {
     final wasSaved = _api.isSaved(widget.content);
     setState(() => _busy = true);
     try {
-      await _api.toggleSaved(widget.content);
+      await _api.setSaved(widget.content, !wasSaved);
       if (!mounted || !isCurrent()) return;
       AppHaptics.confirmation();
       widget.onFavoriteChanged?.call();
@@ -449,9 +484,11 @@ class _DetailsPageState extends State<DetailsPage> {
                     content: content,
                     heroTag: widget.heroTag,
                     isSaved: saved,
-                    onFavoritePressed: !hasSession || _busy
+                    onFavoritePressed: !hasSession || _busy || _loadingFavorites
                         ? null
-                        : _toggleSaved,
+                        : _favoritesReady
+                        ? _toggleSaved
+                        : _loadFavorites,
                     information: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

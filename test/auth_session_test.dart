@@ -42,6 +42,12 @@ void main() {
             );
             return;
           }
+          if (options.path == '/favoritos') {
+            handler.resolve(
+              Response(requestOptions: options, statusCode: 200, data: []),
+            );
+            return;
+          }
           expect(options.path, '/auth/login');
           expect(options.data, {
             'email': 'ana@teste.com',

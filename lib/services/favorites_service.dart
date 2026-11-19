@@ -35,7 +35,38 @@ extension FavoritesService on ApiService {
     ApiService._invalidateRecommendations(session);
   }
 
-  Future<void> loadFavorites() async {
+  Future<void> _queueFavorites(Future<void> Function() action) {
+    final session = ApiService._sessionVersion;
+    final previous = ApiService._favoritesOperation;
+    final next = () async {
+      if (previous != null) await previous;
+      ApiService._checkSession(session);
+      await action();
+    }();
+    // A failed operation must not block later retries in the same session.
+    ApiService._favoritesOperation = next.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return next;
+  }
+
+  Future<void> ensureFavoritesLoaded() =>
+      ApiService._favoritesLoaded ? Future.value() : loadFavorites();
+
+  Future<void> loadFavorites() {
+    final pending = ApiService._favoritesLoad;
+    if (pending != null) return pending;
+    final session = ApiService._sessionVersion;
+    return ApiService._favoritesLoad = _queueFavorites(_readFavorites)
+        .whenComplete(() {
+          if (session == ApiService._sessionVersion) {
+            ApiService._favoritesLoad = null;
+          }
+        });
+  }
+
+  Future<void> _readFavorites() async {
     final session = ApiService._sessionVersion;
     final favorites = await getFavorites();
     final contents = await Future.wait(
@@ -47,6 +78,7 @@ extension FavoritesService on ApiService {
       ),
     );
     ApiService._checkSession(session);
+    ApiService._favoritesLoaded = true;
     ApiService.savedContents = contents;
   }
 
@@ -54,17 +86,36 @@ extension FavoritesService on ApiService {
     (saved) => saved.contentKey == content.contentKey,
   );
 
-  Future<void> toggleSaved(Map<String, String> content) async {
+  Future<void> toggleSaved(Map<String, String> content) =>
+      _changeSaved(content);
+
+  Future<void> setSaved(Map<String, String> content, bool saved) =>
+      _changeSaved(content, saved: saved);
+
+  Future<void> _changeSaved(
+    Map<String, String> content, {
+    bool? saved,
+  }) => _queueFavorites(() async {
     final session = ApiService._sessionVersion;
-    final contents = List<Map<String, String>>.from(ApiService.savedContents);
-    if (isSaved(content)) {
-      await removeFavourite(content);
-      contents.removeWhere((saved) => saved.contentKey == content.contentKey);
-    } else {
-      await addFavourite(content);
-      contents.add(content);
+    try {
+      if (!ApiService._favoritesLoaded) await _readFavorites();
+      final contents = List<Map<String, String>>.from(ApiService.savedContents);
+      final shouldSave = saved ?? !isSaved(content);
+      if (shouldSave == isSaved(content)) return;
+      if (!shouldSave) {
+        await removeFavourite(content);
+        contents.removeWhere((saved) => saved.contentKey == content.contentKey);
+      } else {
+        await addFavourite(content);
+        contents.add(content);
+      }
+      ApiService._checkSession(session);
+      ApiService.savedContents = contents;
+    } catch (_) {
+      if (session == ApiService._sessionVersion) {
+        ApiService._favoritesLoaded = false;
+      }
+      rethrow;
     }
-    ApiService._checkSession(session);
-    ApiService.savedContents = contents;
-  }
+  });
 }

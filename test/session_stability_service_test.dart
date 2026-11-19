@@ -247,6 +247,12 @@ void main() {
         api.dio.interceptors.add(
           InterceptorsWrapper(
             onRequest: (options, handler) async {
+              if (options.path == '/favoritos') {
+                handler.resolve(
+                  Response(requestOptions: options, statusCode: 200, data: []),
+                );
+                return;
+              }
               final email = options.data['email'];
               if (email == 'a@teste.com') {
                 started.complete();

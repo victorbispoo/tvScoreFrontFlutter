@@ -47,6 +47,9 @@ class ApiService {
 
   static void _advanceSession() {
     _sessionVersion++;
+    _favoritesOperation = null;
+    _favoritesLoad = null;
+    _favoritesLoaded = false;
     _recommendations.clear();
     _clearReviewCache();
     _scheduleSessionExpiry();
@@ -128,9 +131,19 @@ class ApiService {
     if (_token == null || expiry == null) return;
     final session = _sessionVersion;
     final remaining = expiry.difference(DateTime.now());
+    // Web timers overflow beyond the signed 32-bit setTimeout limit.
+    const maxWebInterval = Duration(hours: 24);
+    final interval = kIsWeb && remaining > maxWebInterval
+        ? maxWebInterval
+        : remaining;
     _expirationTimer = Timer(
-      remaining.isNegative ? Duration.zero : remaining,
+      interval.isNegative ? Duration.zero : interval,
       () {
+        if (session != _sessionVersion) return;
+        if (DateTime.now().isBefore(expiry)) {
+          _scheduleSessionExpiry();
+          return;
+        }
         unawaited(ApiService()._invalidateSession(expectedSession: session));
       },
     );
@@ -155,7 +168,17 @@ class ApiService {
   static final userPhotoUrl = ValueNotifier<String?>(null);
   static final contentPreferencesRevision = ValueNotifier<int>(0);
   static String userEmail = '';
-  static List<Map<String, String>> savedContents = [];
+  static Future<void>? _favoritesOperation;
+  static Future<void>? _favoritesLoad;
+  static bool _favoritesLoaded = false;
+  static final savedContentsRevision = ValueNotifier<int>(0);
+  static List<Map<String, String>> _savedContents = [];
+  static List<Map<String, String>> get savedContents => _savedContents;
+  static set savedContents(List<Map<String, String>> value) {
+    _savedContents = value;
+    savedContentsRevision.value++;
+  }
+
   static List<Review> reviews = [];
   static Future<List<Map<String, dynamic>>>? _myReviewsRequest;
   static DateTime? _myReviewsFetchedAt;

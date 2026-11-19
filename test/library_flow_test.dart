@@ -27,6 +27,19 @@ class _WatchBackend extends BackendHttp {
   };
 }
 
+Future<void> removeFavorite(WidgetTester tester, Finder button) async {
+  await tester.tap(button);
+  for (
+    var attempt = 0;
+    attempt < 50 && ApiService.savedContents.isNotEmpty;
+    attempt++
+  ) {
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+  }
+  expect(ApiService.savedContents, isEmpty);
+}
+
 void main() {
   late BackendHttp backend;
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -293,7 +306,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byTooltip('Remover dos favoritos'));
+    await removeFavorite(tester, find.byTooltip('Remover dos favoritos'));
     await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -315,7 +328,7 @@ void main() {
     await tester.pumpAndSettle();
     final button = find.byTooltip('Remover dos favoritos');
     expect(tester.getSize(button), const Size(48, 48));
-    await tester.tap(button);
+    await removeFavorite(tester, button);
     await tester.pumpAndSettle();
     expect(ApiService.savedContents, isEmpty);
     expect(find.text('Sua lista está vazia'), findsOneWidget);
