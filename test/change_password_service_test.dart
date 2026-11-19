@@ -55,9 +55,9 @@ void main() {
       expect(ApiService.token, status == 401 ? isNull : 'old-token');
     });
   }
-  test('valida bytes UTF-8 antes do envio', () async {
+  test('alteração aplica a política de recuperação antes do envio', () async {
     final api = ApiService();
-    for (final next in ['1234567', 'á' * 37, 'igualigual']) {
+    for (final next in ['á' * 4, 'á' * 37, '      ', 'senha😀', 'igualigual']) {
       await expectLater(
         api.changePassword('igualigual', next),
         throwsFormatException,
@@ -72,8 +72,31 @@ void main() {
         },
       ),
     );
-    await api.changePassword('atual', 'á' * 4);
+    await api.changePassword('atual', '123456');
     await api.changePassword('atual', 'á' * 36);
     expect(calls, 2);
+  });
+
+  test('cadastro aplica a política de recuperação antes do envio', () async {
+    final api = ApiService();
+    var calls = 0;
+    api.dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          calls++;
+          expect(options.path, '/auth/cadastrar');
+          expect((options.data as Map)['senha'], 'áéíóúç');
+          handler.resolve(Response(requestOptions: options, statusCode: 201));
+        },
+      ),
+    );
+    for (final password in ['á' * 4, 'á' * 37, '      ', 'senha😀']) {
+      await expectLater(
+        api.register('Maria', 'maria@example.com', password),
+        throwsFormatException,
+      );
+    }
+    await api.register('Maria', 'maria@example.com', 'áéíóúç');
+    expect(calls, 1);
   });
 }

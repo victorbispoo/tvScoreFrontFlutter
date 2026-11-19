@@ -121,7 +121,7 @@ void main() {
 
     expect(find.text('Por favor, insira um e-mail válido.'), findsOneWidget);
     expect(
-      find.text('A senha deve ter pelo menos 6 caracteres.'),
+      find.text('Use pelo menos 6 caracteres e evite usar apenas espaços.'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

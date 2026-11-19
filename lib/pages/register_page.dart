@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_routes.dart';
+import '../core/password_recovery_rules.dart';
 import '../services/api_services.dart';
 import '../widgets/auth_form_layout.dart';
 import '../widgets/auth_text_field.dart';
@@ -236,15 +237,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _register(),
                           onChanged: (_) => setState(() {}),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor, insira sua senha.';
-                            }
-                            if (value.length < 6) {
-                              return 'A senha deve ter pelo menos 6 caracteres.';
-                            }
-                            return null;
-                          },
+                          validator: PasswordRecoveryRules.validatePassword,
                         ),
                         const SizedBox(height: 24),
                         SizedBox(

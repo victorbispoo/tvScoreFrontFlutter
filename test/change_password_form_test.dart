@@ -20,7 +20,7 @@ void main() {
               onSuccess: () => completed = true,
               onSubmit: (current, next) async {
                 expect(current, ' atual ');
-                expect(next, ' senha nova ');
+                expect(next, 'áéíóúç');
                 calls++;
                 if (calls == 1) {
                   throw const FormatException('Senha atual incorreta.');
@@ -39,11 +39,14 @@ void main() {
     await tester.enterText(fields.at(2), 'diferente');
     await tester.tap(submit);
     await tester.pumpAndSettle();
-    expect(find.text('Use entre 8 e 72 bytes UTF-8.'), findsOneWidget);
+    expect(
+      find.text('A senha está muito longa. Use uma senha mais curta.'),
+      findsOneWidget,
+    );
     expect(find.text('As senhas não coincidem.'), findsOneWidget);
     expect(calls, 0);
-    await tester.enterText(fields.at(1), ' senha nova ');
-    await tester.enterText(fields.at(2), ' senha nova ');
+    await tester.enterText(fields.at(1), 'áéíóúç');
+    await tester.enterText(fields.at(2), 'áéíóúç');
     for (var i = 0; i < 3; i++) {
       await tester.tap(find.byTooltip('Mostrar senha').first);
       await tester.pump();

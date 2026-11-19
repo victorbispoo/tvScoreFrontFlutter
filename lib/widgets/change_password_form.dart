@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
+import '../core/password_recovery_rules.dart';
 import 'auth_text_field.dart';
 
 class ChangePasswordForm extends StatefulWidget {
@@ -92,10 +91,8 @@ class _ChangePasswordFormState extends State<ChangePasswordForm> {
           enabled: !_busy,
           textInputAction: TextInputAction.next,
           validator: (value) {
-            final length = utf8.encode(value ?? '').length;
-            if (length < 8 || length > 72) {
-              return 'Use entre 8 e 72 bytes UTF-8.';
-            }
+            final error = PasswordRecoveryRules.validatePassword(value);
+            if (error != null) return error;
             if (value == _current.text) {
               return 'Escolha uma senha diferente da atual.';
             }

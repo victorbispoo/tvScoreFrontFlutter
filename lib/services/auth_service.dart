@@ -172,11 +172,10 @@ extension AuthService on ApiService {
     String currentPassword,
     String newPassword,
   ) async {
-    final bytes = utf8.encode(newPassword).length;
-    if (bytes < 8 || bytes > 72 || currentPassword == newPassword) {
-      throw const FormatException(
-        'Use uma nova senha diferente, entre 8 e 72 bytes UTF-8.',
-      );
+    final validation = PasswordRecoveryRules.validatePassword(newPassword);
+    if (validation != null) throw FormatException(validation);
+    if (currentPassword == newPassword) {
+      throw const FormatException('Escolha uma senha diferente da atual.');
     }
     try {
       final response = await dio.put(
@@ -321,6 +320,8 @@ extension AuthService on ApiService {
   }
 
   Future<void> register(String name, String email, String password) async {
+    final validation = PasswordRecoveryRules.validatePassword(password);
+    if (validation != null) throw FormatException(validation);
     try {
       await dio.post(
         '/auth/cadastrar',
