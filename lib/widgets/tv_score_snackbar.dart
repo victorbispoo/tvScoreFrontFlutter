@@ -90,8 +90,10 @@ class TvScoreSnackbar {
     );
   }
 
-  static Widget withFloatingNavigation({required Widget child}) =>
-      _FloatingNavigationScope(visible: true, child: child);
+  static Widget withFloatingNavigation({
+    required Widget child,
+    bool visible = true,
+  }) => _FloatingNavigationScope(visible: visible, child: child);
 }
 
 class _FloatingNavigationScope extends InheritedWidget {

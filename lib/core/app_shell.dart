@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import '../pages/favorites_page.dart';
 import '../pages/home_page.dart';
 import '../pages/profile_page.dart';
+import '../widgets/desktop_navigation.dart';
 import '../widgets/floating_navigation_bar.dart';
 import '../widgets/tv_score_snackbar.dart';
+
+import 'app_breakpoints.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -44,57 +47,86 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = FloatingNavigationBar.scrollClearance(context);
-    return Scaffold(
-      extendBody: true,
-      body: TvScoreSnackbar.withFloatingNavigation(
-        child: Stack(
-          children: [
-            SafeArea(
-              bottom: false,
-              child: PageView(
-                controller: _pages,
-                onPageChanged: (index) => setState(() => _index = index),
-                children: [
-                  HomePage(bottomPadding: bottomPadding),
-                  FavoritesPage(
-                    bottomPadding: bottomPadding,
-                    onExplore: () => _selectPage(0),
-                  ),
-                  ProfilePage(
-                    isActive: _index == 2,
-                    bottomPadding: bottomPadding,
-                  ),
-                ],
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                top: false,
-                child: FloatingNavigationBar(
-                  index: _index,
-                  onSelected: _selectPage,
-                  pageController: _pages,
-                  onIndicatorDragStarted: () {
-                    _navigationTarget = null;
-                    _pages.position.hold(() {});
-                  },
-                  onIndicatorDragged: (position) {
-                    _pages.jumpTo(position * _pages.position.viewportDimension);
-                    _pages.position.hold(() {});
-                  },
-                  onIndicatorReleased: (position, target) {
-                    _navigationTarget = null;
-                    _pages.jumpTo(position * _pages.position.viewportDimension);
-                    _selectPage(target);
-                  },
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final desktop = AppBreakpoints.isDesktop(constraints.maxWidth);
+        final bottomPadding = desktop
+            ? 0.0
+            : FloatingNavigationBar.scrollClearance(context);
+        return Scaffold(
+          extendBody: true,
+          body: TvScoreSnackbar.withFloatingNavigation(
+            visible: !desktop,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: desktop ? 208 : 0,
+                  child: desktop
+                      ? DesktopNavigation(
+                          index: _index,
+                          onSelected: _selectPage,
+                        )
+                      : null,
                 ),
-              ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      SafeArea(
+                        bottom: desktop,
+                        child: PageView(
+                          controller: _pages,
+                          onPageChanged: (index) =>
+                              setState(() => _index = index),
+                          children: [
+                            HomePage(bottomPadding: bottomPadding),
+                            FavoritesPage(
+                              bottomPadding: bottomPadding,
+                              onExplore: () => _selectPage(0),
+                            ),
+                            ProfilePage(
+                              isActive: _index == 2,
+                              bottomPadding: bottomPadding,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!desktop)
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: SafeArea(
+                            top: false,
+                            child: FloatingNavigationBar(
+                              index: _index,
+                              onSelected: _selectPage,
+                              pageController: _pages,
+                              onIndicatorDragStarted: () {
+                                _navigationTarget = null;
+                                _pages.position.hold(() {});
+                              },
+                              onIndicatorDragged: (position) {
+                                _pages.jumpTo(
+                                  position * _pages.position.viewportDimension,
+                                );
+                                _pages.position.hold(() {});
+                              },
+                              onIndicatorReleased: (position, target) {
+                                _navigationTarget = null;
+                                _pages.jumpTo(
+                                  position * _pages.position.viewportDimension,
+                                );
+                                _selectPage(target);
+                              },
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
