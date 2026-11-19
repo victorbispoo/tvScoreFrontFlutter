@@ -8,6 +8,45 @@ import 'package:tv_score_front_flutter/widgets/content_poster.dart';
 import 'package:tv_score_front_flutter/widgets/ranked_content_carousel.dart';
 
 void main() {
+  testWidgets('setas pulam até os limites com animações desativadas', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1024, 700);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(1024, 700),
+            disableAnimations: true,
+          ),
+          child: Scaffold(
+            body: CarouselViewport(
+              itemCount: 6,
+              itemWidth: 200,
+              height: 100,
+              itemBuilder: (_, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final controller = tester
+        .widget<ListView>(find.byType(ListView))
+        .controller!;
+    expect(controller.position.maxScrollExtent, greaterThan(0));
+
+    await tester.tap(find.byTooltip('Próximos'));
+    expect(controller.offset, controller.position.maxScrollExtent);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Anteriores'));
+    expect(controller.offset, 0);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   final contents = List.generate(
     12,
     (index) => {

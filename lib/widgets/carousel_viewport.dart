@@ -36,14 +36,18 @@ class _CarouselViewportState extends State<CarouselViewport> {
   void _move(int direction) {
     if (!_scroll.hasClients) return;
     final position = _scroll.position;
+    final target =
+        (position.pixels + direction * position.viewportDimension * .85).clamp(
+          0.0,
+          position.maxScrollExtent,
+        );
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(target);
+      return;
+    }
     _scroll.animateTo(
-      (position.pixels + direction * position.viewportDimension * .85).clamp(
-        0.0,
-        position.maxScrollExtent,
-      ),
-      duration: MediaQuery.disableAnimationsOf(context)
-          ? Duration.zero
-          : const Duration(milliseconds: 280),
+      target,
+      duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
     );
   }
