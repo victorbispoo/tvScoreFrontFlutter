@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/app_breakpoints.dart';
 import '../core/rating_scale.dart';
 import 'episode_details_sheet.dart';
 import 'season_selector.dart';
@@ -157,26 +158,28 @@ class _EpisodeRatingsGridState extends State<EpisodeRatingsGrid> {
           LayoutBuilder(
             builder: (context, constraints) {
               const spacing = 8.0;
+              final desktop =
+                  AppBreakpoints.supportsWidePages &&
+                  AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
               final columns = ((constraints.maxWidth + spacing) / 68)
                   .floor()
-                  .clamp(1, 8);
-              final width =
-                  (constraints.maxWidth - spacing * (columns - 1)) / columns;
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: [
-                  for (final episode in episodes)
-                    SizedBox(
-                      width: width,
-                      height: 64,
-                      child: _buildCell(
-                        episode,
-                        seasonNumber,
-                        (episode['episode_number'] as num).toInt(),
-                      ),
-                    ),
-                ],
+                  .clamp(1, desktop ? 16 : 8);
+              return GridView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  mainAxisExtent: 64,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                ),
+                itemCount: episodes.length,
+                itemBuilder: (context, index) => _buildCell(
+                  episodes[index],
+                  seasonNumber,
+                  (episodes[index]['episode_number'] as num).toInt(),
+                ),
               );
             },
           ),

@@ -62,21 +62,20 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future<void> _logout() async {
+    final navigator = Navigator.of(context);
     try {
       await _api.logout();
     } catch (_) {
-      if (!mounted) return;
-      TvScoreSnackbar.error(
-        context,
-        'Não foi possível sair da conta. Tente novamente.',
-      );
-      return;
+      if (mounted) {
+        TvScoreSnackbar.error(
+          context,
+          'Não foi possível sair da conta. Tente novamente.',
+        );
+      }
     }
-    if (!mounted) return;
+    if (!navigator.mounted) return;
 
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+    navigator.pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
   }
 
   Future<void> _editPreferences() => showDialog<void>(
@@ -198,6 +197,9 @@ class _ProfilePageState extends State<ProfilePage>
             child: Padding(
               padding: EdgeInsets.all(wide ? 22 : 16),
               child: Column(
+                mainAxisAlignment: ApiService.hasSession
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
@@ -234,6 +236,18 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           );
           if (!ApiService.hasSession) {
+            final account = _ProfileGlassSurface(
+              wide: wide,
+              child: Padding(
+                padding: EdgeInsets.all(wide ? 22 : 16),
+                child: const GuestAccountPrompt(
+                  icon: HugeIconsStroke.user,
+                  title: 'Sua conta no TVScore',
+                  message:
+                      'Entre ou crie uma conta para organizar seus favoritos e avaliações.',
+                ),
+              ),
+            );
             return ListView(
               padding: EdgeInsets.fromLTRB(
                 inset,
@@ -246,18 +260,33 @@ class _ProfilePageState extends State<ProfilePage>
                   'Perfil',
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 32),
-                  child: GuestAccountPrompt(
-                    icon: HugeIconsStroke.user,
-                    title: 'Sua conta no TVScore',
-                    message:
-                        'Entre ou crie uma conta para organizar seus favoritos e avaliações.',
-                  ),
-                ),
-                personalizationTitle,
-                SizedBox(height: wide ? 16 : 12),
-                appearance,
+                SizedBox(height: wide ? 28 : 16),
+                if (desktopColumns)
+                  Table(
+                    columnWidths: const {1: FixedColumnWidth(gap)},
+                    children: [
+                      TableRow(
+                        children: [
+                          TableCell(
+                            verticalAlignment:
+                                TableCellVerticalAlignment.intrinsicHeight,
+                            child: account,
+                          ),
+                          const SizedBox.shrink(),
+                          TableCell(
+                            verticalAlignment:
+                                TableCellVerticalAlignment.intrinsicHeight,
+                            child: appearance,
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                else ...[
+                  account,
+                  const SizedBox(height: 16),
+                  appearance,
+                ],
               ],
             );
           }

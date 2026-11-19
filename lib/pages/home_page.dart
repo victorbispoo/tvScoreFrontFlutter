@@ -70,6 +70,20 @@ class _HomePageState extends State<HomePage>
     _loadRecommendations();
     ApiService.contentPreferencesRevision.addListener(_reloadPreferences);
     ApiService.recommendationsRevision.addListener(_recommendationsInvalidated);
+    ApiService.sessionRevision.addListener(_sessionChanged);
+  }
+
+  void _sessionChanged() {
+    if (!mounted) return;
+    setState(() {
+      _recommendationLoad = null;
+      _recommended = const {};
+      _forYouRecommendations = const [];
+      _catalogSections = null;
+      _extraGenreContents.clear();
+      _reloadCatalog();
+      _loadRecommendations();
+    });
   }
 
   void _reloadPreferences() {
@@ -339,6 +353,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    ApiService.sessionRevision.removeListener(_sessionChanged);
     ApiService.contentPreferencesRevision.removeListener(_reloadPreferences);
     ApiService.recommendationsRevision.removeListener(
       _recommendationsInvalidated,

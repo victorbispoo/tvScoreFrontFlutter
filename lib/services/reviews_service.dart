@@ -1,6 +1,34 @@
 part of 'api_services.dart';
 
+class CommunityReviewsRestricted implements Exception {
+  const CommunityReviewsRestricted();
+
+  static const message =
+      'As avaliações da comunidade ainda não estão disponíveis para visitantes.';
+}
+
 extension ReviewsService on ApiService {
+  Future<Response<dynamic>> _readCommunityReviews(
+    String path, {
+    required Map<String, dynamic> queryParameters,
+  }) async {
+    final authenticated = ApiService.hasSession;
+    try {
+      return await dio.get(
+        path,
+        queryParameters: queryParameters,
+        options: Options(headers: {'Authorization': null}),
+      );
+    } on DioException catch (error) {
+      if (!authenticated &&
+          (error.response?.statusCode == 401 ||
+              error.response?.statusCode == 403)) {
+        throw const CommunityReviewsRestricted();
+      }
+      rethrow;
+    }
+  }
+
   Future<
     ({List<Map<String, dynamic>> reviews, int totalPages, int totalElements})
   >
@@ -14,13 +42,10 @@ extension ReviewsService on ApiService {
     if (page < 0 || size < 1 || size > 100) {
       throw ArgumentError('Página inválida ou tamanho fora de 1 a 100.');
     }
-    final session = ApiService._sessionVersion;
-    final response = await dio.get(
+    final response = await _readCommunityReviews(
       '/avaliacoes/filme/$contentId/paginadas',
       queryParameters: {'tipoConteudo': type, 'pagina': page, 'tamanho': size},
-      options: _authorizationOptions,
     );
-    ApiService._checkSession(session);
     final data = response.data as Map;
     return (
       reviews: (data['content'] as List)
@@ -76,10 +101,9 @@ extension ReviewsService on ApiService {
   ) async {
     requireContentReference(contentId, type);
 
-    final response = await dio.get(
+    final response = await _readCommunityReviews(
       '/avaliacoes/filme/$contentId',
       queryParameters: {'tipoConteudo': type},
-      options: _authorizationOptions,
     );
 
     final items = response.data as List;
@@ -95,7 +119,7 @@ extension ReviewsService on ApiService {
     final response = await dio.get(
       '/avaliacoes/conteudo/$contentId/resumo',
       queryParameters: {'tipoConteudo': type},
-      options: ApiService.hasSession ? _authorizationOptions : null,
+      options: Options(headers: {'Authorization': null}),
     );
 
     return Map<String, dynamic>.from(response.data as Map);

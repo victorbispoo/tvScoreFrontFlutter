@@ -153,7 +153,8 @@ void main() {
         expectAboveBar(logout);
         await tester.tap(logout);
         await tester.pumpAndSettle();
-        expect(find.byType(LoginPage), findsOneWidget);
+        expect(find.byType(HomePage), findsOneWidget);
+        expect(find.byType(LoginPage), findsNothing);
         expect(tester.takeException(), isNull);
       },
     );

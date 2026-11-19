@@ -28,10 +28,12 @@ extension PreferencesService on ApiService {
   }
 
   Future<List<Map<String, String>>> getPreferredContents() async {
+    final session = ApiService._sessionVersion;
     final response = await dio.get(
       '/usuarios/eu/conteudos-preferidos',
       options: _authorizationOptions,
     );
+    ApiService._checkSession(session);
     return (response.data['conteudos'] as List).map((item) {
       final data = Map<String, dynamic>.from(item as Map);
       final reference = requireContentReference(
@@ -51,6 +53,7 @@ extension PreferencesService on ApiService {
 
   Future<({List<Map<String, String>> contents, int page, int totalPages})>
   getPreferredContentOptions({int page = 1}) async {
+    final session = ApiService._sessionVersion;
     if (page < 1 || page > ApiService.maxSearchPage) {
       throw ArgumentError.value(page, 'page');
     }
@@ -59,6 +62,7 @@ extension PreferencesService on ApiService {
       queryParameters: {'pagina': page},
       options: _authorizationOptions,
     );
+    ApiService._checkSession(session);
     final data = response.data as Map<String, dynamic>;
     return (
       contents: (data['results'] as List).map((item) {
@@ -94,6 +98,7 @@ extension PreferencesService on ApiService {
   }
 
   Future<List<Map<String, dynamic>>> getPreferredGenres() async {
+    final session = ApiService._sessionVersion;
     if (ApiService.token == null || ApiService.token!.isEmpty) {
       throw StateError('Entre na sua conta para consultar preferências.');
     }
@@ -102,6 +107,7 @@ extension PreferencesService on ApiService {
       '/usuarios/eu/generos',
       options: _authorizationOptions,
     );
+    ApiService._checkSession(session);
 
     final data = Map<String, dynamic>.from(response.data as Map);
     final genres = data['generos'] as List;

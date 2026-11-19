@@ -7,9 +7,14 @@ import '../widgets/auth_text_field.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.passwordReset = false});
+  const LoginPage({
+    super.key,
+    this.passwordReset = false,
+    this.returnToOrigin = false,
+  });
 
   final bool passwordReset;
+  final bool returnToOrigin;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -42,7 +47,24 @@ class _LoginPageState extends State<LoginPage> {
       );
       return;
     }
-    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    if (widget.returnToOrigin) {
+      Navigator.of(context).pop(true);
+    } else {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    }
+  }
+
+  Future<void> _openRegistration() async {
+    final authenticated = await Navigator.pushNamed<dynamic>(
+      context,
+      AppRoutes.register,
+      arguments: widget.returnToOrigin
+          ? AppRoutes.returnToOriginArguments
+          : null,
+    );
+    if (mounted && widget.returnToOrigin && authenticated == true) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   @override
@@ -191,10 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () => Navigator.pushNamed(
-                                context,
-                                AppRoutes.register,
-                              ),
+                              onPressed: _openRegistration,
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,

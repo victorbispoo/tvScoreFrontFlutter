@@ -76,7 +76,7 @@ extension RecommendationsService on ApiService {
       }
       final status = error.response?.statusCode;
       if (status == 401) {
-        await _invalidateSession();
+        await _invalidateSession(expectedSession: session);
       }
       throw RecommendationException(switch (status) {
         401 => RecommendationFailure.invalidSession,

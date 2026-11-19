@@ -23,6 +23,7 @@ class LoginController extends ChangeNotifier {
       await _apiService.loginApi(
         emailController.text.trim(),
         passwordController.text,
+        isActive: () => !_disposed,
       );
       return !_disposed;
     } on FormatException catch (error) {

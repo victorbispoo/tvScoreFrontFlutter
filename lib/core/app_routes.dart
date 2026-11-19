@@ -24,6 +24,7 @@ abstract final class AppRoutes {
   static const details = '/details';
   static const recovery = '/recuperar-senha';
   static const resetPassword = '/redefinir-senha';
+  static const returnToOriginArguments = (returnToOrigin: true);
 
   static RouteSettings? recoveryRouteFromUrl(Uri url) {
     final route = url.fragment.startsWith('/')
@@ -70,15 +71,23 @@ abstract final class AppRoutes {
       case login:
         page = LoginPage(
           passwordReset: settings.arguments == const (passwordReset: true),
+          returnToOrigin: settings.arguments == returnToOriginArguments,
         );
       case home:
         page = const AppShell();
       case register:
-        page = const RegisterPage();
+        page = RegisterPage(
+          returnToOrigin: settings.arguments == returnToOriginArguments,
+        );
       case search:
         page = const SearchPage();
       case myReviews:
-        page = ApiService.hasSession ? const MyReviewsPage() : const AppShell();
+        page = ValueListenableBuilder<int>(
+          valueListenable: ApiService.sessionRevision,
+          builder: (context, revision, _) => ApiService.hasSession
+              ? MyReviewsPage(key: ValueKey(revision))
+              : const AppShell(),
+        );
       case details:
         final args = settings.arguments;
         if (args is! DetailsArguments) {

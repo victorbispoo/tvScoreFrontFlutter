@@ -12,7 +12,9 @@ import '../widgets/profile_photo_editor.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  const RegisterPage({super.key, this.returnToOrigin = false});
+
+  final bool returnToOrigin;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -77,7 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (!mounted) return;
 
-      await api.loginApi(email, password);
+      await api.loginApi(email, password, isActive: () => mounted);
 
       if (photo != null && mounted) await _uploadPhoto(api, photo);
       if (!mounted) return;
@@ -92,9 +94,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (!mounted) return;
 
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      if (widget.returnToOrigin) {
+        Navigator.of(context).pop(true);
+      } else {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      }
     } catch (error) {
       if (!mounted) return;
 

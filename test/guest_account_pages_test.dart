@@ -192,7 +192,18 @@ void main() {
     expect(find.text('Editar perfil'), findsNothing);
     await selectTab(tester, 'Favoritos');
     expect(find.text('Seus favoritos no TVScore'), findsOneWidget);
-    expect(backend.requests.length, requestsBeforeLogout);
+    expect(
+      backend.requests
+          .skip(requestsBeforeLogout)
+          .where(
+            (request) =>
+                request.contains('/usuarios/') ||
+                request.contains('/favoritos') ||
+                request.contains('/avaliacoes/minhas') ||
+                request.contains('/recomendacoes/'),
+          ),
+      isEmpty,
+    );
     expect(tester.takeException(), isNull);
   });
 }

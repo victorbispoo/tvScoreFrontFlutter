@@ -93,6 +93,7 @@ extension AuthService on ApiService {
   }
 
   Future<void> resetPassword(String token, String newPassword) async {
+    final session = ApiService._sessionVersion;
     if (!PasswordRecoveryRules.isValidToken(token)) {
       throw const InvalidRecoveryLink();
     }
@@ -112,7 +113,7 @@ extension AuthService on ApiService {
           'Não foi possível redefinir a senha. Tente novamente.',
         );
       }
-      await _invalidateSession();
+      await _invalidateSession(expectedSession: session);
     } on DioException catch (error) {
       final response = error.response;
       if (response?.statusCode == 429) {
@@ -143,29 +144,52 @@ extension AuthService on ApiService {
 
   static const _storage = FlutterSecureStorage();
   static const _sessionKey = 'tv_score_session';
+  static int _authAttempt = 0;
+  static Future<void>? _sessionStorage;
+
+  static Future<T> _withSessionStorage<T>(Future<T> Function() action) async {
+    final previous = _sessionStorage;
+    final completed = Completer<void>();
+    _sessionStorage = completed.future;
+    try {
+      if (previous != null) await previous;
+      return await action();
+    } finally {
+      if (identical(_sessionStorage, completed.future)) _sessionStorage = null;
+      completed.complete();
+    }
+  }
+
+  static void _checkAuthAttempt(int attempt) {
+    if (attempt != _authAttempt) {
+      throw StateError('A sessão mudou. Entre novamente na sua conta.');
+    }
+  }
 
   static void _clearAccount() {
-    ApiService._advanceSession();
-    ApiService._clearReviewCache();
     ApiService._token = null;
-    ApiService.userName = '';
-    ApiService.userPhotoUrl.value = null;
-    ApiService.userEmail = '';
-    ApiService.savedContents = [];
-    ApiService.reviews = [];
+    ApiService._expiresAt = null;
+    ApiService._advanceSession();
+    ApiService._clearPrivateState();
     ApiService._sessionRevision.value++;
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: _sessionKey);
+    _authAttempt++;
     _clearAccount();
+    await _withSessionStorage(() => _storage.delete(key: _sessionKey));
   }
 
-  Future<void> _invalidateSession() async {
+  Future<void> _invalidateSession({int? expectedSession}) async {
+    if (expectedSession != null &&
+        expectedSession != ApiService._sessionVersion) {
+      return;
+    }
     try {
       await logout();
     } catch (_) {
-      _clearAccount();
+      // Memory is already cleared. A delayed storage error must not clear a newer login.
+      debugPrint('Não foi possível remover a sessão salva.');
     }
   }
 
@@ -173,6 +197,7 @@ extension AuthService on ApiService {
     String currentPassword,
     String newPassword,
   ) async {
+    final session = ApiService._sessionVersion;
     final validation = PasswordRecoveryRules.validatePassword(newPassword);
     if (validation != null) throw FormatException(validation);
     if (currentPassword == newPassword) {
@@ -184,6 +209,7 @@ extension AuthService on ApiService {
         data: {'senhaAtual': currentPassword, 'novaSenha': newPassword},
         options: _authorizationOptions,
       );
+      ApiService._checkSession(session);
       if (response.statusCode != 204) {
         throw const FormatException(
           'Não foi possível alterar a senha. Tente novamente.',
@@ -191,7 +217,7 @@ extension AuthService on ApiService {
       }
     } on DioException catch (error) {
       if (error.response?.statusCode == 401) {
-        await _invalidateSession();
+        await _invalidateSession(expectedSession: session);
         rethrow;
       }
       throw FormatException(switch (error.response?.statusCode) {
@@ -203,12 +229,7 @@ extension AuthService on ApiService {
               : 'Não foi possível alterar a senha. Tente novamente.',
       });
     }
-    try {
-      await logout();
-    } catch (_) {
-      // The server has already revoked this session, even if local deletion fails.
-      _clearAccount();
-    }
+    await _invalidateSession(expectedSession: session);
   }
 
   // Confere a expiração local; a assinatura é validada pelo backend.
@@ -230,9 +251,13 @@ extension AuthService on ApiService {
   }
 
   Future<bool> restoreSession() async {
+    final attempt = ++_authAttempt;
     _clearAccount();
     try {
-      final value = await _storage.read(key: _sessionKey);
+      final value = await _withSessionStorage(
+        () => _storage.read(key: _sessionKey),
+      );
+      _checkAuthAttempt(attempt);
       if (value == null) return false;
       final session = jsonDecode(value);
       if (session is! Map<String, dynamic>) {
@@ -250,6 +275,7 @@ extension AuthService on ApiService {
         throw const FormatException('Sessão inválida ou expirada.');
       }
       await open(email, name);
+      _checkAuthAttempt(attempt);
       ApiService.token = token;
       try {
         await loadProfilePhoto();
@@ -257,39 +283,57 @@ extension AuthService on ApiService {
         if (error.response?.statusCode == 401) rethrow;
         // A temporary connection failure must not discard a valid saved session.
       }
+      _checkAuthAttempt(attempt);
       return true;
     } catch (_) {
-      _clearAccount();
-      try {
-        await _storage.delete(key: _sessionKey);
-      } catch (_) {
-        debugPrint('Não foi possível remover a sessão salva.');
+      if (attempt == _authAttempt) {
+        await _invalidateSession();
       }
       return false;
     }
   }
 
-  Future<void> loginApi(String email, String password) async {
+  Future<void> loginApi(
+    String email,
+    String password, {
+    bool Function()? isActive,
+  }) async {
+    final attempt = ++_authAttempt;
+    void checkAttempt() {
+      _checkAuthAttempt(attempt);
+      if (isActive?.call() == false) {
+        throw StateError('O login foi cancelado.');
+      }
+    }
+
+    _clearAccount();
     try {
-      await logout();
+      await _withSessionStorage(() => _storage.delete(key: _sessionKey));
+      checkAttempt();
       final response = await dio.post(
         '/auth/login',
         data: {'email': email.trim().toLowerCase(), 'senha': password},
       );
+      checkAttempt();
       final dados = response.data as Map<String, dynamic>;
       final tokenRecebido = dados['token'] as String?;
       if (tokenRecebido == null || tokenRecebido.isEmpty) {
         throw const FormatException('Token não recebido do servidor.');
       }
       await open(dados['email'] as String, dados['nome'] as String);
-      await _storage.write(
-        key: _sessionKey,
-        value: jsonEncode({
-          'token': tokenRecebido,
-          'email': ApiService.userEmail,
-          'name': ApiService.userName,
-        }),
-      );
+      checkAttempt();
+      await _withSessionStorage(() {
+        checkAttempt();
+        return _storage.write(
+          key: _sessionKey,
+          value: jsonEncode({
+            'token': tokenRecebido,
+            'email': ApiService.userEmail,
+            'name': ApiService.userName,
+          }),
+        );
+      });
+      checkAttempt();
       ApiService.token = tokenRecebido;
       ApiService.userPhotoUrl.value = dados['fotoUrl'] as String?;
       if (!dados.containsKey('fotoUrl')) {
@@ -299,11 +343,12 @@ extension AuthService on ApiService {
           if (error.response?.statusCode == 401) rethrow;
         }
       }
+      checkAttempt();
     } on DioException catch (error) {
       debugPrint('Tipo: ${error.type}');
       debugPrint('URL: ${error.requestOptions.uri}');
       debugPrint('Status: ${error.response?.statusCode}');
-      _clearAccount();
+      if (attempt == _authAttempt) await _invalidateSession();
       final status = error.response?.statusCode;
       throw FormatException(
         status == 401
@@ -315,7 +360,7 @@ extension AuthService on ApiService {
             : 'Não foi possível entrar. Confira seus dados e tente novamente.',
       );
     } catch (_) {
-      _clearAccount();
+      if (attempt == _authAttempt) await _invalidateSession();
       rethrow;
     }
   }

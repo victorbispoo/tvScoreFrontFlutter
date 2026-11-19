@@ -22,6 +22,7 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
   final _selected = <String>{};
   final _contents = <(String?, String?), Map<String, String>>{};
   final _sessionToken = ApiService.token;
+  final _sessionRevision = ApiService.sessionRevision.value;
   late Future<List<Map<String, dynamic>>> _genres;
   Set<String>? _confirmedGenres;
   int _step = 0;
@@ -34,6 +35,37 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
   void initState() {
     super.initState();
     _genres = _loadGenres();
+    ApiService.sessionRevision.addListener(_sessionChanged);
+  }
+
+  void _sessionChanged() {
+    if (!mounted || _sessionRevision == ApiService.sessionRevision.value) {
+      return;
+    }
+    setState(() {
+      _selected.clear();
+      _contents.clear();
+      _confirmedGenres = null;
+      _loaded = false;
+      _visitedContents = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final route = ModalRoute.of(context);
+      if (route == null) return;
+      final navigator = Navigator.of(context);
+      if (route.isCurrent) {
+        navigator.pop();
+      } else {
+        navigator.removeRoute(route);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    ApiService.sessionRevision.removeListener(_sessionChanged);
+    super.dispose();
   }
 
   Future<List<Map<String, dynamic>>> _loadGenres() async {
@@ -47,6 +79,7 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
           ? _api.getPreferredContents()
           : Future.value(<Map<String, String>>[]),
     ).wait;
+    _checkSession();
     if (mounted) {
       setState(() {
         _selected
@@ -62,7 +95,9 @@ class _ContentPreferencesDialogState extends State<ContentPreferencesDialog> {
   }
 
   void _checkSession() {
-    if (_sessionToken == null || ApiService.token != _sessionToken) {
+    if (_sessionToken == null ||
+        ApiService.token != _sessionToken ||
+        _sessionRevision != ApiService.sessionRevision.value) {
       throw StateError('A sessão mudou. Reabra as preferências.');
     }
   }

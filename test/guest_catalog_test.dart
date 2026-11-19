@@ -39,8 +39,6 @@ void main() {
           api.getPreferredGenres,
           api.getPreferredContents,
           api.loadProfilePhoto,
-          () => api.getContentReviewsPage(1000, 'MOVIE'),
-          () => api.getContentReviews(1000, 'MOVIE'),
         ]) {
           await expectLater(request(), throwsStateError);
         }
@@ -120,7 +118,7 @@ void main() {
     expect(
       backend.requests.where(
         (request) => !RegExp(
-          r'^GET /(?:(?:filmes|series|conteudos)/|avaliacoes/conteudo/\d+/resumo$)',
+          r'^GET /(?:(?:filmes|series|conteudos)/|avaliacoes/conteudo/\d+/resumo$|avaliacoes/filme/\d+/paginadas$)',
         ).hasMatch(request),
       ),
       isEmpty,

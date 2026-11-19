@@ -200,7 +200,9 @@ class ContentHeader extends StatelessWidget {
                         width: tablet
                             ? (contentWidth - posterWidth - gap).clamp(
                                 0.0,
-                                640.0,
+                                desktop && content['type'] == 'TV'
+                                    ? double.infinity
+                                    : 640.0,
                               )
                             : contentWidth,
                         child: Padding(

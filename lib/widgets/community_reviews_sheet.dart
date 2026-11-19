@@ -54,9 +54,13 @@ class _CommunityReviewsSheetState extends State<CommunityReviewsSheet> {
         _total = page.totalElements;
         _nextPage++;
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
-        setState(() => _error = 'Não foi possível carregar as avaliações.');
+        setState(
+          () => _error = error is CommunityReviewsRestricted
+              ? CommunityReviewsRestricted.message
+              : 'Não foi possível carregar as avaliações.',
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -119,8 +123,10 @@ class _CommunityReviewsSheetState extends State<CommunityReviewsSheet> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        _nextPage == 0
+                        _loading && _nextPage == 0
                             ? 'Carregando avaliações…'
+                            : _error != null && _nextPage == 0
+                            ? 'Avaliações indisponíveis'
                             : '$_total ${_total == 1 ? 'avaliação' : 'avaliações'}',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,

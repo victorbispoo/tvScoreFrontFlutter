@@ -4,6 +4,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_breakpoints.dart';
 import '../core/app_haptics.dart';
+import '../core/app_routes.dart';
 import '../models/content_metadata.dart';
 import '../models/review.dart';
 import '../services/api_services.dart';
@@ -35,26 +36,47 @@ class DetailsPage extends StatefulWidget {
 
 class _DetailsPageState extends State<DetailsPage> {
   final _api = ApiService();
+  final _episodesKey = GlobalKey();
   late final TextEditingController _comment;
   late Widget _whereToWatch;
   Future<Map<String, String>>? _details;
   late double _rating;
   bool _busy = false;
   Map<String, dynamic>? _reviewSummary;
+  bool _loadingSummary = true;
+  String? _summaryError;
   bool _loadingCommunity = true;
   String? _communityError;
   bool _loadingMyReview = true;
   String? _myReviewError;
   List<Map<String, dynamic>> _communityReviews = [];
   int _communityTotal = 0;
+  bool _openingLogin = false;
+  int _summaryRequest = 0;
+  int _communityRequest = 0;
+  int _personalRequest = 0;
   @override
   void initState() {
     super.initState();
     _loadDetails();
     _rating = 8.0;
     _comment = TextEditingController();
+    ApiService.sessionRevision.addListener(_sessionChanged);
     if (ApiService.hasSession) _loadMyReview();
     _checkCommunityReviews();
+  }
+
+  void _sessionChanged() {
+    if (!mounted) return;
+    _personalRequest++;
+    setState(() {
+      _comment.clear();
+      _rating = 8.0;
+      _busy = false;
+      _myReviewError = null;
+      _loadingMyReview = ApiService.hasSession;
+    });
+    if (ApiService.hasSession) _loadMyReview();
   }
 
   @override
@@ -93,6 +115,37 @@ class _DetailsPageState extends State<DetailsPage> {
   }
 
   Future<void> _checkCommunityReviews() async {
+    await Future.wait([_loadReviewSummary(), _loadCommunityReviews()]);
+  }
+
+  Future<void> _loadReviewSummary() async {
+    final request = ++_summaryRequest;
+    bool isCurrent() => mounted && request == _summaryRequest;
+    setState(() {
+      _loadingSummary = true;
+      _summaryError = null;
+    });
+    try {
+      final reference = widget.content.apiReference;
+      final summary = await _api.getContentReviewSummary(
+        reference.id,
+        reference.type,
+      );
+      if (isCurrent()) setState(() => _reviewSummary = summary);
+    } catch (_) {
+      if (isCurrent()) {
+        setState(
+          () => _summaryError = 'Não foi possível carregar a média TVScore.',
+        );
+      }
+    } finally {
+      if (isCurrent()) setState(() => _loadingSummary = false);
+    }
+  }
+
+  Future<void> _loadCommunityReviews() async {
+    final request = ++_communityRequest;
+    bool isCurrent() => mounted && request == _communityRequest;
     setState(() {
       _loadingCommunity = true;
       _communityError = null;
@@ -100,26 +153,26 @@ class _DetailsPageState extends State<DetailsPage> {
 
     try {
       final reference = widget.content.apiReference;
-      final (summary, reviews) = await (
-        _api.getContentReviewSummary(reference.id, reference.type),
-        ApiService.hasSession
-            ? _api.getContentReviewsPage(reference.id, reference.type, size: 3)
-            : Future.value(null),
-      ).wait;
+      final reviews = await _api.getContentReviewsPage(
+        reference.id,
+        reference.type,
+        size: 3,
+      );
 
-      if (!mounted) return;
+      if (!isCurrent()) return;
       setState(() {
-        _reviewSummary = summary;
-        _communityReviews = reviews?.reviews ?? [];
-        _communityTotal = reviews?.totalElements ?? 0;
+        _communityReviews = reviews.reviews;
+        _communityTotal = reviews.totalElements;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!isCurrent()) return;
       setState(() {
-        _communityError = 'Não foi possível carregar as avaliações.';
+        _communityError = error is CommunityReviewsRestricted
+            ? CommunityReviewsRestricted.message
+            : 'Não foi possível carregar as avaliações.';
       });
     } finally {
-      if (mounted) {
+      if (isCurrent()) {
         setState(() {
           _loadingCommunity = false;
         });
@@ -127,7 +180,31 @@ class _DetailsPageState extends State<DetailsPage> {
     }
   }
 
+  Future<void> _signInToReview() async {
+    if (_openingLogin) return;
+    _openingLogin = true;
+    try {
+      final authenticated = await Navigator.pushNamed<dynamic>(
+        context,
+        AppRoutes.login,
+        arguments: AppRoutes.returnToOriginArguments,
+      );
+      if (!mounted || authenticated != true || !ApiService.hasSession) return;
+      // The details route stays in the stack, including its content and scroll.
+      // Authentication only unlocks the form; saving still requires an explicit tap.
+      await _checkCommunityReviews();
+    } finally {
+      _openingLogin = false;
+    }
+  }
+
   Future<void> _loadMyReview() async {
+    final request = ++_personalRequest;
+    final session = ApiService.sessionRevision.value;
+    bool isCurrent() =>
+        mounted &&
+        request == _personalRequest &&
+        session == ApiService.sessionRevision.value;
     setState(() {
       _loadingMyReview = true;
       _myReviewError = null;
@@ -135,7 +212,7 @@ class _DetailsPageState extends State<DetailsPage> {
 
     try {
       await _api.loadMyReviewFor(widget.content);
-      if (!mounted) return;
+      if (!isCurrent()) return;
 
       final review = _api.reviewFor(widget.content);
       final rating = review?.rating ?? 8.0;
@@ -151,13 +228,13 @@ class _DetailsPageState extends State<DetailsPage> {
       });
     } catch (error) {
       debugPrint('Falha ao carregar avaliação pessoal: $error');
-      if (!mounted) return;
+      if (!isCurrent()) return;
 
       setState(() {
         _myReviewError = 'Não foi possível carregar sua avaliação.';
       });
     } finally {
-      if (mounted) {
+      if (isCurrent()) {
         setState(() {
           _loadingMyReview = false;
         });
@@ -167,16 +244,19 @@ class _DetailsPageState extends State<DetailsPage> {
 
   @override
   void dispose() {
+    ApiService.sessionRevision.removeListener(_sessionChanged);
     _comment.dispose();
     super.dispose();
   }
 
   Future<void> _toggleSaved() async {
+    final session = ApiService.sessionRevision.value;
+    bool isCurrent() => mounted && session == ApiService.sessionRevision.value;
     final wasSaved = _api.isSaved(widget.content);
     setState(() => _busy = true);
     try {
       await _api.toggleSaved(widget.content);
-      if (!mounted) return;
+      if (!mounted || !isCurrent()) return;
       AppHaptics.confirmation();
       widget.onFavoriteChanged?.call();
       TvScoreSnackbar.info(
@@ -184,36 +264,38 @@ class _DetailsPageState extends State<DetailsPage> {
         wasSaved ? 'Removido dos favoritos.' : 'Adicionado aos favoritos.',
       );
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || !isCurrent()) return;
       AppHaptics.error();
       TvScoreSnackbar.error(
         context,
         'Não foi possível atualizar seus favoritos.',
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (isCurrent()) setState(() => _busy = false);
     }
   }
 
   Future<void> _saveReview() async {
+    final session = ApiService.sessionRevision.value;
+    bool isCurrent() => mounted && session == ApiService.sessionRevision.value;
     setState(() => _busy = true);
     try {
       await _api.saveReview(widget.content, _rating, _comment.text);
-      if (!mounted) return;
+      if (!mounted || !isCurrent()) return;
       AppHaptics.confirmation();
       TvScoreSnackbar.success(context, 'Sua avaliação foi salva.');
       await _checkCommunityReviews();
     } catch (error, stackTrace) {
       debugPrint('falha: $error');
       debugPrintStack(stackTrace: stackTrace);
-      if (!mounted) return;
+      if (!mounted || !isCurrent()) return;
       AppHaptics.error();
       TvScoreSnackbar.error(
         context,
         'Não foi possível salvar sua avaliação. Tente novamente.',
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (isCurrent()) setState(() => _busy = false);
     }
   }
 
@@ -441,15 +523,15 @@ class _DetailsPageState extends State<DetailsPage> {
                                 ),
                               ],
                             ),
-                            if (_loadingCommunity)
+                            if (_loadingSummary)
                               const SkeletonBlock(width: 110, height: 15)
-                            else if (_communityError != null)
+                            else if (_summaryError != null)
                               Column(
                                 crossAxisAlignment: .start,
                                 children: [
-                                  Text(_communityError!),
+                                  Text(_summaryError!),
                                   TextButton(
-                                    onPressed: _checkCommunityReviews,
+                                    onPressed: _loadReviewSummary,
                                     child: const Text('Tentar novamente'),
                                   ),
                                 ],
@@ -510,6 +592,13 @@ class _DetailsPageState extends State<DetailsPage> {
                             style: const TextStyle(height: 1.6),
                           ),
                         ],
+                        if (desktop && content['type'] == 'TV') ...[
+                          const SizedBox(height: 24),
+                          EpisodePanel(
+                            key: _episodesKey,
+                            seriesId: int.parse(content['id']!),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -527,9 +616,12 @@ class _DetailsPageState extends State<DetailsPage> {
                               ? CrossAxisAlignment.stretch
                               : CrossAxisAlignment.start,
                           children: [
-                            if (content['type'] == 'TV') ...[
+                            if (!desktop && content['type'] == 'TV') ...[
                               const SizedBox(height: 24),
-                              EpisodePanel(seriesId: int.parse(content['id']!)),
+                              EpisodePanel(
+                                key: _episodesKey,
+                                seriesId: int.parse(content['id']!),
+                              ),
                             ],
                             if (hasSession) ...[
                               const SizedBox(height: 24),
@@ -559,17 +651,23 @@ class _DetailsPageState extends State<DetailsPage> {
                                 },
                                 onSave: _saveReview,
                               ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Avaliações da comunidade',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            ] else ...[
+                              const SizedBox(height: 24),
+                              FilledButton(
+                                onPressed: _signInToReview,
+                                child: const Text('Entrar para avaliar'),
                               ),
-                              const SizedBox(height: 12),
-                              _buildCommunitySection(),
                             ],
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Avaliações da comunidade',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildCommunitySection(),
                             const SizedBox(height: 24),
                           ],
                         ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -20,7 +21,19 @@ part 'recommendations_service.dart';
 
 class ApiService {
   ApiService({DateTime Function()? recommendationClock})
-    : _recommendationClock = recommendationClock ?? DateTime.now;
+    : _recommendationClock = recommendationClock ?? DateTime.now {
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          final session = error.requestOptions.extra['sessionVersion'];
+          if (error.response?.statusCode == 401 && session is int) {
+            await _invalidateSession(expectedSession: session);
+          }
+          handler.next(error);
+        },
+      ),
+    );
+  }
 
   final DateTime Function() _recommendationClock;
   static final _recommendations = <String, _RecommendationEntry>{};
@@ -35,6 +48,8 @@ class ApiService {
   static void _advanceSession() {
     _sessionVersion++;
     _recommendations.clear();
+    _clearReviewCache();
+    _scheduleSessionExpiry();
   }
 
   static const maxSearchPage = 500;
@@ -49,25 +64,86 @@ class ApiService {
 
   Options get _authorizationOptions {
     final token = ApiService.token;
-    if (token == null || token.isEmpty) {
+    if (!hasSession || token == null) {
+      if (_token != null) {
+        final session = _sessionVersion;
+        unawaited(
+          Future<void>.microtask(
+            () => _invalidateSession(expectedSession: session),
+          ),
+        );
+      }
       throw StateError('Entre na sua conta para continuar.');
     }
-    return Options(headers: {'Authorization': 'Bearer $token'});
+    return Options(
+      headers: {'Authorization': 'Bearer $token'},
+      extra: {'sessionVersion': _sessionVersion},
+    );
   }
 
   static String? _token;
   static final _sessionRevision = ValueNotifier<int>(0);
   static ValueListenable<int> get sessionRevision => _sessionRevision;
-  static String? get token => _token;
-  static bool get hasSession => _token?.isNotEmpty ?? false;
+  static DateTime? _expiresAt;
+  static Timer? _expirationTimer;
+  static String? get token => hasSession ? _token : null;
+  static bool get hasSession =>
+      (_token?.isNotEmpty ?? false) &&
+      (_expiresAt == null || DateTime.now().isBefore(_expiresAt!));
   static set token(String? value) {
     if (_token == value) return;
+    if (_token != null) _clearPrivateState();
     _token = value;
+    _expiresAt = value == null ? null : _tokenExpiration(value);
     _advanceSession();
     _sessionRevision.value++;
   }
 
   static int _sessionVersion = 0;
+
+  static DateTime? _tokenExpiration(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      final expiration = payload is Map ? payload['exp'] : null;
+      if (expiration is! num || !expiration.isFinite) return null;
+      return DateTime.fromMillisecondsSinceEpoch(
+        (expiration * 1000).round(),
+        isUtc: true,
+      );
+    } on FormatException {
+      return null;
+    } on RangeError {
+      return null;
+    }
+  }
+
+  static void _scheduleSessionExpiry() {
+    _expirationTimer?.cancel();
+    _expirationTimer = null;
+    final expiry = _expiresAt;
+    if (_token == null || expiry == null) return;
+    final session = _sessionVersion;
+    final remaining = expiry.difference(DateTime.now());
+    _expirationTimer = Timer(
+      remaining.isNegative ? Duration.zero : remaining,
+      () {
+        unawaited(ApiService()._invalidateSession(expectedSession: session));
+      },
+    );
+  }
+
+  static void _clearPrivateState() {
+    _clearReviewCache();
+    userName = '';
+    userEmail = '';
+    userPhotoUrl.value = null;
+    savedContents = [];
+    reviews = [];
+  }
 
   static void _checkSession(int version) {
     if (version != _sessionVersion) {
@@ -95,10 +171,11 @@ class ApiService {
 
   Future<void> open(String email, String defaultName) async {
     _advanceSession();
-    userPhotoUrl.value = null;
-    _clearReviewCache();
+    final session = _sessionVersion;
+    _clearPrivateState();
     final preferences = SharedPreferencesAsync();
     final value = await preferences.getString('tv_score_library_$email');
+    _checkSession(session);
     final data = value == null
         ? <String, dynamic>{}
         : jsonDecode(value) as Map<String, dynamic>;
@@ -107,6 +184,7 @@ class ApiService {
       data.remove('saved');
       data.remove('reviews');
       await preferences.setString('tv_score_library_$email', jsonEncode(data));
+      _checkSession(session);
     }
 
     userEmail = email;
