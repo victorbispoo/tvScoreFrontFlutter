@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tv_score_front_flutter/core/app_breakpoints.dart';
 import 'package:tv_score_front_flutter/core/app_shell.dart';
@@ -49,7 +50,9 @@ void main() {
           .controller;
       final homeState = tester.state(find.byType(HomePage));
       tester
-          .widget<TrendingCarousel>(find.byType(TrendingCarousel))
+          .widget<TrendingCarousel>(
+            find.byType(TrendingCarousel, skipOffstage: false),
+          )
           .onTypeSelected('TV');
       await tester.pumpAndSettle();
       final scroll = tester
@@ -66,7 +69,7 @@ void main() {
       await tester.pumpAndSettle();
       final offset = scroll.pixels;
 
-      for (final width in [390.0, 768.0, 1024.0, 1440.0, 390.0]) {
+      for (final width in [390.0, 768.0, 1024.0, 1366.0, 1920.0, 390.0]) {
         tester.view.physicalSize = Size(width, 650);
         await tester.pumpAndSettle();
         final desktop = width >= AppBreakpoints.desktop;
@@ -83,10 +86,27 @@ void main() {
           same(controller),
         );
         expect(tester.state(find.byType(HomePage)), same(homeState));
+        expect(
+          find.descendant(
+            of: find.byType(HomePage),
+            matching: find.byType(SvgPicture),
+          ),
+          desktop ? findsNothing : findsOneWidget,
+        );
+        if (desktop) {
+          final sidebar = tester.getRect(find.byType(DesktopNavigation));
+          expect(sidebar.top, 0);
+          expect(sidebar.height, 650);
+          final home = tester.getRect(find.byType(HomePage));
+          expect(home.left, greaterThanOrEqualTo(sidebar.right));
+          expect(home.right, lessThanOrEqualTo(width));
+        }
         expect(scroll.pixels, offset);
         expect(
           tester
-              .widget<TrendingCarousel>(find.byType(TrendingCarousel))
+              .widget<TrendingCarousel>(
+                find.byType(TrendingCarousel, skipOffstage: false),
+              )
               .selectedType,
           'TV',
         );

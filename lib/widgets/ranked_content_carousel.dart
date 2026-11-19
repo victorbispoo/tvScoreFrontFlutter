@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
 import '../core/app_routes.dart';
 import '../core/rating_scale.dart';
 import '../models/content_metadata.dart';
+import 'carousel_viewport.dart';
 import 'content_poster.dart';
 import 'poster_hero_tag.dart';
 
@@ -26,144 +28,149 @@ class RankedContentCarousel extends StatelessWidget {
         ? null
         : carouselPosterHeroTags('home:$heroSection', contents);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 26),
-      child: SizedBox(
-        height: 144,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: contents.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
-          itemBuilder: (context, index) {
-            final content = contents[index];
-            final heroTag = heroTags?[index];
-            return SizedBox(
-              width: 259,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () async {
-                  await AppRoutes.openDetails(
-                    context,
-                    content: content,
-                    heroTag: heroTag,
-                  );
-                  if (context.mounted) onChanged();
-                },
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 141,
-                      height: 144,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 0,
-                            bottom: 5,
-                            width: 54,
-                            height: 48,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.bottomLeft,
-                              child: Text(
-                                (index + 1).toString().padLeft(2, '0'),
-                                style: TextStyle(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+    final desktop = AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = ((constraints.maxWidth - 40) / 380).floor().clamp(2, 4);
+        final itemWidth = desktop
+            ? (constraints.maxWidth - 40 - (columns - 1) * 12) / columns
+            : 259.0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 26),
+          child: CarouselViewport(
+            height: desktop ? 216 : 144,
+            itemWidth: itemWidth,
+            itemCount: contents.length,
+            itemBuilder: (context, index) {
+              final content = contents[index];
+              final heroTag = heroTags?[index];
+              return SizedBox(
+                width: itemWidth,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    await AppRoutes.openDetails(
+                      context,
+                      content: content,
+                      heroTag: heroTag,
+                    );
+                    if (context.mounted) onChanged();
+                  },
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: desktop ? 192 : 141,
+                        height: desktop ? 216 : 144,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              bottom: 5,
+                              width: 54,
+                              height: 48,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.bottomLeft,
+                                child: Text(
+                                  (index + 1).toString().padLeft(2, '0'),
+                                  style: TextStyle(
+                                    fontSize: 42,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            width: 96,
-                            height: 144,
-                            child: ContentPoster(
-                              content: content,
-                              heroTag: heroTag,
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              width: desktop ? 144 : 96,
+                              height: desktop ? 216 : 144,
+                              child: ContentPoster(
+                                content: content,
+                                heroTag: heroTag,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            content['title'] ?? '',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${content['year'] ?? ''} · ${content.primaryGenre}",
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          if ((double.tryParse(content['score'] ?? '') ?? 0) >
-                              0) ...[
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(
-                                  HugeIconsSolid.star,
-                                  size: 20,
-                                  color: RatingScale.badgeColor(
-                                    context,
-                                    double.tryParse(content['score'] ?? ''),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${content['score']}',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: RatingScale.badgeColor(
-                                      context,
-                                      double.tryParse(content['score'] ?? ''),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                             Text(
-                              'Sem avaliações',
+                              content['title'] ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "${content['year'] ?? ''} · ${content.primaryGenre}",
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurfaceVariant,
                               ),
                             ),
-                        ],
+                            if ((double.tryParse(content['score'] ?? '') ?? 0) >
+                                0) ...[
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Icon(
+                                    HugeIconsSolid.star,
+                                    size: 20,
+                                    color: RatingScale.badgeColor(
+                                      context,
+                                      double.tryParse(content['score'] ?? ''),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${content['score']}',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: RatingScale.badgeColor(
+                                        context,
+                                        double.tryParse(content['score'] ?? ''),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ] else
+                              Text(
+                                'Sem avaliações',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

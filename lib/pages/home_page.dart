@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
+import '../core/app_breakpoints.dart';
 import '../core/app_routes.dart';
 import '../core/light_logo_color_mapper.dart';
 import '../models/content_metadata.dart';
@@ -590,91 +591,110 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return RefreshIndicator(
-      onRefresh: _refresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.only(top: 12, bottom: widget.bottomPadding),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SizedBox(
-              height: 64,
-              child: Row(
-                children: [
-                  SvgPicture.asset(
-                    'lib/assets/logoTvScore.svg',
-                    height: 44,
-                    colorMapper:
-                        Theme.of(context).brightness == Brightness.light
-                        ? const LightLogoColorMapper()
-                        : null,
+    final desktop = AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: desktop ? 1360 : double.infinity),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: desktop ? 12 : 0),
+          child: RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.only(top: 12, bottom: widget.bottomPadding),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    height: 64,
+                    child: Row(
+                      children: [
+                        if (desktop)
+                          Text(
+                            'In?cio',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          )
+                        else
+                          SvgPicture.asset(
+                            'lib/assets/logoTvScore.svg',
+                            height: 44,
+                            colorMapper:
+                                Theme.of(context).brightness == Brightness.light
+                                ? const LightLogoColorMapper()
+                                : null,
+                          ),
+                        const Spacer(),
+                        IconButton(
+                          tooltip: 'Pesquisar',
+                          onPressed: () {
+                            Navigator.pushNamed(context, AppRoutes.search);
+                          },
+                          icon: Icon(
+                            HugeIconsSolid.search01,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: 'Pesquisar',
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.search);
+                ),
+                const SizedBox(height: 22),
+                _genreSections(personalized: true),
+                _KeepAliveSection(
+                  child: FutureBuilder<List<Map<String, String>>>(
+                    future: _trending,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return TextButton(
+                          onPressed: () => setState(_reloadTrending),
+                          child: const Text(
+                            'Não foi possível carregar Em alta. Tentar novamente',
+                          ),
+                        );
+                      }
+                      if (!snapshot.hasData) {
+                        return const SkeletonCarousel(showFilters: true);
+                      }
+                      return TrendingCarousel(
+                        contents: _distributed['trending'] ?? [],
+                        showWhenEmpty: _canChangeTrendingFilter,
+                        selectedType: _trendingType,
+                        onTypeSelected: (value) => setState(() {
+                          _trendingType = value;
+                          _distributeContents();
+                        }),
+                        onChanged: () => setState(() {}),
+                        heroSection: 'trending',
+                      );
                     },
-                    icon: Icon(
-                      HugeIconsSolid.search01,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
                   ),
-                ],
-              ),
+                ),
+                _genreSections(firstGenre: true),
+                _KeepAliveSection(
+                  child: TopRatedCarousel(
+                    heroSection: 'top-rated',
+                    selectedType: _topRatedType,
+                    onTypeSelected: (type) => setState(() {
+                      _topRatedType = type;
+                      _topRated = ApiService().getTopRatedContents(type);
+                    }),
+                    onRetry: () => setState(() {
+                      _topRated = ApiService().getTopRatedContents(
+                        _topRatedType,
+                      );
+                    }),
+                    contents: _topRated,
+                    orderContents: _prioritizeRated,
+                    onChanged: () => setState(() {}),
+                  ),
+                ),
+                _genreSections(),
+              ],
             ),
           ),
-          const SizedBox(height: 22),
-          _genreSections(personalized: true),
-          _KeepAliveSection(
-            child: FutureBuilder<List<Map<String, String>>>(
-              future: _trending,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return TextButton(
-                    onPressed: () => setState(_reloadTrending),
-                    child: const Text(
-                      'Não foi possível carregar Em alta. Tentar novamente',
-                    ),
-                  );
-                }
-                if (!snapshot.hasData) {
-                  return const SkeletonCarousel(showFilters: true);
-                }
-                return TrendingCarousel(
-                  contents: _distributed['trending'] ?? [],
-                  showWhenEmpty: _canChangeTrendingFilter,
-                  selectedType: _trendingType,
-                  onTypeSelected: (value) => setState(() {
-                    _trendingType = value;
-                    _distributeContents();
-                  }),
-                  onChanged: () => setState(() {}),
-                  heroSection: 'trending',
-                );
-              },
-            ),
-          ),
-          _genreSections(firstGenre: true),
-          _KeepAliveSection(
-            child: TopRatedCarousel(
-              heroSection: 'top-rated',
-              selectedType: _topRatedType,
-              onTypeSelected: (type) => setState(() {
-                _topRatedType = type;
-                _topRated = ApiService().getTopRatedContents(type);
-              }),
-              onRetry: () => setState(() {
-                _topRated = ApiService().getTopRatedContents(_topRatedType);
-              }),
-              contents: _topRated,
-              orderContents: _prioritizeRated,
-              onChanged: () => setState(() {}),
-            ),
-          ),
-          _genreSections(),
-        ],
+        ),
       ),
     );
   }
