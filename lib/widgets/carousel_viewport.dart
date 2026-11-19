@@ -5,6 +5,18 @@ import 'package:hugeicons_pro/hugeicons.dart';
 
 import '../core/app_breakpoints.dart';
 
+double desktopCarouselPosterWidth(double width, {required bool featured}) {
+  final available = width - 40;
+  final columns = (available / (featured ? 216 : 192)).floor().clamp(3, 7);
+  return ((available - (columns - 1) * 12) / columns).clamp(160.0, 224.0);
+}
+
+double desktopRankedItemWidth(double width) {
+  final available = width - 40;
+  final columns = (available / 380).floor().clamp(2, 4);
+  return (available - (columns - 1) * 12) / columns;
+}
+
 // Own the controller independently of card sizes so resizing keeps scroll state.
 class CarouselViewport extends StatefulWidget {
   const CarouselViewport({

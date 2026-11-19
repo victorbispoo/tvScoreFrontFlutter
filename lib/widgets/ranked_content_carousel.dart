@@ -31,9 +31,8 @@ class RankedContentCarousel extends StatelessWidget {
     final desktop = AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = ((constraints.maxWidth - 40) / 380).floor().clamp(2, 4);
         final itemWidth = desktop
-            ? (constraints.maxWidth - 40 - (columns - 1) * 12) / columns
+            ? desktopRankedItemWidth(constraints.maxWidth)
             : 259.0;
         return Padding(
           padding: const EdgeInsets.only(bottom: 26),

@@ -40,13 +40,11 @@ class ContentCarousel extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final basePosterWidth = featured ? 158.0 : 144.0;
-        final available = constraints.maxWidth - 40;
-        final columns = (available / (featured ? 216 : 192)).floor().clamp(
-          3,
-          7,
-        );
         final posterWidth = desktop
-            ? ((available - (columns - 1) * 12) / columns).clamp(160.0, 224.0)
+            ? desktopCarouselPosterWidth(
+                constraints.maxWidth,
+                featured: featured,
+              )
             : basePosterWidth * posterScale;
         final height = desktop
             ? posterWidth * 1.5 + 84

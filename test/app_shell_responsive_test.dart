@@ -24,116 +24,151 @@ void main() {
   });
 
   for (final brightness in Brightness.values) {
-    testWidgets('navegação e resize no tema $brightness', (tester) async {
-      final previous = HttpOverrides.current;
-      HttpOverrides.global = BackendHttp();
-      FlutterSecureStorage.setMockInitialValues({});
-      ApiService.token = 'responsive-test';
-      ApiService.savedContents = [];
-      tester.view.devicePixelRatio = 1;
-      addTearDown(() {
-        HttpOverrides.global = previous;
-        ApiService.token = null;
+    testWidgets(
+      'navegação e resize no tema $brightness',
+      (tester) async {
+        final previous = HttpOverrides.current;
+        HttpOverrides.global = BackendHttp();
+        FlutterSecureStorage.setMockInitialValues({});
+        ApiService.token = 'responsive-test';
         ApiService.savedContents = [];
-        tester.view.reset();
-      });
-      tester.view.physicalSize = const Size(390, 650);
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(brightness: brightness),
-          home: const AppShell(),
-        ),
-      );
-      await tester.pumpAndSettle();
-      final controller = tester
-          .widget<PageView>(find.byType(PageView))
-          .controller;
-      final homeState = tester.state(find.byType(HomePage));
-      tester
-          .widget<TrendingCarousel>(
-            find.byType(TrendingCarousel, skipOffstage: false),
-          )
-          .onTypeSelected('TV');
-      await tester.pumpAndSettle();
-      final scroll = tester
-          .state<ScrollableState>(
-            find
-                .descendant(
-                  of: find.byType(HomePage),
-                  matching: find.byType(Scrollable),
-                )
-                .first,
-          )
-          .position;
-      scroll.jumpTo(10);
-      await tester.pumpAndSettle();
-      final offset = scroll.pixels;
-
-      for (final width in [390.0, 768.0, 1024.0, 1366.0, 1920.0, 390.0]) {
-        tester.view.physicalSize = Size(width, 650);
-        await tester.pumpAndSettle();
-        final desktop = width >= AppBreakpoints.desktop;
-        expect(
-          find.byType(DesktopNavigation),
-          desktop ? findsOneWidget : findsNothing,
-        );
-        expect(
-          find.byType(FloatingNavigationBar),
-          desktop ? findsNothing : findsOneWidget,
-        );
-        expect(
-          tester.widget<PageView>(find.byType(PageView)).controller,
-          same(controller),
-        );
-        expect(tester.state(find.byType(HomePage)), same(homeState));
-        expect(
-          find.descendant(
-            of: find.byType(HomePage),
-            matching: find.byType(SvgPicture),
+        tester.view.devicePixelRatio = 1;
+        addTearDown(() {
+          HttpOverrides.global = previous;
+          ApiService.token = null;
+          ApiService.savedContents = [];
+          tester.view.reset();
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
+        });
+        tester.view.physicalSize = const Size(390, 650);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(brightness: brightness),
+            home: const AppShell(),
           ),
-          desktop ? findsNothing : findsOneWidget,
         );
-        if (desktop) {
-          final sidebar = tester.getRect(find.byType(DesktopNavigation));
-          expect(sidebar.top, 0);
-          expect(sidebar.height, 650);
-          final home = tester.getRect(find.byType(HomePage));
-          expect(home.left, greaterThanOrEqualTo(sidebar.right));
-          expect(home.right, lessThanOrEqualTo(width));
-        }
-        expect(scroll.pixels, offset);
-        expect(
-          tester
-              .widget<TrendingCarousel>(
-                find.byType(TrendingCarousel, skipOffstage: false),
-              )
-              .selectedType,
-          'TV',
-        );
-        expect(
-          tester.widget<HomePage>(find.byType(HomePage)).bottomPadding,
-          desktop ? 0 : 88,
-        );
-        final navigation = find.byType(
-          desktop ? DesktopNavigation : FloatingNavigationBar,
-        );
-        for (final (index, label) in [
-          (1, 'Favoritos'),
-          (2, 'Perfil'),
-          (0, 'Início'),
-        ]) {
-          await tester.tap(
-            find.descendant(of: navigation, matching: find.text(label)),
-          );
+        await tester.pumpAndSettle();
+        final controller = tester
+            .widget<PageView>(find.byType(PageView))
+            .controller;
+        final homeState = tester.state(find.byType(HomePage));
+        tester
+            .widget<TrendingCarousel>(
+              find.byType(TrendingCarousel, skipOffstage: false),
+            )
+            .onTypeSelected('TV');
+        await tester.pumpAndSettle();
+        final scroll = tester
+            .state<ScrollableState>(
+              find
+                  .descendant(
+                    of: find.byType(HomePage),
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
+            )
+            .position;
+        scroll.jumpTo(10);
+        await tester.pumpAndSettle();
+        final offset = scroll.pixels;
+
+        for (final width in [390.0, 768.0, 1024.0, 1366.0, 1920.0, 390.0]) {
+          tester.view.physicalSize = Size(width, 650);
+          final reducedMotion = width == 1920;
+          tester.platformDispatcher.accessibilityFeaturesTestValue =
+              FakeAccessibilityFeatures(disableAnimations: reducedMotion);
           await tester.pumpAndSettle();
-          expect(controller!.page, index.toDouble());
+          final desktop = width >= AppBreakpoints.desktop;
           expect(
-            find.byType([HomePage, FavoritesPage, ProfilePage][index]),
-            findsOneWidget,
+            find.byType(DesktopNavigation),
+            desktop ? findsOneWidget : findsNothing,
           );
+          expect(
+            find.byType(FloatingNavigationBar),
+            desktop ? findsNothing : findsOneWidget,
+          );
+          expect(
+            tester.widget<PageView>(find.byType(PageView)).controller,
+            same(controller),
+          );
+          expect(tester.state(find.byType(HomePage)), same(homeState));
+          expect(
+            find.descendant(
+              of: find.byType(HomePage),
+              matching: find.byType(SvgPicture),
+            ),
+            desktop ? findsNothing : findsOneWidget,
+          );
+          if (desktop) {
+            final sidebar = tester.getRect(find.byType(DesktopNavigation));
+            expect(sidebar.top, 0);
+            expect(sidebar.height, 650);
+            final home = tester.getRect(find.byType(HomePage));
+            expect(home.left, greaterThanOrEqualTo(sidebar.right));
+            expect(home.right, lessThanOrEqualTo(width));
+          }
+          expect(scroll.pixels, offset);
+          expect(
+            tester
+                .widget<TrendingCarousel>(
+                  find.byType(TrendingCarousel, skipOffstage: false),
+                )
+                .selectedType,
+            'TV',
+          );
+          expect(
+            tester.widget<HomePage>(find.byType(HomePage)).bottomPadding,
+            desktop ? 0 : 88,
+          );
+          final navigation = find.byType(
+            desktop ? DesktopNavigation : FloatingNavigationBar,
+          );
+          for (final (index, label) in [
+            (1, 'Favoritos'),
+            (2, 'Perfil'),
+            (0, 'Início'),
+          ]) {
+            final before = controller!.page!;
+            final homeOrigin = index == 1
+                ? tester.getTopLeft(find.byType(HomePage))
+                : null;
+            await tester.tap(
+              find.descendant(of: navigation, matching: find.text(label)),
+            );
+            if (reducedMotion) {
+              expect(controller.page, index.toDouble());
+            } else if (index == 1) {
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 50));
+              if (desktop) {
+                expect(controller.page, before);
+                final outgoing = tester.getTopLeft(find.byType(HomePage));
+                expect(outgoing.dx, homeOrigin!.dx);
+                expect(outgoing.dy, lessThan(homeOrigin.dy));
+                await tester.tap(
+                  find.descendant(
+                    of: navigation,
+                    matching: find.text('Perfil'),
+                  ),
+                );
+              } else {
+                expect(controller.page, inExclusiveRange(0, 1));
+              }
+            }
+            await tester.pumpAndSettle();
+            expect(controller.page, index.toDouble());
+            if (desktop) {
+              expect(tester.widget<DesktopNavigation>(navigation).index, index);
+            }
+            expect(
+              find.byType([HomePage, FavoritesPage, ProfilePage][index]),
+              findsOneWidget,
+            );
+          }
+          expect(tester.takeException(), isNull);
         }
-        expect(tester.takeException(), isNull);
-      }
-    });
+      },
+      variant: const TargetPlatformVariant({TargetPlatform.windows}),
+    );
   }
 }

@@ -10,12 +10,61 @@ import 'package:tv_score_front_flutter/pages/home_page.dart';
 import 'package:tv_score_front_flutter/pages/search_page.dart';
 import 'package:tv_score_front_flutter/services/api_services.dart';
 import 'package:tv_score_front_flutter/widgets/content_card.dart';
+import 'package:tv_score_front_flutter/widgets/content_carousel.dart';
 import 'package:tv_score_front_flutter/widgets/content_poster.dart';
 import 'package:tv_score_front_flutter/widgets/skeleton_loading.dart';
 import 'support/backend_http.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('skeleton acompanha o pôster real ao mudar a largura', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    for (final width in [390.0, 768.0, 1024.0, 1366.0, 1920.0]) {
+      tester.view.physicalSize = Size(width, 1000);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: width >= 1024 ? (width - 208).clamp(0.0, 1360.0) : width,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SkeletonCarousel(),
+                      ContentCarousel(
+                        title: 'Cinema',
+                        onChanged: () {},
+                        contents: const [
+                          {'id': '1', 'type': 'MOVIE', 'title': 'Filme'},
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final skeletonPoster = find.descendant(
+        of: find.byType(SkeletonPosterCard).first,
+        matching: find.byType(AspectRatio),
+      );
+      final size = tester.getSize(skeletonPoster);
+      expect(size, tester.getSize(find.byType(ContentPoster)));
+      expect(size.width / size.height, closeTo(2 / 3, .001));
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets('skeleton respeita movimento reduzido e telas estreitas', (
     tester,

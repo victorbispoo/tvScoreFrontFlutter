@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_breakpoints.dart';
+import 'carousel_viewport.dart';
+
 class SkeletonShimmer extends StatefulWidget {
   const SkeletonShimmer({super.key, required this.child});
 
@@ -113,54 +116,73 @@ class SkeletonCarousel extends StatelessWidget {
   final double posterScale;
 
   @override
-  Widget build(BuildContext context) => SkeletonShimmer(
-    child: Padding(
-      padding: const EdgeInsets.only(bottom: 26),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (showHeading) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: SkeletonBlock(width: 155, height: 22),
-            ),
-            const SizedBox(height: 14),
-          ],
-          if (showFilters) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: featured
-                  ? const SkeletonBlock(height: 36, radius: 18)
-                  : const Row(
-                      children: [
-                        SkeletonBlock(width: 76, height: 36, radius: 18),
-                        SizedBox(width: 8),
-                        SkeletonBlock(width: 76, height: 36, radius: 18),
-                        SizedBox(width: 8),
-                        SkeletonBlock(width: 76, height: 36, radius: 18),
-                      ],
-                    ),
-            ),
-            const SizedBox(height: 10),
-          ],
-          SizedBox(
-            height:
-                (featured ? 318 : 284) +
-                (featured ? 158 : 144) * (posterScale - 1) * 1.5,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: 3,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (_, _) => SizedBox(
-                width: (featured ? 158 : 144) * posterScale,
-                child: const SkeletonPosterCard(),
-              ),
-            ),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final viewport = MediaQuery.sizeOf(context).width;
+      final desktop = AppBreakpoints.isDesktop(viewport);
+      final baseWidth = featured ? 158.0 : 144.0;
+      final posterWidth = desktop
+          ? desktopCarouselPosterWidth(constraints.maxWidth, featured: featured)
+          : baseWidth * posterScale;
+      return SkeletonShimmer(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: desktop && Theme.of(context).brightness == Brightness.light
+                ? 18
+                : 26,
           ),
-        ],
-      ),
-    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (showHeading) ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: SkeletonBlock(width: 155, height: 22),
+                ),
+                const SizedBox(height: 14),
+              ],
+              if (showFilters) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: desktop
+                      ? const SkeletonBlock(width: 336, height: 48, radius: 24)
+                      : featured
+                      ? const SkeletonBlock(height: 36, radius: 18)
+                      : const Row(
+                          children: [
+                            SkeletonBlock(width: 76, height: 36, radius: 18),
+                            SizedBox(width: 8),
+                            SkeletonBlock(width: 76, height: 36, radius: 18),
+                            SizedBox(width: 8),
+                            SkeletonBlock(width: 76, height: 36, radius: 18),
+                          ],
+                        ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (desktop) const SizedBox(height: 48),
+              SizedBox(
+                height: desktop
+                    ? posterWidth * 1.5 + 84
+                    : (featured ? 318 : 284) + (posterWidth - baseWidth) * 1.5,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: viewport >= AppBreakpoints.tablet
+                      ? (constraints.maxWidth / (posterWidth + 12)).ceil()
+                      : 3,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (_, _) => SizedBox(
+                    width: posterWidth,
+                    child: const SkeletonPosterCard(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
   );
 }
 
@@ -168,42 +190,60 @@ class SkeletonRankedCarousel extends StatelessWidget {
   const SkeletonRankedCarousel({super.key});
 
   @override
-  Widget build(BuildContext context) => SkeletonShimmer(
-    child: Padding(
-      padding: const EdgeInsets.only(bottom: 26),
-      child: SizedBox(
-        height: 144,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: 3,
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
-          itemBuilder: (_, _) => const SizedBox(
-            width: 248,
-            child: Row(
-              children: [
-                SkeletonBlock(width: 25, height: 24),
-                SizedBox(width: 5),
-                SkeletonBlock(width: 100, height: 144),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SkeletonBlock(height: 16),
-                      SizedBox(height: 9),
-                      SkeletonBlock(height: 12),
-                      SizedBox(height: 9),
-                      SkeletonBlock(height: 12),
-                    ],
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final desktop = AppBreakpoints.isDesktop(
+        MediaQuery.sizeOf(context).width,
+      );
+      final width = desktop
+          ? desktopRankedItemWidth(constraints.maxWidth)
+          : 248.0;
+      final height = desktop ? 216.0 : 144.0;
+      return SkeletonShimmer(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 26),
+          child: Column(
+            children: [
+              if (desktop) const SizedBox(height: 48),
+              SizedBox(
+                height: height,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: desktop
+                      ? (constraints.maxWidth / (width + 12)).ceil()
+                      : 3,
+                  separatorBuilder: (_, _) => SizedBox(width: 12),
+                  itemBuilder: (_, _) => SizedBox(
+                    width: width,
+                    child: Row(
+                      children: [
+                        SkeletonBlock(width: desktop ? 43 : 25, height: 24),
+                        const SizedBox(width: 5),
+                        SkeletonBlock(width: height * 2 / 3, height: height),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SkeletonBlock(height: 16),
+                              SizedBox(height: 9),
+                              SkeletonBlock(height: 12),
+                              SizedBox(height: 9),
+                              SkeletonBlock(height: 12),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -227,7 +267,7 @@ class SkeletonGrid extends StatelessWidget {
       shrinkWrap: shrinkWrap,
       physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
       padding: padding,
-      itemCount: 6,
+      itemCount: columns > 3 ? columns * 2 : 6,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
         mainAxisExtent: mainAxisExtent,
