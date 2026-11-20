@@ -155,8 +155,11 @@ void main() {
   testWidgets(
     'expiração em detalhes mantém navegação pública sem abrir login',
     (tester) async {
+      final expiration = DateTime.fromMillisecondsSinceEpoch(
+        (DateTime.now().millisecondsSinceEpoch ~/ 1000 + 3) * 1000,
+      );
       ApiService.token = tokenWithExpiration(
-        DateTime.now().millisecondsSinceEpoch ~/ 1000 + 3,
+        expiration.millisecondsSinceEpoch ~/ 1000,
       );
       await tester.pumpWidget(
         MaterialApp(
@@ -165,6 +168,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.byType(ReviewForm), findsOneWidget);
+      expect(ApiService.hasSession, isTrue);
+      // The widget clock fires the timer, but the JWT compares wall time.
+      await tester.runAsync(
+        () => Future<void>.delayed(expiration.difference(DateTime.now())),
+      );
       await tester.pump(const Duration(seconds: 4));
       await tester.pumpAndSettle();
       expect(find.byType(DetailsPage), findsOneWidget);

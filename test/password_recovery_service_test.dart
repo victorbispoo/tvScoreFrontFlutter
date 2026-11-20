@@ -16,6 +16,8 @@ void main() {
       'á' * 36,
       '𐐷abcde',
       '#*1234',
+      'abcde\u00e9',
+      'abcde\u2606',
     ]) {
       expect(PasswordRecoveryRules.validatePassword(password), isNull);
     }
@@ -26,6 +28,9 @@ void main() {
       '𐐷abcd',
       'abcde😀',
       'abcde1️⃣',
+      'abcde\u00a9',
+      'abcde\u2764',
+      'abcde\u{1f1e7}\u{1f1f7}',
     ]) {
       expect(PasswordRecoveryRules.validatePassword(password), isNotNull);
     }

@@ -41,6 +41,11 @@ class _PreviewBackend extends BackendHttp {
 
 void main() {
   testWidgets('appearance previews in both themes', (tester) async {
+    final dispatcher = tester.binding.platformDispatcher;
+    dispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
+    addTearDown(dispatcher.clearAccessibilityFeaturesTestValue);
     for (final dark in [false, true]) {
       GoogleFonts.config.allowRuntimeFetching = false;
       final previousHttp = HttpOverrides.current;

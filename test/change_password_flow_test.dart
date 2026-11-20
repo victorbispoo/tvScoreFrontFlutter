@@ -45,6 +45,11 @@ void main() {
   });
   for (final status in [204, 401, 403]) {
     testWidgets('troca de senha no perfil: HTTP $status', (tester) async {
+      final dispatcher = tester.binding.platformDispatcher;
+      dispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+        disableAnimations: true,
+      );
+      addTearDown(dispatcher.clearAccessibilityFeaturesTestValue);
       FlutterSecureStorage.setMockInitialValues({'tv_score_session': 'old'});
       ApiService.token = 'old';
       ApiService.userName = 'Victor';

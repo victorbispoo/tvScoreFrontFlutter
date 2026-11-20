@@ -82,7 +82,11 @@ void main() {
     tester,
   ) async {
     final content = backend.catalog.first;
-    await tester.runAsync(() => ApiService().toggleSaved(content));
+    // Seed the HTTP fixture so initial load and removal use the same test zone.
+    backend.favorites.add({
+      'filmeSerieId': int.parse(content['id']!),
+      'tipoConteudo': content['type'],
+    });
     await tester.pumpWidget(
       MaterialApp(onGenerateRoute: AppRoutes.generate, home: FavoritesPage()),
     );
@@ -94,6 +98,8 @@ void main() {
     expect(tester.widget<DetailsPage>(find.byType(DetailsPage)).heroTag, tag);
     await tester.tap(find.byTooltip('Remover dos favoritos').last);
     await tester.pumpAndSettle();
+    expect(backend.requests, contains('DELETE /favoritos/${content['id']}'));
+    expect(backend.favorites, isEmpty);
     expect(find.byType(ContentCard, skipOffstage: false), findsNothing);
     await tester.pageBack();
     await tester.pumpAndSettle();

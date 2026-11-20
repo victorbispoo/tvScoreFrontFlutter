@@ -3,6 +3,8 @@ import 'dart:convert';
 abstract final class PasswordRecoveryRules {
   static final _token = RegExp(r'^[A-Za-z0-9_-]{43}$');
   static final _whitespace = RegExp(r'^\p{White_Space}*$', unicode: true);
+  // Unicode Emoji is supported at runtime but not by the analyzer's validator.
+  // ignore: valid_regexps
   static final _emoji = RegExp(r'\p{Emoji}', unicode: true);
 
   static bool isValidToken(String? token) =>

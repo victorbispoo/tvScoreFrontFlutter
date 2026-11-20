@@ -161,6 +161,11 @@ void main() {
   testWidgets('login existente atualiza abas e a shell anterior ao voltar', (
     tester,
   ) async {
+    final dispatcher = tester.binding.platformDispatcher;
+    dispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
+    addTearDown(dispatcher.clearAccessibilityFeaturesTestValue);
     await open(tester, const Size(390, 850));
     await selectTab(tester, 'Favoritos');
     await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
