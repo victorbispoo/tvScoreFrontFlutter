@@ -14,23 +14,15 @@
 
 ## TVScore Mobile
 
-<details>
-<summary>Ver galeria Mobile</summary>
-
 <p align="center">
-  <a href="assets/readme/mobile/01-descubra.png"><img src="assets/readme/mobile/01-descubra.png" alt="Catálogo e recomendações personalizadas no TVScore Mobile" width="184" /></a>
-  <a href="assets/readme/mobile/02-explore.png"><img src="assets/readme/mobile/02-explore.png" alt="Detalhes de Breaking Bad, notas e opções de streaming" width="184" /></a>
-  <a href="assets/readme/mobile/03-avalie.png"><img src="assets/readme/mobile/03-avalie.png" alt="Notas por episódio, edição da avaliação e opiniões da comunidade" width="184" /></a>
-  <a href="assets/readme/mobile/04-personalize.png"><img src="assets/readme/mobile/04-personalize.png" alt="Seleção de gêneros favoritos para personalizar recomendações" width="184" /></a>
+  <a href="assets/readme/mobile/01-descubra.png"><img src="assets/readme/mobile/01-descubra.png" alt="Catálogo e recomendações personalizadas no TVScore Mobile" width="13%" /></a>
+  <a href="assets/readme/mobile/02-explore.png"><img src="assets/readme/mobile/02-explore.png" alt="Detalhes de Breaking Bad, notas e opções de streaming" width="13%" /></a>
+  <a href="assets/readme/mobile/03-avalie.png"><img src="assets/readme/mobile/03-avalie.png" alt="Notas por episódio, edição da avaliação e opiniões da comunidade" width="13%" /></a>
+  <a href="assets/readme/mobile/04-personalize.png"><img src="assets/readme/mobile/04-personalize.png" alt="Seleção de gêneros favoritos para personalizar recomendações" width="13%" /></a>
+  <a href="assets/readme/mobile/05-escolha.png"><img src="assets/readme/mobile/05-escolha.png" alt="Seleção de filmes e séries preferidos" width="13%" /></a>
+  <a href="assets/readme/mobile/06-seu-espaco.png"><img src="assets/readme/mobile/06-seu-espaco.png" alt="Perfil com estatísticas, biblioteca e tema do aplicativo" width="13%" /></a>
+  <a href="assets/readme/mobile/07-comece-agora.png"><img src="assets/readme/mobile/07-comece-agora.png" alt="Tela para entrar, criar conta ou continuar explorando" width="13%" /></a>
 </p>
-
-<p align="center">
-  <a href="assets/readme/mobile/05-escolha.png"><img src="assets/readme/mobile/05-escolha.png" alt="Seleção de filmes e séries preferidos" width="184" /></a>
-  <a href="assets/readme/mobile/06-seu-espaco.png"><img src="assets/readme/mobile/06-seu-espaco.png" alt="Perfil com estatísticas, biblioteca e tema do aplicativo" width="184" /></a>
-  <a href="assets/readme/mobile/07-comece-agora.png"><img src="assets/readme/mobile/07-comece-agora.png" alt="Tela para entrar, criar conta ou continuar explorando" width="184" /></a>
-</p>
-
-</details>
 
 ## TVScore Web
 
