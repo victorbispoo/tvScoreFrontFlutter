@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tv_score_front_flutter/core/app_theme.dart';
 
 import '../controllers/login_controller.dart';
 import '../core/app_routes.dart';
@@ -216,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     'Criar conta',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: AppTheme.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),

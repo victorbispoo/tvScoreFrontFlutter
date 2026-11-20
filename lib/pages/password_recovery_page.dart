@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../core/app_routes.dart';
 import '../core/password_recovery_rules.dart';
 import '../services/api_services.dart';
-import '../widgets/auth_form_layout.dart';
+import '../widgets/auth_cinematic_layout.dart';
 import '../widgets/auth_text_field.dart';
 
 class PasswordRecoveryPage extends StatefulWidget {
@@ -133,138 +133,128 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      body: BackdropGroup(
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: AuthFormLayout(
-                logoSpacing: 40,
-                child: Form(
-                  key: _form,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        widget.resetting
-                            ? 'Redefinir senha'
-                            : 'Recuperar senha',
-                        style: theme.textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      if (_invalidLink)
-                        Semantics(
-                          liveRegion: true,
-                          child: Text(
-                            _rejectedLink
-                                ? 'O link é inválido, expirou ou já foi usado. Solicite um novo.'
-                                : 'Link de recuperação inválido. Solicite um novo link.',
-                            style: TextStyle(color: theme.colorScheme.error),
-                          ),
-                        )
-                      else if (widget.resetting) ...[
-                        const Text(
-                          'Crie uma senha com pelo menos 6 caracteres e sem emojis.',
-                        ),
-                        const SizedBox(height: 20),
-                        AuthTextField(
-                          label: 'Nova senha',
-                          controller: _password,
-                          initialField: true,
-                          isPassword: true,
-                          enabled: !_busy,
-                          textInputAction: TextInputAction.next,
-                          validator: PasswordRecoveryRules.validatePassword,
-                        ),
-                        const SizedBox(height: 16),
-                        AuthTextField(
-                          label: 'Confirmar nova senha',
-                          controller: _confirmation,
-                          isPassword: true,
-                          enabled: !_busy,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _submit(),
-                          validator: (value) => value != _password.text
-                              ? 'As senhas não coincidem.'
-                              : null,
-                        ),
-                      ] else ...[
-                        const Text(
-                          'Informe seu e-mail para solicitar instruções de recuperação.',
-                        ),
-                        const SizedBox(height: 20),
-                        AuthTextField(
-                          label: 'E-mail',
-                          controller: _email,
-                          initialField: true,
-                          enabled: !_busy,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _submit(),
-                          validator: (value) =>
-                              (value?.trim().length ?? 0) <= 254 &&
-                                  RegExp(
-                                    r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                                  ).hasMatch(value?.trim() ?? '')
-                              ? null
-                              : 'Informe um e-mail válido.',
-                        ),
-                      ],
-                      if (_message != null) ...[
-                        const SizedBox(height: 16),
-                        Semantics(
-                          liveRegion: true,
-                          child: Text(
-                            _message!,
-                            style: TextStyle(
-                              color: _messageIsError
-                                  ? theme.colorScheme.error
-                                  : theme.colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      if (_invalidLink)
-                        FilledButton(
-                          onPressed: () => Navigator.of(
-                            context,
-                          ).pushReplacementNamed(AppRoutes.recovery),
-                          child: const Text('Solicitar novo link'),
-                        )
-                      else
-                        FilledButton(
-                          onPressed: _busy || _seconds > 0 ? null : _submit,
-                          child: Text(
-                            _busy
-                                ? 'Aguarde...'
-                                : _seconds > 0
-                                ? 'Tentar em ${_seconds}s'
-                                : widget.resetting
-                                ? 'Redefinir senha'
-                                : 'Enviar solicitação',
-                          ),
-                        ),
-                      TextButton(
-                        onPressed: _busy
-                            ? null
-                            : () {
-                                if (widget.resetting ||
-                                    !Navigator.of(context).canPop()) {
-                                  _login();
-                                } else {
-                                  Navigator.pop(context);
-                                }
-                              },
-                        child: const Text('Voltar ao login'),
-                      ),
-                    ],
+    return AuthCinematicLayout(
+      child: Form(
+        key: _form,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.resetting ? 'Redefinir senha' : 'Recuperar senha',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -.8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_invalidLink)
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _rejectedLink
+                      ? 'O link é inválido, expirou ou já foi usado. Solicite um novo.'
+                      : 'Link de recuperação inválido. Solicite um novo link.',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              )
+            else if (widget.resetting) ...[
+              const Text(
+                'Crie uma senha com pelo menos 6 caracteres e sem emojis.',
+              ),
+              const SizedBox(height: 20),
+              AuthTextField(
+                label: 'Nova senha',
+                controller: _password,
+                initialField: true,
+                isPassword: true,
+                enabled: !_busy,
+                textInputAction: TextInputAction.next,
+                validator: PasswordRecoveryRules.validatePassword,
+              ),
+              const SizedBox(height: 16),
+              AuthTextField(
+                label: 'Confirmar nova senha',
+                controller: _confirmation,
+                isPassword: true,
+                enabled: !_busy,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                validator: (value) =>
+                    value != _password.text ? 'As senhas não coincidem.' : null,
+              ),
+            ] else ...[
+              Text(
+                'Informe seu e-mail para receber as instruções de recuperação.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              AuthTextField(
+                label: 'E-mail',
+                controller: _email,
+                initialField: true,
+                enabled: !_busy,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                validator: (value) =>
+                    (value?.trim().length ?? 0) <= 254 &&
+                        RegExp(
+                          r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                        ).hasMatch(value?.trim() ?? '')
+                    ? null
+                    : 'Informe um e-mail válido.',
+              ),
+            ],
+            if (_message != null) ...[
+              const SizedBox(height: 16),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _message!,
+                  style: TextStyle(
+                    color: _messageIsError
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.primary,
                   ),
                 ),
               ),
+            ],
+            const SizedBox(height: 24),
+            if (_invalidLink)
+              FilledButton(
+                onPressed: () => Navigator.of(
+                  context,
+                ).pushReplacementNamed(AppRoutes.recovery),
+                child: const Text('Solicitar novo link'),
+              )
+            else
+              FilledButton(
+                onPressed: _busy || _seconds > 0 ? null : _submit,
+                child: Text(
+                  _busy
+                      ? 'Aguarde...'
+                      : _seconds > 0
+                      ? 'Tentar em ${_seconds}s'
+                      : widget.resetting
+                      ? 'Redefinir senha'
+                      : 'Enviar solicitação',
+                ),
+              ),
+            TextButton(
+              onPressed: _busy
+                  ? null
+                  : () {
+                      if (widget.resetting || !Navigator.of(context).canPop()) {
+                        _login();
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+              child: const Text('Voltar ao login'),
             ),
-          ),
+          ],
         ),
       ),
     );

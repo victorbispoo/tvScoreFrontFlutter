@@ -34,6 +34,12 @@ class RecoveryBackend extends BackendHttp {
 }
 
 void main() {
+  Future<void> tapVisible(WidgetTester tester, Finder target) async {
+    await tester.ensureVisible(target);
+    await tester.pumpAndSettle();
+    await tester.tap(target);
+  }
+
   setUp(() {
     final dispatcher =
         TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
@@ -86,7 +92,7 @@ void main() {
       tester.widget<AuthTextField>(find.byType(AuthTextField)).controller!.text,
       'user@example.com',
     );
-    await tester.tap(find.text('Enviar solicitação'));
+    await tapVisible(tester, find.text('Enviar solicitação'));
     await tester.pumpAndSettle();
     expect(
       find.text(
@@ -94,7 +100,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tester.tap(find.text('Voltar ao login'));
+    await tapVisible(tester, find.text('Voltar ao login'));
     await tester.pumpAndSettle();
     expect(find.byType(LoginPage), findsOneWidget);
     expect(ApiService.token, 'existing-session');
@@ -146,7 +152,7 @@ void main() {
       } else {
         expect(find.byType(PasswordRecoveryPage), findsOneWidget);
         expect(find.textContaining('O link é inválido'), findsOneWidget);
-        await tester.tap(find.text('Solicitar novo link'));
+        await tapVisible(tester, find.text('Solicitar novo link'));
         await tester.pumpAndSettle();
         expect(find.text('Recuperar senha'), findsOneWidget);
       }
@@ -188,14 +194,14 @@ void main() {
       arguments: 'user@example.com',
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Enviar solicitação'));
+    await tapVisible(tester, find.text('Enviar solicitação'));
     await tester.pumpAndSettle();
     expect(
       tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
       isNull,
     );
     expect(find.textContaining('Tentar em'), findsOneWidget);
-    await tester.tap(find.text('Voltar ao login'));
+    await tapVisible(tester, find.text('Voltar ao login'));
     await tester.pumpAndSettle();
     navigator.currentState!.pushNamed(
       AppRoutes.recovery,
