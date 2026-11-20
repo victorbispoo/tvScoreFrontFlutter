@@ -107,6 +107,8 @@ void main() {
             'poster': poster,
             'tipoConteudo': 'tv',
             'ano': 2019,
+            'motivo_recomendacao':
+                'Recomendado porque você gosta de animação e gênero 10759.',
           },
         ],
       });
@@ -117,6 +119,10 @@ void main() {
       expect(series.content['poster_path'], poster);
       expect(series.content['year'], '2019');
       expect(series.rankingScore, isNull);
+      expect(
+        series.reason,
+        'Recomendado porque você gosta de animação e Ação e Aventura.',
+      );
       expect(result.partial, isNull);
       expect(result.warnings, isNull);
     },

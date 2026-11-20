@@ -162,10 +162,14 @@ extension RecommendationsService on ApiService {
       if (RegExp(r'^[1-9]\d{3}$').hasMatch(value)) content['year'] = value;
     }
     if (absolutePoster) content['poster_path'] = poster;
+    final reason = (item['motivo_recomendacao'] as String?)?.replaceAllMapped(
+      RegExp(r'\bgênero\s+(\d+)\b', caseSensitive: false),
+      (match) => ContentGenres.names[int.tryParse(match[1]!)] ?? match[0]!,
+    );
     return Recommendation(
       content: Map.unmodifiable(content),
       rankingScore: item['score_recomendacao'] as num?,
-      reason: item['motivo_recomendacao'] as String?,
+      reason: reason,
       synopsisSimilarity: item['similaridade_sinopse'] as num?,
     );
   }
