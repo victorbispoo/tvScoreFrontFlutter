@@ -1,21 +1,21 @@
-<div align="center">
-  <img src="lib/assets/tvScoreLogin.png" alt="Logo do TVScore" width="160" />
+<p align="center">
+  <a href="assets/readme/mobile/banner.png"><img src="assets/readme/mobile/banner.png" alt="TVScore Mobile com as telas de catálogo, detalhes e perfil" width="760" /></a>
+</p>
 
-  <h1>TVScore</h1>
-  <p>Explore filmes e séries, descubra onde assistir e organize suas avaliações e seus favoritos.</p>
+<div align="center">
+  <p>O TVScore é um Trabalho de Conclusão de Curso desenvolvido em Flutter para Android e Web. Explore filmes e séries, descubra onde assistir e receba recomendações com base nas suas preferências e avaliações.</p>
   <p>
-    <a href="https://tvscore.pages.dev/">Abrir versão Web</a> ·
-    <a href="https://github.com/victorbispoo/tvScoreFrontFlutter/releases">Android no GitHub Releases</a>
+    <a href="https://tvscore-landing.pages.dev/"><img src="https://img.shields.io/badge/Conhecer%20o%20TVScore-2563EB?style=for-the-badge" alt="Conhecer o TVScore" /></a>
+    <a href="https://tvscore.pages.dev/"><img src="https://img.shields.io/badge/Abrir%20no%20navegador-26384F?style=for-the-badge" alt="Abrir no navegador" /></a>
+    <a href="https://github.com/victorbispoo/tvScoreFrontFlutter/releases"><img src="https://img.shields.io/badge/Baixar%20APK-26384F?style=for-the-badge" alt="Baixar APK para Android" /></a>
   </p>
+  <p><a href="#tvscore-mobile">Mobile</a> · <a href="#tvscore-web">Web</a> · <a href="#como-executar">Como executar</a></p>
 </div>
 
 ## TVScore Mobile
 
-Para instalar no Android, abra o [GitHub Releases](https://github.com/victorbispoo/tvScoreFrontFlutter/releases) e baixe o arquivo .apk na seção **Assets**.
-
-<p align="center">
-  <a href="assets/readme/mobile/banner.png"><img src="assets/readme/mobile/banner.png" alt="TVScore Mobile com as telas de catálogo, detalhes e perfil" width="760" /></a>
-</p>
+<details>
+<summary>Ver galeria Mobile</summary>
 
 <p align="center">
   <a href="assets/readme/mobile/01-descubra.png"><img src="assets/readme/mobile/01-descubra.png" alt="Catálogo e recomendações personalizadas no TVScore Mobile" width="184" /></a>
@@ -30,7 +30,12 @@ Para instalar no Android, abra o [GitHub Releases](https://github.com/victorbisp
   <a href="assets/readme/mobile/07-comece-agora.png"><img src="assets/readme/mobile/07-comece-agora.png" alt="Tela para entrar, criar conta ou continuar explorando" width="184" /></a>
 </p>
 
+</details>
+
 ## TVScore Web
+
+<details>
+<summary>Ver galeria Web</summary>
 
 <p align="center">
   <a href="assets/readme/web/01-tvscore-web.png"><img src="assets/readme/web/01-tvscore-web.png" alt="Catálogo do TVScore Web aberto em um notebook" width="760" /></a>
@@ -46,31 +51,69 @@ Para instalar no Android, abra o [GitHub Releases](https://github.com/victorbisp
   <a href="assets/readme/web/05-favoritos.png"><img src="assets/readme/web/05-favoritos.png" alt="Biblioteca de filmes e séries favoritos" width="370" /></a>
 </p>
 
-## Sobre o projeto
-
-O **TVScore** é um Trabalho de Conclusão de Curso desenvolvido em Flutter para Android e Web. O projeto reúne catálogo do TMDB, disponibilidade de streaming no Brasil, biblioteca pessoal e recomendações com base nas preferências e avaliações do usuário.
+</details>
 
 ## Funcionalidades
 
-| Recurso | Descrição |
-| --- | --- |
-| Catálogo | Carrosséis com destaques, títulos ordenados por nota e ano, categorias por gênero e séries. |
-| Pesquisa | Busca por título diretamente no backend, com filtro entre filmes e séries e carregamento de novas páginas durante a rolagem. |
-| Filtros do catálogo | Exploração por gênero, ano, faixa de notas e plataforma de streaming. |
-| Detalhes | Pôster, imagem de fundo, sinopse, ano, gêneros e nota TMDB. |
-| Onde assistir | Plataformas disponíveis no Brasil para cada título, separadas por assinatura, aluguel e compra, com acesso à consulta de disponibilidade. |
-| Recomendações personalizadas | Sugestões de filmes e séries com base nas preferências e avaliações do usuário, acompanhadas de explicações sobre a recomendação. |
-| Episódios | Seleção de temporada e grid com número, nota TMDB e cores por faixa de avaliação. Episódios sem votos recebem uma indicação própria. |
-| Favoritos | Adição, consulta e remoção de títulos, com persistência vinculada à conta no backend. |
-| Avaliações pessoais | Notas de 0 a 10 em passos de 0,5, com comentário opcional, edição e exclusão. |
-| Comunidade | Avaliações de outros usuários, média TVScore e quantidade de avaliações por título. |
-| Minhas avaliações | Consulta do histórico pessoal e ordenação por data ou nota. |
-| Conta e sessão | Cadastro, login, restauração de sessão, verificação de expiração do token e logout. |
-| Perfil | Contagens de favoritos e avaliações, acesso à biblioteca e personalização local do nome exibido. |
+- **Catálogo e busca.** Explore destaques, busque por título e filtre por gênero, ano, nota ou serviço de streaming. Consulte sinopse, gêneros e nota do TMDB nos detalhes.
+- **Onde assistir.** Veja as opções de streaming no Brasil por assinatura, aluguel ou compra.
+- **Avaliações e episódios.** Dê notas de 0 a 10, com comentário opcional, consulte avaliações da comunidade e acompanhe as notas dos episódios por temporada.
+- **Favoritos e histórico.** Salve títulos na conta e consulte ou edite suas avaliações no perfil. Escolha entre os temas claro, escuro e do sistema.
+- **Recomendações.** Selecione gêneros e títulos preferidos para receber sugestões com base nas suas escolhas e avaliações.
 
-As notas **TMDB**, a média da comunidade **TVScore** e a **avaliação pessoal** são apresentadas separadamente. O score de recomendação indica a relevância de uma sugestão para o usuário e não representa uma nota do título. Filmes e séries são identificados pelo ID TMDB e pelo tipo de conteúdo.
+A interface mostra separadamente a **nota do TMDB**, a **média da comunidade TVScore** e a **sua avaliação**. A pontuação de recomendação indica quanto uma sugestão combina com as suas preferências.
 
-O aplicativo apresenta estados de carregamento, lista vazia, erro e nova tentativa. Quando não há informações de streaming para um título, exibe “Disponibilidade não informada”. Contas sem histórico recebem orientação para informar preferências e avaliar conteúdos.
+## Como executar
+
+Instale o Flutter com uma versão do Dart compatível com `^3.12.2`, conforme o [pubspec.yaml](pubspec.yaml). Use o Git para clonar o projeto e uma conexão com a internet para acessar a API e as imagens.
+
+```bash
+git clone https://github.com/victorbispoo/tvScoreFrontFlutter.git
+cd tvScoreFrontFlutter
+flutter doctor
+flutter pub get
+```
+
+### Android
+
+Configure o Android SDK e inicie um emulador ou conecte um dispositivo com depuração USB habilitada. Use o ID exibido por `flutter devices`.
+
+```bash
+flutter devices
+flutter run -d ID_DO_ANDROID
+```
+
+Para instalar a versão publicada, baixe o arquivo `.apk` na seção **Assets** do [GitHub Releases](https://github.com/victorbispoo/tvScoreFrontFlutter/releases).
+
+### Web
+
+Com o Chrome instalado, execute:
+
+```bash
+flutter run -d chrome
+```
+
+### Configuração da API
+
+O endereço padrão do backend é:
+
+```text
+https://tvscore-backend.onrender.com/api
+```
+
+Para utilizar outro servidor, altere o `baseUrl` do Dio em [lib/services/api_services.dart](lib/services/api_services.dart). O endereço deve ser acessível pelo emulador ou dispositivo.
+
+O frontend consome o backend Java. As credenciais de acesso ao TMDB são configuradas no servidor.
+
+### Catálogo de demonstração
+
+Para substituir os destaques da tela Início por um catálogo fixo:
+
+```bash
+flutter run --dart-define=USE_MOCK_MOVIES=true
+```
+
+Os dados ficam em [lib/data/mock_contents.dart](lib/data/mock_contents.dart). A opção altera o catálogo da tela inicial. Pesquisa, autenticação, favoritos, avaliações e episódios continuam consultando o backend. As imagens também dependem de conexão com a internet.
 
 ## Tecnologias
 
@@ -98,56 +141,6 @@ O aplicativo apresenta estados de carregamento, lista vazia, erro e nova tentati
 - **Serviço Python:** processa preferências e avaliações para produzir recomendações personalizadas de filmes e séries.
 
 Os repositórios dos três componentes estão disponíveis em **Repositórios relacionados**.
-
-## Como executar
-
-### Pré-requisitos
-
-- Flutter com versão do Dart compatível com `^3.12.2`, conforme o [pubspec.yaml](pubspec.yaml).
-- Para Android, use o Android SDK e um emulador ou dispositivo com depuração USB.
-- Para Web, tenha o Chrome instalado.
-- Git e conexão com a internet para acesso à API e às imagens.
-
-### Instalação
-
-```bash
-git clone https://github.com/victorbispoo/tvScoreFrontFlutter.git
-cd tvScoreFrontFlutter
-flutter pub get
-flutter doctor
-flutter run
-```
-
-Para escolher um dispositivo:
-
-```bash
-flutter devices
-flutter run -d ID_DO_DISPOSITIVO
-```
-
-Para executar no navegador, use `flutter run -d chrome`. Ao abrir o aplicativo, você pode entrar, criar uma conta ou continuar explorando.
-
-### Configuração da API
-
-O endereço padrão do backend é:
-
-```text
-https://tvscore-backend.onrender.com/api
-```
-
-Para utilizar outro servidor, altere o `baseUrl` do Dio em [lib/services/api_services.dart](lib/services/api_services.dart). O endereço deve ser acessível pelo emulador ou dispositivo.
-
-O frontend consome o backend Java. As credenciais de acesso ao TMDB são configuradas no servidor.
-
-### Catálogo de demonstração
-
-Para substituir os destaques da tela Início por um catálogo fixo:
-
-```bash
-flutter run --dart-define=USE_MOCK_MOVIES=true
-```
-
-Os dados ficam em [lib/data/mock_contents.dart](lib/data/mock_contents.dart). A opção altera o catálogo da tela inicial. Pesquisa, autenticação, favoritos, avaliações e episódios continuam consultando o backend. As imagens também dependem de conexão com a internet.
 
 ## Organização do código
 
