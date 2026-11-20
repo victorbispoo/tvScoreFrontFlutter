@@ -41,6 +41,14 @@ class _PhotoBackend extends PreferencesBackend {
 }
 
 void main() {
+  setUp(() {
+    final dispatcher =
+        TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
+    dispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
+    addTearDown(dispatcher.clearAccessibilityFeaturesTestValue);
+  });
   late _PhotoBackend backend;
   setUp(() {
     backend = _PhotoBackend();

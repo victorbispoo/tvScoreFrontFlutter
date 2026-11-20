@@ -5,7 +5,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import '../core/app_routes.dart';
 import '../core/password_recovery_rules.dart';
 import '../services/api_services.dart';
-import '../widgets/auth_form_layout.dart';
+import '../widgets/auth_cinematic_layout.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/genre_preferences.dart';
 import '../widgets/profile_photo_editor.dart';
@@ -159,136 +159,121 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      surfaceTintColor: Colors.transparent,
-      leading: IconButton(
-        tooltip: 'Voltar',
-        onPressed: () => Navigator.maybePop(context),
-        icon: const Icon(HugeIconsStroke.arrowLeft01),
-      ),
-      title: const Text('Criar conta'),
+  Widget build(BuildContext context) => AuthCinematicLayout(
+    leading: IconButton(
+      tooltip: 'Voltar',
+      onPressed: () => Navigator.maybePop(context),
+      icon: const Icon(HugeIconsStroke.arrowLeft01),
     ),
-    body: BackdropGroup(
-      child: SafeArea(
-        top: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: (constraints.maxHeight - 36).clamp(
-                  0.0,
-                  double.infinity,
-                ),
-              ),
-              child: Center(
-                child: AuthFormLayout(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ProfilePhotoEditor(
-                          name: _nameController.text,
-                          photoUrl: _photoUrl,
-                          photoBytes: _photoBytes,
-                          enabled: !_busy,
-                          onBusy: (busy) => setState(() => _photoBusy = busy),
-                          onPendingChanged: (_) {},
-                          onUpload: (bytes, _) async {
-                            setState(() => _photoBytes = bytes);
-                          },
-                          onRemove: () async {
-                            setState(() => _photoBytes = null);
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        AuthTextField(
-                          label: 'Nome',
-                          initialField: true,
-                          controller: _nameController,
-                          textInputAction: TextInputAction.next,
-                          onChanged: (_) => setState(() {}),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Por favor, insira seu nome.';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        AuthTextField(
-                          label: 'E-mail',
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          onChanged: (_) => setState(() {}),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Por favor, insira seu e-mail.';
-                            }
-                            if (!_isValidEmail(value.trim())) {
-                              return 'Por favor, insira um e-mail válido.';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        AuthTextField(
-                          label: 'Senha',
-                          controller: _passwordController,
-                          isPassword: true,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _register(),
-                          onChanged: (_) => setState(() {}),
-                          validator: PasswordRecoveryRules.validatePassword,
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: FilledButton(
-                            onPressed: _busy || _photoBusy ? null : _register,
-                            child: _busy
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Cadastrar'),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              'J\u00e1 tem uma conta?',
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.maybePop(context),
-                              child: const Text('Entrar'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+    child: Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Crie sua conta',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: -.8,
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            'Comece sua próxima história.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ProfilePhotoEditor(
+            avatarSize: 92,
+            name: _nameController.text,
+            photoUrl: _photoUrl,
+            photoBytes: _photoBytes,
+            enabled: !_busy,
+            onBusy: (busy) => setState(() => _photoBusy = busy),
+            onPendingChanged: (_) {},
+            onUpload: (bytes, _) async {
+              setState(() => _photoBytes = bytes);
+            },
+            onRemove: () async {
+              setState(() => _photoBytes = null);
+            },
+          ),
+          const SizedBox(height: 16),
+          AuthTextField(
+            label: 'Nome',
+            initialField: true,
+            controller: _nameController,
+            textInputAction: TextInputAction.next,
+            onChanged: (_) => setState(() {}),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Por favor, insira seu nome.';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          AuthTextField(
+            label: 'E-mail',
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            onChanged: (_) => setState(() {}),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Por favor, insira seu e-mail.';
+              }
+              if (!_isValidEmail(value.trim())) {
+                return 'Por favor, insira um e-mail válido.';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          AuthTextField(
+            label: 'Senha',
+            controller: _passwordController,
+            isPassword: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _register(),
+            onChanged: (_) => setState(() {}),
+            validator: PasswordRecoveryRules.validatePassword,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton(
+              onPressed: _busy || _photoBusy ? null : _register,
+              child: _busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Cadastrar'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'J\u00e1 tem uma conta?',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.maybePop(context),
+                child: const Text('Entrar'),
+              ),
+            ],
+          ),
+        ],
       ),
     ),
   );

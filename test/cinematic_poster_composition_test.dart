@@ -43,6 +43,86 @@ bool _isPoster(Positioned position) =>
     position.width != null && position.height == position.width! * 1.5;
 
 void main() {
+  testWidgets(
+    'collage decodes behind sharp posters without changing their placement',
+    (tester) async {
+      _reduceMotion(tester);
+      final posters = CinematicPosterComposition.featuredPosters;
+      Widget scene({String? collage}) => MaterialApp(
+        home: Scaffold(
+          body: CinematicPosterComposition(
+            collageAsset: collage,
+            posterAssets: [for (final poster in posters) poster.asset],
+            posterTitles: [for (final poster in posters) poster.title],
+          ),
+        ),
+      );
+      await tester.pumpWidget(scene());
+      await tester.pumpAndSettle();
+      final original = tester
+          .widgetList<Positioned>(find.byType(Positioned))
+          .where(_isPoster)
+          .map((p) => (p.left, p.top, p.width, p.height))
+          .toList();
+      final angles = tester
+          .widgetList<Transform>(
+            _rotations(find.byType(CinematicPosterComposition)),
+          )
+          .map((t) => t.transform.entry(0, 1))
+          .toList();
+      await tester.pumpWidget(scene(collage: 'lib/assets/colagemLogin.jpg'));
+      await tester.pumpAndSettle();
+      final collage = find.image(
+        ResizeImage(
+          const AssetImage('lib/assets/colagemLogin.jpg'),
+          width: 1440,
+        ),
+      );
+      expect(collage, findsOneWidget);
+      await tester.runAsync(
+        () => precacheImage(
+          tester.widget<Image>(collage).image,
+          tester.element(collage),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.ancestor(of: collage, matching: find.byType(ImageFiltered)),
+        findsOneWidget,
+      );
+      final rawImage = tester.widget<RawImage>(
+        find.descendant(of: collage, matching: find.byType(RawImage)),
+      );
+      expect(rawImage.image, isNotNull);
+      expect(tester.widget<Image>(collage).fit, BoxFit.cover);
+      for (final poster in posters) {
+        expect(
+          find.ancestor(
+            of: find.image(AssetImage(poster.asset)),
+            matching: find.byType(ImageFiltered),
+          ),
+          findsNothing,
+        );
+      }
+      expect(
+        tester
+            .widgetList<Positioned>(find.byType(Positioned))
+            .where(_isPoster)
+            .map((p) => (p.left, p.top, p.width, p.height)),
+        original,
+      );
+      expect(
+        tester
+            .widgetList<Transform>(
+              _rotations(find.byType(CinematicPosterComposition)),
+            )
+            .map((t) => t.transform.entry(0, 1)),
+        angles,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final count in [4, 5]) {
     testWidgets(
       '$count pôsteres: composição fixa, assimétrica e proporcional',

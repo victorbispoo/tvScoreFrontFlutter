@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -16,6 +17,7 @@ class CinematicPosterComposition extends StatelessWidget {
     this.posterTitles = const [],
     this.placeholderCount = 5,
     this.compact = false,
+    this.collageAsset,
   }) : assert(
          posterAssets.length == 0 ||
              posterAssets.length == 4 ||
@@ -34,8 +36,10 @@ class CinematicPosterComposition extends StatelessWidget {
   final List<String> posterTitles;
   final int placeholderCount;
   final bool compact;
+  final String? collageAsset;
 
   static const backgroundColor = Color(0xFF040B17);
+  static const collageBackgroundColor = Color(0xFF080B11);
   static const _canvasSize = Size(900, 620);
 
   // Logical poster order, independent of the fixed back-to-front paint order.
@@ -95,7 +99,9 @@ class CinematicPosterComposition extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: canvasSize.aspectRatio,
         child: ColoredBox(
-          color: backgroundColor,
+          color: collageAsset == null
+              ? backgroundColor
+              : collageBackgroundColor,
           child: ClipRect(
             child: FittedBox(
               fit: BoxFit.contain,
@@ -103,6 +109,15 @@ class CinematicPosterComposition extends StatelessWidget {
                 size: canvasSize,
                 child: Stack(
                   children: [
+                    if (collageAsset case final asset?)
+                      Positioned.fill(
+                        child: RepaintBoundary(
+                          child: _CollageBackground(
+                            asset: asset,
+                            compact: compact,
+                          ),
+                        ),
+                      ),
                     Positioned.fill(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -136,6 +151,8 @@ class CinematicPosterComposition extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (collageAsset != null)
+                      const Positioned.fill(child: _CollageEdgeFade()),
                     for (final placement in placements)
                       Positioned(
                         left: placement.x,
@@ -170,6 +187,96 @@ class CinematicPosterComposition extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CollageBackground extends StatelessWidget {
+  const _CollageBackground({required this.asset, required this.compact});
+
+  final String asset;
+  final bool compact;
+
+  static const _imageOpacity = .95;
+  static const _overlayOpacity = .55;
+  static const _blurSigma = 2.0;
+
+  @override
+  Widget build(BuildContext context) {
+    const base = CinematicPosterComposition.collageBackgroundColor;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ImageFiltered(
+          imageFilter: ImageFilter.blur(
+            sigmaX: _blurSigma,
+            sigmaY: _blurSigma,
+            tileMode: TileMode.clamp,
+          ),
+          child: Image.asset(
+            asset,
+            fit: BoxFit.cover,
+            cacheWidth: compact ? 720 : 1440,
+            color: Colors.white.withValues(alpha: _imageOpacity),
+            colorBlendMode: BlendMode.modulate,
+            errorBuilder: (_, _, _) => const SizedBox.expand(),
+          ),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                base.withValues(alpha: _overlayOpacity),
+                const Color(0xFF101827).withValues(alpha: _overlayOpacity),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CollageEdgeFade extends StatelessWidget {
+  const _CollageEdgeFade();
+
+  @override
+  Widget build(BuildContext context) {
+    const base = CinematicPosterComposition.collageBackgroundColor;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                base,
+                base.withValues(alpha: 0),
+                base.withValues(alpha: 0),
+                base,
+              ],
+              stops: const [0, .18, .78, 1],
+            ),
+          ),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                base,
+                base.withValues(alpha: 0),
+                base.withValues(alpha: 0),
+                base,
+              ],
+              stops: const [0, .18, .60, 1],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

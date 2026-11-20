@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../controllers/login_controller.dart';
 import '../core/app_routes.dart';
+import '../widgets/auth_cinematic_layout.dart';
 import '../widgets/auth_text_field.dart';
-import '../widgets/login_cinematic_layout.dart';
 import '../widgets/tv_score_snackbar.dart';
 
 class LoginPage extends StatefulWidget {
@@ -69,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LoginCinematicLayout(
+    return AuthCinematicLayout(
       child: Form(
         key: _formKey,
         child: Column(

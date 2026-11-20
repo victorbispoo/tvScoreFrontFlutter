@@ -508,6 +508,11 @@ void main() {
     testWidgets(
       'cadastro apresenta duas etapas ou permite pular todo o fluxo, skip=$skip',
       (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
         await tester.pumpWidget(
           MaterialApp(
             onGenerateRoute: AppRoutes.generate,

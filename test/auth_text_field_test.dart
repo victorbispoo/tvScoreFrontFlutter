@@ -151,7 +151,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Criar conta'), findsOneWidget);
+    expect(find.text('Crie sua conta'), findsOneWidget);
     expect(find.byTooltip('Voltar'), findsOneWidget);
     expect(find.byIcon(HugeIconsStroke.camera01), findsOneWidget);
     expect(find.text('J\u00e1 tem uma conta?'), findsOneWidget);

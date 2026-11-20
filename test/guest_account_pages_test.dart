@@ -94,6 +94,11 @@ void main() {
     testWidgets(
       'visitante navega sem dados pessoais em $width dp',
       (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
         await open(tester, Size(width, 850));
         await selectTab(tester, 'Favoritos');
         expect(find.byType(FavoritesPage), findsOneWidget);

@@ -18,6 +18,7 @@ class ProfilePhotoEditor extends StatefulWidget {
     required this.onPendingChanged,
     this.enabled = true,
     this.photoBytes,
+    this.avatarSize = 120,
   });
 
   final String name;
@@ -28,6 +29,7 @@ class ProfilePhotoEditor extends StatefulWidget {
   final ValueChanged<bool> onPendingChanged;
   final bool enabled;
   final Uint8List? photoBytes;
+  final double avatarSize;
 
   @override
   State<ProfilePhotoEditor> createState() => _ProfilePhotoEditorState();
@@ -204,7 +206,7 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
                         name: widget.name,
                         imageUrl: url,
                         imageBytes: bytes,
-                        size: 120,
+                        size: widget.avatarSize,
                       ),
                     ),
                   ),
@@ -255,7 +257,7 @@ class _ProfilePhotoEditorState extends State<ProfilePhotoEditor> {
             ),
           if (_busy && !_confirmingRemoval)
             SizedBox(
-              width: 120,
+              width: widget.avatarSize,
               child: LinearProgressIndicator(value: _progress),
             ),
           if (_error != null)

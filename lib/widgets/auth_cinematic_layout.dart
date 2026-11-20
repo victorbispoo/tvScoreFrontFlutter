@@ -7,13 +7,15 @@ import '../core/app_breakpoints.dart';
 import '../core/light_logo_color_mapper.dart';
 import 'cinematic_poster_composition.dart';
 
-class LoginCinematicLayout extends StatelessWidget {
-  const LoginCinematicLayout({super.key, required this.child});
+class AuthCinematicLayout extends StatelessWidget {
+  const AuthCinematicLayout({super.key, this.leading, required this.child});
 
+  final Widget? leading;
   final Widget child;
 
   Widget _posters({bool compact = false}) => CinematicPosterComposition(
     compact: compact,
+    collageAsset: 'lib/assets/colagemLogin.jpg',
     posterAssets: [
       for (final poster in CinematicPosterComposition.featuredPosters)
         poster.asset,
@@ -40,17 +42,26 @@ class LoginCinematicLayout extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: SizedBox(
-                      width: 144,
-                      height: 96,
-                      child: SvgPicture.asset(
-                        'lib/assets/tvScoreLogin.svg',
-                        colorMapper: theme.brightness == Brightness.light
-                            ? const LightLogoColorMapper()
-                            : null,
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 144,
+                        height: 96,
+                        child: SvgPicture.asset(
+                          'lib/assets/tvScoreLogin.svg',
+                          colorMapper: theme.brightness == Brightness.light
+                              ? const LightLogoColorMapper()
+                              : null,
+                        ),
                       ),
-                    ),
+                      if (leading != null)
+                        PositionedDirectional(
+                          start: 0,
+                          top: 0,
+                          child: leading!,
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                   child,
@@ -109,7 +120,7 @@ class LoginCinematicLayout extends StatelessWidget {
                   Expanded(
                     flex: 55,
                     child: ColoredBox(
-                      color: CinematicPosterComposition.backgroundColor,
+                      color: CinematicPosterComposition.collageBackgroundColor,
                       child: Center(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(vertical: 32),
