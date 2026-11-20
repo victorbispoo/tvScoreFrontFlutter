@@ -26,9 +26,6 @@
 
 ## TVScore Web
 
-<details>
-<summary>Ver galeria Web</summary>
-
 <p align="center">
   <a href="assets/readme/web/01-tvscore-web.png"><img src="assets/readme/web/01-tvscore-web.png" alt="Catálogo do TVScore Web aberto em um notebook" width="760" /></a>
 </p>
@@ -42,8 +39,6 @@
   <a href="assets/readme/web/04-avaliacoes.png"><img src="assets/readme/web/04-avaliacoes.png" alt="Formulário de avaliação e resenhas da comunidade" width="370" /></a>
   <a href="assets/readme/web/05-favoritos.png"><img src="assets/readme/web/05-favoritos.png" alt="Biblioteca de filmes e séries favoritos" width="370" /></a>
 </p>
-
-</details>
 
 ## Funcionalidades
 
