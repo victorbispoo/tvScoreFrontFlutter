@@ -1,31 +1,54 @@
 <div align="center">
-  <img src="lib/assets/tvScoreLogin.png" alt="Logo do TV Score" width="180" />
+  <img src="lib/assets/tvScoreLogin.png" alt="Logo do TVScore" width="160" />
 
-  <h1>TV Score</h1>
-  <p><strong>Sua próxima boa história começa aqui.</strong></p>
-  <p>Descubra filmes e séries, saiba onde assistir e receba recomendações feitas para você.</p>
-
-  <img src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter" />
-  <img src="https://img.shields.io/badge/Dart-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart" />
-  <img src="https://img.shields.io/badge/Material_3-091426?style=flat-square&logo=materialdesign&logoColor=white" alt="Material 3" />
-  <img src="https://img.shields.io/badge/Plataforma-Android-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android" />
+  <h1>TVScore</h1>
+  <p>Explore filmes e séries, descubra onde assistir e organize suas avaliações e seus favoritos.</p>
+  <p>
+    <a href="https://tvscore.pages.dev/">Abrir versão Web</a> ·
+    <a href="https://github.com/victorbispoo/tvScoreFrontFlutter/releases">Android no GitHub Releases</a>
+  </p>
 </div>
 
----
+## TVScore Mobile
+
+Para instalar no Android, abra o [GitHub Releases](https://github.com/victorbispoo/tvScoreFrontFlutter/releases) e baixe o arquivo .apk na seção **Assets**.
+
+<p align="center">
+  <a href="assets/readme/mobile/banner.png"><img src="assets/readme/mobile/banner.png" alt="TVScore Mobile com as telas de catálogo, detalhes e perfil" width="760" /></a>
+</p>
+
+<p align="center">
+  <a href="assets/readme/mobile/01-descubra.png"><img src="assets/readme/mobile/01-descubra.png" alt="Catálogo e recomendações personalizadas no TVScore Mobile" width="184" /></a>
+  <a href="assets/readme/mobile/02-explore.png"><img src="assets/readme/mobile/02-explore.png" alt="Detalhes de Breaking Bad, notas e opções de streaming" width="184" /></a>
+  <a href="assets/readme/mobile/03-avalie.png"><img src="assets/readme/mobile/03-avalie.png" alt="Notas por episódio, edição da avaliação e opiniões da comunidade" width="184" /></a>
+  <a href="assets/readme/mobile/04-personalize.png"><img src="assets/readme/mobile/04-personalize.png" alt="Seleção de gêneros favoritos para personalizar recomendações" width="184" /></a>
+</p>
+
+<p align="center">
+  <a href="assets/readme/mobile/05-escolha.png"><img src="assets/readme/mobile/05-escolha.png" alt="Seleção de filmes e séries preferidos" width="184" /></a>
+  <a href="assets/readme/mobile/06-seu-espaco.png"><img src="assets/readme/mobile/06-seu-espaco.png" alt="Perfil com estatísticas, biblioteca e tema do aplicativo" width="184" /></a>
+  <a href="assets/readme/mobile/07-comece-agora.png"><img src="assets/readme/mobile/07-comece-agora.png" alt="Tela para entrar, criar conta ou continuar explorando" width="184" /></a>
+</p>
+
+## TVScore Web
+
+<p align="center">
+  <a href="assets/readme/web/01-tvscore-web.png"><img src="assets/readme/web/01-tvscore-web.png" alt="Catálogo do TVScore Web aberto em um notebook" width="760" /></a>
+</p>
+
+<p align="center">
+  <a href="assets/readme/web/02-responsividade.png"><img src="assets/readme/web/02-responsividade.png" alt="Detalhes de uma série em tablet, desktop e celular" width="370" /></a>
+  <a href="assets/readme/web/03-aparencia.png"><img src="assets/readme/web/03-aparencia.png" alt="Perfil e opções de tema claro, escuro e do sistema" width="370" /></a>
+</p>
+
+<p align="center">
+  <a href="assets/readme/web/04-avaliacoes.png"><img src="assets/readme/web/04-avaliacoes.png" alt="Formulário de avaliação e resenhas da comunidade" width="370" /></a>
+  <a href="assets/readme/web/05-favoritos.png"><img src="assets/readme/web/05-favoritos.png" alt="Biblioteca de filmes e séries favoritos" width="370" /></a>
+</p>
 
 ## Sobre o projeto
 
-O **TV Score** é um aplicativo de descoberta e avaliação de filmes e séries, desenvolvido em Flutter como Trabalho de Conclusão de Curso. Ele reúne catálogo TMDB, disponibilidade em plataformas de streaming, favoritos, avaliações da comunidade e recomendações personalizadas em uma interface com tema escuro e Material 3.
-
-O aplicativo integra uma API Java e um serviço de recomendações em Python. A API gerencia autenticação, catálogo e biblioteca pessoal; o recomendador utiliza as preferências e o histórico de avaliações para sugerir filmes e séries. A sessão é armazenada de forma segura no dispositivo, permitindo retomar o acesso ao reabrir o app.
-
-## Escopo do projeto
-
-O TV Score reúne em um único aplicativo a descoberta de conteúdos, a consulta de onde assistir e a organização da experiência de cada usuário com filmes e séries. O público inclui pessoas que buscam novos títulos, acompanham suas preferências e consultam opiniões antes de escolher o que assistir.
-
-O escopo contempla o fluxo completo: criar uma conta, explorar e pesquisar o catálogo, aplicar filtros, consultar detalhes e plataformas disponíveis, salvar favoritos, publicar e gerenciar avaliações e receber recomendações personalizadas. A biblioteca permanece vinculada à conta, permitindo recuperar favoritos e avaliações em novos acessos.
-
-A solução compreende o aplicativo Android em Flutter, a API Java, a persistência dos dados pessoais e o serviço Python de recomendação, com integração aos dados do TMDB e à disponibilidade de streaming fornecida pelo JustWatch via TMDB.
+O **TVScore** é um Trabalho de Conclusão de Curso desenvolvido em Flutter para Android e Web. O projeto reúne catálogo do TMDB, disponibilidade de streaming no Brasil, biblioteca pessoal e recomendações com base nas preferências e avaliações do usuário.
 
 ## Funcionalidades
 
@@ -54,7 +77,7 @@ O aplicativo apresenta estados de carregamento, lista vazia, erro e nova tentati
 | Tecnologia | Aplicação |
 | --- | --- |
 | Flutter e Dart | Interface, navegação e lógica do aplicativo |
-| Material 3 | Componentes visuais e tema escuro |
+| Material 3 | Componentes visuais e temas claro, escuro e do sistema |
 | Dio | Comunicação HTTP com a API |
 | Flutter Secure Storage | Armazenamento seguro da sessão |
 | Shared Preferences | Preferências locais do perfil |
@@ -81,8 +104,8 @@ Os repositórios dos três componentes estão disponíveis em **Repositórios re
 ### Pré-requisitos
 
 - Flutter com versão do Dart compatível com `^3.12.2`, conforme o [pubspec.yaml](pubspec.yaml).
-- Android SDK configurado.
-- Emulador Android ou dispositivo com depuração USB habilitada.
+- Para Android, use o Android SDK e um emulador ou dispositivo com depuração USB.
+- Para Web, tenha o Chrome instalado.
 - Git e conexão com a internet para acesso à API e às imagens.
 
 ### Instalação
@@ -102,7 +125,7 @@ flutter devices
 flutter run -d ID_DO_DISPOSITIVO
 ```
 
-Ao abrir o aplicativo, crie uma conta pela tela de cadastro ou entre com uma conta existente.
+Para executar no navegador, use `flutter run -d chrome`. Ao abrir o aplicativo, você pode entrar, criar uma conta ou continuar explorando.
 
 ### Configuração da API
 
@@ -114,7 +137,7 @@ https://tvscore-backend.onrender.com/api
 
 Para utilizar outro servidor, altere o `baseUrl` do Dio em [lib/services/api_services.dart](lib/services/api_services.dart). O endereço deve ser acessível pelo emulador ou dispositivo.
 
-O frontend consome o backend Java; as credenciais de acesso ao TMDB são configuradas no servidor.
+O frontend consome o backend Java. As credenciais de acesso ao TMDB são configuradas no servidor.
 
 ### Catálogo de demonstração
 
@@ -124,7 +147,7 @@ Para substituir os destaques da tela Início por um catálogo fixo:
 flutter run --dart-define=USE_MOCK_MOVIES=true
 ```
 
-Os dados ficam em [lib/data/mock_contents.dart](lib/data/mock_contents.dart). A opção altera o catálogo da Home; pesquisa, autenticação, favoritos, avaliações e episódios continuam consultando o backend. As imagens também dependem de conexão com a internet.
+Os dados ficam em [lib/data/mock_contents.dart](lib/data/mock_contents.dart). A opção altera o catálogo da tela inicial. Pesquisa, autenticação, favoritos, avaliações e episódios continuam consultando o backend. As imagens também dependem de conexão com a internet.
 
 ## Organização do código
 
@@ -185,7 +208,3 @@ build/app/outputs/flutter-apk/app-release.apk
 Dados de filmes, séries, episódios e imagens são fornecidos pelo [TMDB](https://www.themoviedb.org/). Este produto utiliza a API do TMDB, mas não é endossado nem certificado pelo TMDB.
 
 As informações sobre onde assistir são fornecidas pelo **JustWatch**, por meio da integração de disponibilidade do TMDB, considerando a região do Brasil.
-
----
-
-<p align="center">TV Score · Descubra, avalie e encontre sua próxima história favorita.</p>
