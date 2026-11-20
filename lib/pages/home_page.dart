@@ -43,6 +43,7 @@ class _HomePageState extends State<HomePage>
   late Future<List<Map<String, String>>> _trending;
   late Future<List<Map<String, String>>> _topRated;
   Future<void>? _recommendationLoad;
+  final _recommendationYears = <(String?, String?), Future<String>>{};
   List<Map<String, String>> _forYouRecommendations = const [];
   Set<(String?, String?)> _recommended = const {};
   List<HomeSection>? _catalogSections;
@@ -77,6 +78,7 @@ class _HomePageState extends State<HomePage>
     if (!mounted) return;
     setState(() {
       _recommendationLoad = null;
+      _recommendationYears.clear();
       _recommended = const {};
       _forYouRecommendations = const [];
       _catalogSections = null;
@@ -266,7 +268,7 @@ class _HomePageState extends State<HomePage>
         Future.wait([
           read(api.getMovieRecommendations),
           read(api.getSeriesRecommendations),
-        ]).then((results) {
+        ]).then((results) async {
           if (!mounted || !identical(_recommendationLoad, load)) return;
           _recommendationsPending = false;
           if (ApiService.token != token) {
@@ -300,6 +302,61 @@ class _HomePageState extends State<HomePage>
             _distributeContents();
           });
           _fillEmptyGenre();
+          final catalog = <(String?, String?), String>{};
+          Future<void> collect(Future<List<Map<String, String>>> source) async {
+            try {
+              for (final content in await source) {
+                final year = content['year'] ?? '';
+                if (year.isNotEmpty) catalog[content.contentKey] = year;
+              }
+            } catch (_) {
+              // Public metadata is optional; recommendation order is unchanged.
+            }
+          }
+
+          await Future.wait([
+            collect(
+              _sections.then(
+                (sections) => [
+                  for (final section in sections) ...section.contents,
+                ],
+              ),
+            ),
+            collect(_trending),
+            collect(_topRated),
+          ]);
+          if (!mounted || !identical(_recommendationLoad, load)) return;
+          final years = <(String?, String?), String>{};
+          await Future.wait([
+            for (final item in results.expand((items) => items))
+              if ((item.content['year'] ?? '').isEmpty)
+                () async {
+                  final key = item.content.contentKey;
+                  years[key] =
+                      catalog[key] ??
+                      await _recommendationYears.putIfAbsent(key, () async {
+                        try {
+                          final reference = item.identity;
+                          final content = await api.getContent(
+                            reference.id,
+                            reference.type,
+                          );
+                          return content['year'] ?? '';
+                        } catch (_) {
+                          _recommendationYears.remove(key);
+                          return '';
+                        }
+                      });
+                }(),
+          ]);
+          if (!mounted || !identical(_recommendationLoad, load)) return;
+          setState(() {
+            _forYouRecommendations = [
+              for (final content in _forYouRecommendations)
+                {...content, 'year': ?years[content.contentKey]},
+            ];
+            _distributeContents();
+          });
         });
     return _recommendationLoad = load;
   }

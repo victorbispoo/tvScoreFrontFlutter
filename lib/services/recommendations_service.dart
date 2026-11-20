@@ -151,9 +151,16 @@ extension RecommendationsService on ApiService {
       'vote_average': item['nota'],
       'genre_ids': genres,
       'genres': genres,
+      'release_date': item['release_date'],
+      'first_air_date': item['first_air_date'],
       'poster_path': absolutePoster ? null : poster,
     }, type);
-    if (item['ano'] case final int year) content['year'] = year.toString();
+    if (content['year']!.isEmpty) {
+      final year =
+          item['ano'] ?? item['ano_lancamento'] ?? item['release_year'];
+      final value = year?.toString() ?? '';
+      if (RegExp(r'^[1-9]\d{3}$').hasMatch(value)) content['year'] = value;
+    }
     if (absolutePoster) content['poster_path'] = poster;
     return Recommendation(
       content: Map.unmodifiable(content),

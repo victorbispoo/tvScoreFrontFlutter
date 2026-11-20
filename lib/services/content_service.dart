@@ -139,7 +139,10 @@ extension ContentService on ApiService {
   }
 
   Map<String, String> _mapContent(Map<String, dynamic> data, String type) {
-    final releaseDate = data['release_date'] as String? ?? '';
+    final releaseDate =
+        (type == 'TV' ? data['first_air_date'] as String? : null) ??
+        data['release_date'] as String? ??
+        '';
     final poster = data['poster_path'] as String? ?? '';
     final backdrop = data['backdrop_path'] as String? ?? '';
     final genres = ContentGenres.fromJson(data);

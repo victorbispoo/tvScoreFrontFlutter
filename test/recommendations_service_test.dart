@@ -122,6 +122,33 @@ void main() {
     },
   );
 
+  for (final (resource, dateField, date) in [
+    ('filmes', 'release_date', '2014-11-06'),
+    ('series', 'first_air_date', '2008-01-20'),
+  ]) {
+    test('preserves $dateField and year aliases for $resource', () async {
+      respond(resource, {
+        'recomendacoes': [
+          {'id': 1, dateField: date, 'ano': 1999},
+          {'id': 2, 'ano_lancamento': '2021'},
+          {'id': 3, 'release_year': 2022},
+          {'id': 4, dateField: ''},
+          {'id': 5, 'ano': 'unknown'},
+        ],
+      });
+      final result = resource == 'filmes'
+          ? await api.getMovieRecommendations()
+          : await api.getSeriesRecommendations();
+      expect(result.items.map((item) => item.content['year']), [
+        date.substring(0, 4),
+        '2021',
+        '2022',
+        '',
+        '',
+      ]);
+    });
+  }
+
   test('accepts an empty recommendation list', () async {
     respond('filmes', {'total': 0, 'recomendacoes': []});
     expect((await api.getMovieRecommendations()).items, isEmpty);

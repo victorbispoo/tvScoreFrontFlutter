@@ -138,6 +138,39 @@ class _HomeBackend extends BackendHttp {
   }
 }
 
+class _MissingYearBackend extends _HomeBackend {
+  bool offline = false;
+
+  @override
+  Object? respond(String method, Uri uri, String body) {
+    if (uri.path.contains('/recomendacoes/')) {
+      requests.add('$method ${uri.path}');
+      return {
+        'recomendacoes': [
+          {'id': 97, 'titulo': 'Recommended'},
+          if (uri.path.endsWith('/filmes')) ...[
+            {'id': 97, 'titulo': 'Duplicate'},
+            {'id': 98, 'titulo': 'Undated'},
+          ],
+        ],
+      };
+    }
+    if (RegExp(r'/(filmes|series)/(97|98)$').hasMatch(uri.path)) {
+      requests.add('$method ${uri.path}');
+      if (offline) throw const SocketException('Offline');
+      return {
+        'id': int.parse(uri.path.split('/').last),
+        if (uri.path.endsWith('/97'))
+          if (uri.path.contains('/filmes/'))
+            'release_date': '2014-11-06'
+          else
+            'first_air_date': '2008-01-20',
+      };
+    }
+    return super.respond(method, uri, body);
+  }
+}
+
 void main() {
   Future<void> mount(
     WidgetTester tester,
@@ -178,6 +211,34 @@ void main() {
   Iterable<String?> titles(List<Map<String, String>> contents) =>
       contents.map((content) => content['title']);
 
+  for (final offline in [false, true]) {
+    testWidgets(
+      'hydrates missing years without duplicate reads, offline=$offline',
+      (tester) async {
+        final backend = _MissingYearBackend()..offline = offline;
+        await mount(tester, backend);
+        await tester.pumpAndSettle();
+        final contents = section(tester, 'personalized');
+        expect(contents.map((item) => (item['id'], item['type'])), [
+          ('97', 'MOVIE'),
+          ('97', 'TV'),
+          ('98', 'MOVIE'),
+        ]);
+        expect(
+          contents.map((item) => item['year']),
+          offline ? ['', '', ''] : ['2014', '2008', ''],
+        );
+        for (final path in ['/filmes/97', '/series/97', '/filmes/98']) {
+          expect(
+            backend.requests.where((item) => item.endsWith(path)),
+            hasLength(1),
+          );
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'personaliza a Home sem refazer IA nos filtros e força no refresh',
     (tester) async {
@@ -197,6 +258,17 @@ void main() {
       await tester.pumpAndSettle();
       final personalized = section(tester, 'personalized');
       expect(titles(personalized), ['MOVIE 2', 'TV 2', 'MOVIE 3']);
+      expect(personalized.map((content) => content['year']), [
+        '2026',
+        '2026',
+        '2026',
+      ]);
+      expect(
+        backend.requests.where(
+          (item) => RegExp(r'/(filmes|series)/\d+$').hasMatch(item),
+        ),
+        isEmpty,
+      );
       expect(personalized.first['recommendation_score'], '0.3');
       expect(
         personalized.first['recommendation_reason'],
@@ -284,7 +356,7 @@ void main() {
       );
       expect(
         find.descendant(of: personalized, matching: find.textContaining('•')),
-        findsNothing,
+        findsWidgets,
       );
       expect(tester.getSize(poster).width, closeTo(158 * 1.1, .1));
       expect(
