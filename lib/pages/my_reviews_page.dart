@@ -115,117 +115,170 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Minhas avaliações')),
       body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-            ? Center(
-                child: Column(
-                  mainAxisSize: .min,
-                  children: [
-                    Text(_error!, textAlign: .center),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: _loadMyReviews,
-                      child: const Text('Tentar Novamente'),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? Center(
+                    child: Column(
+                      mainAxisSize: .min,
+                      children: [
+                        Text(_error!, textAlign: .center),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: _loadMyReviews,
+                          child: const Text('Tentar Novamente'),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              )
-            : reviews.isEmpty
-            ? Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(HugeIconsStroke.star, size: 64, color: Colors.amber),
-                      SizedBox(height: 16),
-                      Text(
-                        'Sua opinião merece uma nota',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  )
+                : reviews.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            HugeIconsStroke.star,
+                            size: 64,
+                            color: Colors.amber,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Sua opinião merece uma nota',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'Abra um filme ou série, escolha sua nota e conte o que achou. Suas avaliações aparecerão aqui.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Abra um filme ou série, escolha sua nota e conte o que achou. Suas avaliações aparecerão aqui.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Card(
+                    ),
+                  )
+                : _buildReviews(reviews, average),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _reviewCard(Review review) => _MyReviewCard(
+    review: review,
+    deleting: _deleting,
+    onEdit: () => _editReview(review),
+    onDelete: () => _deleteReview(review),
+  );
+
+  Widget _buildReviews(List<Review> reviews, double average) => LayoutBuilder(
+    builder: (context, constraints) {
+      final columns = constraints.maxWidth - 40 >= 900 ? 2 : 1;
+      return ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: 1 + (reviews.length / columns).ceil(),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Card(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
-                            children: [
-                              Text(
-                                '${reviews.length}',
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  '${reviews.length}',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const Text('Avaliações'),
-                            ],
+                                const Text(
+                                  'Avaliações',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
-                          Column(
-                            children: [
-                              Text(
-                                average.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                  fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  average.toStringAsFixed(1),
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const Text('Sua nota média'),
-                            ],
+                                const Text(
+                                  'Sua nota média',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: TvScoreSegmentedControl<bool>(
-                      options: const {
-                        false: 'Mais recentes',
-                        true: 'Maiores notas',
-                      },
-                      selectedValue: _highestFirst,
-                      onChanged: (value) =>
-                          setState(() => _highestFirst = value),
-                    ),
+                ),
+                const SizedBox(height: 16),
+                TvScoreSegmentedControl<bool>(
+                  options: const {
+                    false: 'Mais recentes',
+                    true: 'Maiores notas',
+                  },
+                  selectedValue: _highestFirst,
+                  onChanged: (value) => setState(() => _highestFirst = value),
+                ),
+                const SizedBox(height: 12),
+              ],
+            );
+          }
+          final first = (index - 1) * columns;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _reviewCard(reviews[first])),
+                if (columns == 2) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: first + 1 < reviews.length
+                        ? _reviewCard(reviews[first + 1])
+                        : const SizedBox.shrink(),
                   ),
-                  const SizedBox(height: 12),
-                  for (final review in reviews)
-                    _MyReviewCard(
-                      review: review,
-                      deleting: _deleting,
-                      onEdit: () => _editReview(review),
-                      onDelete: () => _deleteReview(review),
-                    ),
                 ],
-              ),
-      ),
-    );
-  }
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
 }
 
 class _MyReviewCard extends StatelessWidget {
@@ -242,62 +295,59 @@ class _MyReviewCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter.grouped(
-        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: .16),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: .12),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(16),
+    child: BackdropFilter.grouped(
+      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: .16),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 90,
-                height: 130,
-                child: ContentPoster(content: review.content),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      review.content['title'] ?? 'Título indisponível',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: .12),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 90,
+              height: 130,
+              child: ContentPoster(content: review.content),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    review.content['title'] ?? 'Título indisponível',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          HugeIconsSolid.star,
-                          size: 15,
-                          color: RatingScale.color(review.rating),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Icon(
+                        HugeIconsSolid.star,
+                        size: 15,
+                        color: RatingScale.color(review.rating),
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
                           '${review.rating.toStringAsFixed(1)}/10',
                           style: TextStyle(
                             color: RatingScale.color(review.rating),
@@ -305,69 +355,69 @@ class _MyReviewCard extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${review.date.day.toString().padLeft(2, '0')}/${review.date.month.toString().padLeft(2, '0')}/${review.date.year}',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                    if (review.comment.trim().isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        review.comment,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 13,
-                          height: 1.3,
-                        ),
                       ),
                     ],
-                    const SizedBox(height: 2),
-                    Wrap(
-                      spacing: 2,
-                      children: [
-                        TextButton.icon(
-                          onPressed: deleting ? null : onEdit,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            minimumSize: const Size(48, 40),
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            textStyle: const TextStyle(fontSize: 13),
-                          ),
-                          icon: const Icon(
-                            HugeIconsStroke.pencilEdit01,
-                            size: 16,
-                          ),
-                          label: const Text('Editar'),
-                        ),
-                        TextButton.icon(
-                          onPressed: deleting ? null : onDelete,
-                          style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFFE59AA5),
-                            minimumSize: const Size(48, 40),
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            textStyle: const TextStyle(fontSize: 13),
-                          ),
-                          icon: const Icon(HugeIconsStroke.delete02, size: 16),
-                          label: const Text('Excluir'),
-                        ),
-                      ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${review.date.day.toString().padLeft(2, '0')}/${review.date.month.toString().padLeft(2, '0')}/${review.date.year}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (review.comment.trim().isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      review.comment,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
                     ),
                   ],
-                ),
+                  const SizedBox(height: 2),
+                  Wrap(
+                    spacing: 2,
+                    children: [
+                      TextButton.icon(
+                        onPressed: deleting ? null : onEdit,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant,
+                          minimumSize: const Size(48, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          textStyle: const TextStyle(fontSize: 13),
+                        ),
+                        icon: const Icon(
+                          HugeIconsStroke.pencilEdit01,
+                          size: 16,
+                        ),
+                        label: const Text('Editar'),
+                      ),
+                      TextButton.icon(
+                        onPressed: deleting ? null : onDelete,
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFE59AA5),
+                          minimumSize: const Size(48, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          textStyle: const TextStyle(fontSize: 13),
+                        ),
+                        icon: const Icon(HugeIconsStroke.delete02, size: 16),
+                        label: const Text('Excluir'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     ),
