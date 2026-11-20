@@ -22,11 +22,13 @@ class DetailsPage extends StatefulWidget {
   const DetailsPage({
     super.key,
     required this.content,
+    this.contentLoaded = false,
     this.heroTag,
     this.onFavoriteChanged,
   });
 
   final Map<String, String> content;
+  final bool contentLoaded;
   final Object? heroTag;
   final VoidCallback? onFavoriteChanged;
 
@@ -117,6 +119,7 @@ class _DetailsPageState extends State<DetailsPage> {
   void didUpdateWidget(covariant DetailsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.content.contentKey != widget.content.contentKey ||
+        oldWidget.contentLoaded != widget.contentLoaded ||
         oldWidget.content['ondeAssistir'] != widget.content['ondeAssistir'] ||
         oldWidget.content['backdrop_path'] != widget.content['backdrop_path']) {
       _loadDetails();
@@ -126,8 +129,9 @@ class _DetailsPageState extends State<DetailsPage> {
   void _loadDetails() {
     final content = widget.content;
     _details = null;
-    if (content['ondeAssistir'] == null ||
-        (content['backdrop_path'] ?? '').isEmpty) {
+    if (!widget.contentLoaded &&
+        (content['ondeAssistir'] == null ||
+            (content['backdrop_path'] ?? '').isEmpty)) {
       final reference = content.apiReference;
       _details = _api.getContent(reference.id, reference.type);
     }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/content_metadata.dart';
 import '../pages/details_page.dart';
+import '../pages/details_route_page.dart';
 import '../pages/login_page.dart';
 import '../pages/my_reviews_page.dart';
 import '../pages/password_recovery_page.dart';
@@ -50,6 +52,16 @@ abstract final class AppRoutes {
     fragment: url.fragment.startsWith('/') ? resetPassword : null,
   );
 
+  static bool isDetailsRoute(String name) {
+    final path = Uri.tryParse(name)?.path;
+    return path == details || (path?.startsWith('$details/') ?? false);
+  }
+
+  static List<Route<dynamic>> initialDetailsRoutes(String name) => [
+    generate(const RouteSettings(name: Navigator.defaultRouteName))!,
+    generate(RouteSettings(name: name))!,
+  ];
+
   static Route<dynamic>? generate(RouteSettings settings) {
     final Widget page;
     final uri = Uri.tryParse(settings.name ?? '');
@@ -73,6 +85,7 @@ abstract final class AppRoutes {
           passwordReset: settings.arguments == const (passwordReset: true),
           returnToOrigin: settings.arguments == returnToOriginArguments,
         );
+      case Navigator.defaultRouteName:
       case home:
         page = const AppShell();
       case register:
@@ -88,24 +101,35 @@ abstract final class AppRoutes {
               ? MyReviewsPage(key: ValueKey(revision))
               : const AppShell(),
         );
-      case details:
-        final args = settings.arguments;
-        if (args is! DetailsArguments) {
-          throw ArgumentError.value(
-            args,
-            'arguments',
-            'Expected DetailsArguments',
-          );
-        }
-        page = DetailsPage(
-          content: args.content,
-          heroTag: args.heroTag,
-          onFavoriteChanged: args.onFavoriteChanged,
-        );
       default:
-        return null;
+        if (!isDetailsRoute(settings.name ?? '')) return null;
+        page = _detailsPage(uri!.path, settings.arguments);
     }
     return MaterialPageRoute<dynamic>(settings: settings, builder: (_) => page);
+  }
+
+  static Widget _detailsPage(String path, Object? arguments) {
+    final segments = path.split('/');
+    final type = switch (segments.length == 4 ? segments[2] : null) {
+      'movie' => 'MOVIE',
+      'tv' => 'TV',
+      _ => null,
+    };
+    final id = segments.length == 4 && RegExp(r'^[0-9]+$').hasMatch(segments[3])
+        ? int.tryParse(segments[3])
+        : null;
+    if (type == null || id == null || id <= 0 || id > 9007199254740991) {
+      return const DetailsRouteError(message: 'Link de detalhes inválido.');
+    }
+    if (arguments is DetailsArguments &&
+        arguments.content.contentKey == (id.toString(), type)) {
+      return DetailsPage(
+        content: arguments.content,
+        heroTag: arguments.heroTag,
+        onFavoriteChanged: arguments.onFavoriteChanged,
+      );
+    }
+    return DetailsRoutePage(id: id, type: type);
   }
 
   static Future<void> openDetails(
@@ -114,8 +138,10 @@ abstract final class AppRoutes {
     Object? heroTag,
     VoidCallback? onFavoriteChanged,
   }) async {
+    final reference = content.apiReference;
+    final type = reference.type == 'MOVIE' ? 'movie' : 'tv';
     await Navigator.of(context).pushNamed<void>(
-      details,
+      '$details/$type/${reference.id}',
       arguments: (
         content: content,
         heroTag: heroTag,

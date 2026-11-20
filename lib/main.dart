@@ -32,6 +32,9 @@ class TvScoreApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initialRoute =
+        WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    final opensDetails = AppRoutes.isDetailsRoute(initialRoute);
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.instance,
       builder: (context, mode, child) => MaterialApp(
@@ -46,10 +49,12 @@ class TvScoreApp extends StatelessWidget {
         themeMode: mode,
         onGenerateRoute: AppRoutes.generate,
         initialRoute: recoveryRoute?.name,
-        onGenerateInitialRoutes: recoveryRoute == null
-            ? null
-            : (_) => [AppRoutes.generate(recoveryRoute!)!],
-        home: recoveryRoute == null ? const AppShell() : null,
+        onGenerateInitialRoutes: recoveryRoute != null
+            ? (_) => [AppRoutes.generate(recoveryRoute!)!]
+            : opensDetails
+            ? AppRoutes.initialDetailsRoutes
+            : null,
+        home: recoveryRoute == null && !opensDetails ? const AppShell() : null,
       ),
     );
   }
